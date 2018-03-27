@@ -1,0 +1,19 @@
+{
+    "name": "meet-aleksey/php-mvc",
+    "description": "Implementation of MVC in PHP.",
+    "keywords": ["mvc"],
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Meet Aleksey",
+            "homepage": "https://github.com/meet-aleksey"
+        }
+    ],
+    "require": {
+        "php": ">=7.0"
+    },
+    "autoload": {
+        "psr-4": { "PhpMvc\\": "src" }
+    }
+}
