@@ -1,8 +1,11 @@
 <?php
 namespace PhpMvc;
 
+/**
+ * The main class that works wonders.
+ */
 class Make {
-    
+
     /**
      * Magic!
      * 
@@ -20,45 +23,45 @@ class Make {
      * @param string $appNamespace Root namespace of the application.
      */
     private static function init($appNamespace) {
-        define('DS', DIRECTORY_SEPARATOR);
-        define('ROOT_PATH', getcwd() . DS);
-        define('CORE_PATH', ROOT_PATH . 'core' . DS);
-        define('CONFIG_PATH', ROOT_PATH . 'config' . DS);
-        define('CONTROLLER_PATH', ROOT_PATH . 'controllers' . DS);
-        define('MODEL_PATH', ROOT_PATH . 'models' . DS);
-        define('VIEW_PATH', ROOT_PATH . 'views' . DS);
-        define('SHARED_PATH', VIEW_PATH . 'shared' . DS);
-        define('UPLOAD_PATH', ROOT_PATH . 'upload' . DS);
+        define('PHPMVC_DS', DIRECTORY_SEPARATOR);
+        define('PHPMVC_ROOT_PATH', getcwd() . PHPMVC_DS);
+        define('PHPMVC_CORE_PATH', __DIR__ .PHPMVC_DS);
+        define('PHPMVC_CONFIG_PATH', PHPMVC_ROOT_PATH . 'config' . PHPMVC_DS);
+        define('PHPMVC_CONTROLLER_PATH', PHPMVC_ROOT_PATH . 'controllers' . PHPMVC_DS);
+        define('PHPMVC_MODEL_PATH', PHPMVC_ROOT_PATH . 'models' . PHPMVC_DS);
+        define('PHPMVC_VIEW_PATH', PHPMVC_ROOT_PATH . 'views' . PHPMVC_DS);
+        define('PHPMVC_SHARED_PATH', PHPMVC_VIEW_PATH . 'shared' . PHPMVC_DS);
+        define('PHPMVC_UPLOAD_PATH', PHPMVC_ROOT_PATH . 'upload' . PHPMVC_DS);
         
-        define('APP_NAMESPACE', $appNamespace);
+        define('PHPMVC_APP_NAMESPACE', $appNamespace);
 
-        define('CONTROLLER', isset($_REQUEST['controller']) ? $_REQUEST['controller'] : 'Home');
-        define('ACTION', isset($_REQUEST['action']) ? $_REQUEST['action'] : 'index');
-        define('VIEW', strtolower(CONTROLLER));
-        define('CURRENT_CONTROLLER_PATH', CONTROLLER_PATH . VIEW . DS);
-        define('CURRENT_VIEW_PATH', VIEW_PATH . VIEW . DS . ACTION . '.php');
+        define('PHPMVC_CONTROLLER', isset($_REQUEST['controller']) ? $_REQUEST['controller'] : 'Home');
+        define('PHPMVC_ACTION', isset($_REQUEST['action']) ? $_REQUEST['action'] : 'index');
+        define('PHPMVC_VIEW', strtolower(PHPMVC_CONTROLLER));
+        define('PHPMVC_CURRENT_CONTROLLER_PATH', PHPMVC_CONTROLLER_PATH . PHPMVC_VIEW . PHPMVC_DS);
+        define('PHPMVC_CURRENT_VIEW_PATH', PHPMVC_VIEW_PATH . PHPMVC_VIEW . PHPMVC_DS . PHPMVC_ACTION . '.php');
     }
 
+    /**
+     * Includes the required files. 
+     */
     private static function include() {
-        require_once __DIR__ . DS . 'Loader.php';
-        // require_once CORE_PATH . 'Controller.php';
+        require_once PHPMVC_CORE_PATH . 'Loader.php';
+        require_once PHPMVC_CORE_PATH . 'Controller.php';
     }
 
     private static function dispatch() {
-        $controller_name = APP_NAMESPACE . '\\Controllers\\' . CONTROLLER . 'Controller';
+        $controller_name = PHPMVC_APP_NAMESPACE . '\\Controllers\\' . PHPMVC_CONTROLLER . 'Controller';
         $controllerInstance = new $controller_name();
-        $actionName = ACTION;
+        $actionName = PHPMVC_ACTION;
         $requestModel = self::getRequestModel();
-        // TODO: object
-        $layout = NULL;
-        $title = NULL;
-        $viewContent = NULL;
-        $result = NULL;
-        $model = NULL;
-        $modelState = NULL;
+        $viewFile = '';
+        $result = null;
+        $modelState = null;
+        $actionResult = null;
 
         try {
-            $model = $controllerInstance->$actionName($requestModel);
+            $actionResult = $controllerInstance->$actionName($requestModel);
         }
         catch (\Exception $ex) {
             // TODO: 500
@@ -68,145 +71,58 @@ class Make {
             );
         }
 
-        // extract view settings
-        if (is_file(CURRENT_VIEW_PATH) && !empty($viewHeaders = self::getViewHeaders())) {
-            if (preg_match('/^\s*array\([^\)]+\);/m', $viewHeaders, $m))
-            {
-                eval('$view_settings = ' . $m[0]);
-                extract($view_settings, EXTR_PREFIX_ALL, 'view');
-
-                // TODO: the prefix may be superfluous, think about it.
-                if (isset($view_layout)) {
-                    $layout = $view_layout;
-                }
-
-                if (isset($view_title)) {
-                    $title = $view_title;
-                }
+        if ($actionResult instanceof View) {
+            !empty($actionResult->layout) ? ViewContext::$layout = $actionResult->layout : null;
+            !empty($actionResult->title) ? ViewContext::$title = $actionResult->title : null;
+            
+            if (!empty($actionResult->viewData)) {
+                ViewContext::$viewData = array_unique(array_merge(ViewContext::$viewData, $actionResult->viewData), SORT_REGULAR);
             }
+
+            $actionResult = $actionResult->model;
         }
 
-        // get content
-        if (is_file(CURRENT_VIEW_PATH)) {
-            $viewContent = self::getContent(CURRENT_VIEW_PATH, $model, $modelState);
+        ViewContext::$actionResult = $actionResult;
+
+        // get view
+        if (($viewFile = self::getViewFilePath(PHPMVC_CURRENT_VIEW_PATH)) !== false) {
+            ViewContext::$content = self::getView($viewFile, ViewContext::$actionResult, $modelState);
+        }
+        else {
+            ViewContext::$content = ViewContext::$actionResult;
         }
 
         // get layout
-        if (!empty($layout)) {
-            $layoutData = array(
-                'main' => $viewContent, 
-                'title' => $title
-            );
-            // TODO: seach file
-            $result = self::getLayout(SHARED_PATH . $layout, $layoutData);
-        } else {
-            $result = $viewContent;
+        if (!empty(ViewContext::$layout)) {
+            $result = self::getView(self::getViewFilePath(ViewContext::$layout), ViewContext::$actionResult);
+        }
+        else {
+            $result = ViewContext::$content;
+        }
+
+        // preparation for render
+        if (!is_string($result)) {
+            if (($result = json_encode(ViewContext::$actionResult)) === false) {
+                throw new \ErrorException('JSON encode error #' . json_last_error() . ': ' . json_last_error_msg());
+            }
+
+            header('Content-Type: application/json');
         }
 
         // render
         echo $result;
     }
 
-    private static function getViewHeaders() {
-        // TODO: cache
-        $viewFile = fopen(CURRENT_VIEW_PATH, 'r');
-        $viewHeaders = '';
-
-        while (!feof($viewFile)) {
-            $line = fgets($viewFile);
-            $viewHeaders .= $line;
-
-            if (strpos($line, '?>') !== FALSE) {
-                break;
-            }
-        }
-
-        fclose($viewFile);
-
-        return $viewHeaders;
-    }
-
-    private static function getContent($filePath, $data = NULL, $modelState = NULL) {
+    public static function getView($path, $actionResult = NULL, $modelState = NULL) {
         ob_start();
 
-        $inject = function(&$model) use($data) {
-            if (!empty($data)) {
-                $model = $data;
-            }
-        };
-
-        // TODO: может быть лучше сделать класс и передавать все приблуды по ссылке.
-        // Что-нибудь, типа $html->route(...), $html->inject($model) и т.п.
-        $route = function($actionName, $controllerName = NULL) {
-            $params = '';
-
-            if (empty($controllerName)) {
-                $controllerName = VIEW;
-            }
-            elseif (is_array($controllerName)) {
-                $params = '&' . http_build_query($controllerName);
-                $controllerName = VIEW;
-            }
-
-            // TODO: url mode
-            return '/?controller=' . $controllerName . '&action=' . $actionName . $params;
-            // return '/' . $controllerName . '/' . $actionName;
-        };
-
-        $content = function($name = NULL, $contentModel = NULL) use($data) {
-            if (!isset($contentModel)) {
-                $contentModel = $data;
-            }
-
-            return self::content($name, $contentModel);
-        };
-
-        require($filePath);
+        require($path);
 
         $result = ob_get_contents();
 
         ob_end_clean();
 
         return $result;
-    }
-
-    private static function getLayout($filePath, $data = NULL) {
-        ob_start();
-
-        $content = function($name = NULL) use($data) {
-            return self::content($name, $data);
-        };
-
-        require($filePath);
-
-        $result = ob_get_contents();
-
-        ob_end_clean();
-
-        return $result;
-    }
-
-    private static function content($name = NULL, $data = NULL) {
-        if (empty($name)) {
-            $name = 'main';
-        }
-
-        if (isset($data) && is_array($data) && isset($data[$name])) {
-            echo $data[$name];
-        }
-        elseif (is_file(VIEW_PATH . VIEW . DS . $name)) {
-            echo self::getContent(VIEW_PATH . VIEW . DS . $name, $data);
-        }
-        elseif (is_file(SHARED_PATH . $name)) {
-            echo self::getContent(SHARED_PATH . $name, $data);
-        }
-        elseif (is_file($name)) {
-            echo self::getContent($name, $data);
-        }
-        else {
-            // TODO:
-            // echo '<pre>Content block with name "' . $name . '" not found</pre>';
-        }
     }
 
     private static function getRequestModel() {
@@ -216,6 +132,34 @@ class Make {
         }
 
         return (object)$_POST;
+    }
+
+    /**
+     * Searches for a file with a specified name and returns the correct path.
+     * If the file is not found, returns FALSE. 
+     * 
+     * @param string $path The file name or file path.
+     * @return string|bool
+     */
+    public static function getViewFilePath($path) {
+        if (empty($path)) {
+            return false;
+        }
+        elseif (is_file($result = $path)) {
+            return $result;
+        }
+        elseif (is_file($result = PHPMVC_VIEW_PATH . PHPMVC_VIEW . PHPMVC_DS . $path)) {
+            return $result;
+        }
+        elseif (is_file($result = PHPMVC_SHARED_PATH . $path)) {
+            return $result;
+        }
+
+        if (strlen($path) > 4 && substr($path, -4) != '.php') {
+            return self::getViewFilePath($path . '.php');
+        }
+
+        return false;
     }
     
 }

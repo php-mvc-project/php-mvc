@@ -5,13 +5,13 @@ namespace PhpMvc;
  * Base controller.
  */
 class Controller {
-
+   
     public function __construct() {
     
     }
 
-    public function view($model = null) {
-        return $model;
+    public function view($model = null, $layout = null) {
+        return new View($model, $layout);
     }
 
     public function error($message, $model = null) {
