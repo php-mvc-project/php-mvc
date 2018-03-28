@@ -75,20 +75,33 @@ class Make {
         }
 
         // check the type of the action result
-        if ($actionResult instanceof View) {
+        if ($actionResult instanceof ViewResult) {
             // view result
-            !empty($actionResult->layout) ? ViewContext::$layout = $actionResult->layout : null;
-            !empty($actionResult->title) ? ViewContext::$title = $actionResult->title : null;
+            $view = $actionResult;
+            !empty($view->layout) ? ViewContext::$layout = $view->layout : null;
+            !empty($view->title) ? ViewContext::$title = $view->title : null;
             
-            if (!empty($actionResult->viewData)) {
-                ViewContext::$viewData = array_unique(array_merge(ViewContext::$viewData, $actionResult->viewData), SORT_REGULAR);
+            if (!empty($view->viewData)) {
+                ViewContext::$viewData = array_unique(array_merge(ViewContext::$viewData, $view->viewData), SORT_REGULAR);
             }
 
-            $actionResult = $actionResult->model;
+            $actionResult = $view->model;
+        }
+        elseif ($actionResult instanceof JsonResult) {
+            // make json and exit
+            $json = $actionResult;
+
+            if (($result = json_encode($json->data, $json->options, $json->depth)) === false) {
+                throw new \ErrorException('JSON encode error #' . json_last_error() . ': ' . json_last_error_msg());
+            }
+
+            header('Content-Type: application/json');
+            echo $result;
+            exit;
         }
         elseif ($actionResult instanceof FileResult) {
             // make file result
-            $file = new FileResult($actionResult);
+            $file = $actionResult;
             $fp = fopen($file->path, 'rb');
             
             // headers

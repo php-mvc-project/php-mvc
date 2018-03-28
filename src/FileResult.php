@@ -27,12 +27,17 @@ class FileResult {
      */
     public $downloadName;
    
-    public function __construct($instance = null) {
-        if (isset($instance) && $instance instanceof FileResult) {
-            $this->path = $instance->path;
-            $this->contentType = $instance->contentType;
-            $this->downloadName = $instance->downloadName;
-        }
+    /**
+     * Initializes a new instance of FileResult.
+     * 
+     * @param string $path The file path to output.
+     * @param string $contentType The content type.
+     * @param string $downloadName the content-disposition header so that a file-download dialog box is displayed in the browser with the specified file name.
+     */
+    public function __construct($path, $contentType = null, $downloadName = null) {
+        $this->path = $path;
+        $this->contentType = $contentType;
+        $this->downloadName = $downloadName;
     }
 
 }
