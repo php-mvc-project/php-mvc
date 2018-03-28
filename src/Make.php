@@ -14,6 +14,9 @@ class Make {
     public static function magic($appNamespace) {
         self::init($appNamespace);
         self::include();
+
+        header('X-Powered-By', 'https://github.com/meet-aleksey/php-mvc');
+        
         self::dispatch();
     }
 
@@ -71,7 +74,9 @@ class Make {
             );
         }
 
+        // check the type of the action result
         if ($actionResult instanceof View) {
+            // view result
             !empty($actionResult->layout) ? ViewContext::$layout = $actionResult->layout : null;
             !empty($actionResult->title) ? ViewContext::$title = $actionResult->title : null;
             
@@ -80,6 +85,23 @@ class Make {
             }
 
             $actionResult = $actionResult->model;
+        }
+        elseif ($actionResult instanceof FileResult) {
+            // make file result
+            $file = new FileResult($actionResult);
+            $fp = fopen($file->path, 'rb');
+            
+            // headers
+            header('Content-Type: ' . (!empty($file->contentType) ? $file->contentType : 'application/octet-stream'));
+            header('Content-Length: ' . filesize($file->path));
+            
+            if (!empty($file->downloadName)) {
+                header('Content-Disposition: attachment; filename="' . $file->downloadName . '"');
+            }
+
+            // output and exit
+            fpassthru($fp);
+            exit;
         }
 
         ViewContext::$actionResult = $actionResult;

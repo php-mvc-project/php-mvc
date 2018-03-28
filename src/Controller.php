@@ -10,8 +10,24 @@ class Controller {
     
     }
 
+    /**
+     * 
+     * @return View
+     */
     public function view($model = null, $layout = null) {
         return new View($model, $layout);
+    }
+
+    /**
+     * @return FileResult
+     */
+    public function file($path, $contentType = null, $downloadName = null) {
+        $result = new FileResult();
+        $result->path = $path;
+        $result->contentType = $contentType;
+        $result->downloadName = $downloadName;
+
+        return $result;
     }
 
     public function error($message, $model = null) {
