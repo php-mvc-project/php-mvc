@@ -4,7 +4,7 @@ namespace PhpMvc;
 /**
  * Encapsulates the state of model binding to a property of an action-method argument, or to the argument itself.
  */
-class ModelState {
+class ModelState implements \ArrayAccess {
 
     /**
      * 
@@ -17,8 +17,104 @@ class ModelState {
 
     }
 
+    /**
+     * Gets the key-value pair.
+     */
+    public function getKeyValuePair() {
+        $result = array();
+
+        foreach ($this->items as $key => $entry) {
+            $result[$key] = $entry->value;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Gets the key sequence.
+     */
+    public function getKeys() {
+        return array_keys($this->items);
+    }
+
+    /**
+     * Gets the value sequence.
+     */
     public function getValues() {
-        
+        $result = array();
+
+        foreach ($this->items as $key => $entry) {
+            $result[] = $entry->value;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Adds the specified errorMessage to the Errors instance that is associated with the specified key.
+     * 
+     * @param string $key The key of state to add error.
+     * @param string $errorMessage The error message to add.
+     * 
+     * @return void
+     */
+    public function addError($key, $errorMessage) {
+
+    }
+
+    public function toObject() {
+        return (object)$this->items;
+    }
+
+    public $items = array();
+
+    /**
+     * Whether or not an offset exists.
+     *
+     * @param string|int $offset An offset to check for.
+     * 
+     * @return bool
+     */
+    function offsetExists($offset)
+    {
+      return isset($this->items[$offset]);
+    }
+
+    /**
+     * Returns the value at specified offset.
+     *
+     * @param mixed $offset The offset to retrieve.
+     * 
+     * @return mixed
+     */
+    function offsetGet($offset)
+    {
+      return isset($this->items[$offset]) ? $this->items[$offset] : null;
+    }
+
+    /**
+     * Assigns a value to the specified offset.
+     *
+     * @param mixed $offset The offset to assign the value to.
+     * @param mixed $value The value to set.
+     * 
+     * @return void
+     */
+    function offsetSet($offset, $value)
+    {
+      $this->items[$offset] = $value;
+    }
+
+    /**
+     * Unsets an offset.
+     *
+     * @param mixed $offset The offset to unset.
+     * 
+     * @return void
+     */
+    function offsetUnset($offset)
+    {
+      unset($this->items[$offset]);
     }
 
 }

@@ -4,7 +4,7 @@ namespace PhpMvc;
 /**
  * Represents a class that is used to send JSON-formatted content to the response.
  */
-class JsonResult {
+class JsonResult implements ActionResult {
 
     /**
      * Gets or sets the data.
@@ -42,6 +42,27 @@ class JsonResult {
         $this->data = $data;
         $this->options = $options;
         $this->depth = $depth;
+    }
+
+    /**
+     * Executes the action and outputs the result.
+     * 
+     * @param ActionContext $actionContext The context in which the result is executed.
+     * The context information includes information about the action that was executed and request information.
+     * 
+     * @return void
+     */
+    public function execute($actionContext) {
+        // make json and exit
+        if (($result = json_encode($this->data, $this->options, $this->depth)) === false) {
+            throw new \ErrorException('JSON encode error #' . json_last_error() . ': ' . json_last_error_msg());
+        }
+
+        header('Content-Type: application/json');
+
+        echo $result;
+
+        exit;
     }
 
 }

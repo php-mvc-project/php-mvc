@@ -4,7 +4,7 @@ namespace PhpMvc;
 /**
  * The main class that works wonders.
  */
-class Make {
+final class Make {
 
     /**
      * Magic!
@@ -17,7 +17,7 @@ class Make {
 
         header('X-Powered-By', 'https://github.com/meet-aleksey/php-mvc');
         
-        self::dispatch();
+        self::render();
     }
 
     /**
@@ -38,8 +38,8 @@ class Make {
         
         define('PHPMVC_APP_NAMESPACE', $appNamespace);
 
-        define('PHPMVC_CONTROLLER', isset($_REQUEST['controller']) ? $_REQUEST['controller'] : 'Home');
-        define('PHPMVC_ACTION', isset($_REQUEST['action']) ? $_REQUEST['action'] : 'index');
+        define('PHPMVC_CONTROLLER', isset($_REQUEST['controller']) ? ucfirst($_REQUEST['controller']) : 'Home');
+        define('PHPMVC_ACTION', isset($_REQUEST['action']) ? lcfirst($_REQUEST['action']) : 'index');
         define('PHPMVC_VIEW', strtolower(PHPMVC_CONTROLLER));
         define('PHPMVC_CURRENT_CONTROLLER_PATH', PHPMVC_CONTROLLER_PATH . PHPMVC_VIEW . PHPMVC_DS);
         define('PHPMVC_CURRENT_VIEW_PATH', PHPMVC_VIEW_PATH . PHPMVC_VIEW . PHPMVC_DS . PHPMVC_ACTION . '.php');
@@ -53,75 +53,39 @@ class Make {
         require_once PHPMVC_CORE_PATH . 'Controller.php';
     }
 
-    private static function dispatch() {
-        $controller_name = PHPMVC_APP_NAMESPACE . '\\Controllers\\' . PHPMVC_CONTROLLER . 'Controller';
-        $controllerInstance = new $controller_name();
-        $actionName = PHPMVC_ACTION;
-        $requestModel = self::getRequestModel();
-        $viewFile = '';
+    private static function render() {
         $result = null;
-        $modelState = null;
-        $actionResult = null;
+        
+        $actionContext = new ActionContext();
 
-        try {
-            $actionResult = $controllerInstance->$actionName($requestModel);
+        ViewContext::$actionContext = $actionContext;
+
+        // create instance of controller
+        $controllerName = PHPMVC_APP_NAMESPACE . '\\Controllers\\' . PHPMVC_CONTROLLER . 'Controller';
+        $actionContext->controller = new $controllerName();
+        $actionContext->actionName = PHPMVC_ACTION;
+        
+        // arguments and model state
+        self::makeActionState($actionContext);
+
+        ViewContext::$modelState = $actionContext->modelState;
+
+        // execute action
+        $actionResult = self::executeAction($actionContext);
+
+        // execute result
+        if ($actionResult instanceof ActionResult) {
+            $actionResult->execute($actionContext);
         }
-        catch (\Exception $ex) {
-            // TODO: 500
-            // TODO: object
-            $modelState = array(
-                'exception' => $ex
-            );
-        }
-
-        // check the type of the action result
-        if ($actionResult instanceof ViewResult) {
-            // view result
-            $view = $actionResult;
-            !empty($view->layout) ? ViewContext::$layout = $view->layout : null;
-            !empty($view->title) ? ViewContext::$title = $view->title : null;
-            
-            if (!empty($view->viewData)) {
-                ViewContext::$viewData = array_unique(array_merge(ViewContext::$viewData, $view->viewData), SORT_REGULAR);
-            }
-
-            $actionResult = $view->model;
-        }
-        elseif ($actionResult instanceof JsonResult) {
-            // make json and exit
-            $json = $actionResult;
-
-            if (($result = json_encode($json->data, $json->options, $json->depth)) === false) {
-                throw new \ErrorException('JSON encode error #' . json_last_error() . ': ' . json_last_error_msg());
-            }
-
-            header('Content-Type: application/json');
-            echo $result;
-            exit;
-        }
-        elseif ($actionResult instanceof FileResult) {
-            // make file result
-            $file = $actionResult;
-            $fp = fopen($file->path, 'rb');
-            
-            // headers
-            header('Content-Type: ' . (!empty($file->contentType) ? $file->contentType : 'application/octet-stream'));
-            header('Content-Length: ' . filesize($file->path));
-            
-            if (!empty($file->downloadName)) {
-                header('Content-Disposition: attachment; filename="' . $file->downloadName . '"');
-            }
-
-            // output and exit
-            fpassthru($fp);
-            exit;
-        }
-
+        
         ViewContext::$actionResult = $actionResult;
 
+        // append model state keys to view data
+        ViewContext::$viewData = array_merge(ViewContext::$viewData, $actionContext->modelState->getKeyValuePair());
+
         // get view
-        if (($viewFile = self::getViewFilePath(PHPMVC_CURRENT_VIEW_PATH)) !== false) {
-            ViewContext::$content = self::getView($viewFile, ViewContext::$actionResult, $modelState);
+        if ((ViewContext::$viewFile = self::getViewFilePath(PHPMVC_CURRENT_VIEW_PATH)) !== false) {
+            ViewContext::$content = self::getView(ViewContext::$viewFile, ViewContext::$actionResult, $actionContext->modelState);
         }
         else {
             ViewContext::$content = ViewContext::$actionResult;
@@ -146,6 +110,138 @@ class Make {
 
         // render
         echo $result;
+    }
+
+    /**
+     * Makes actions state.
+     * 
+     * @param ActionContext $actionContext Action context and descriptor.
+     * 
+     * @return void
+     */
+    private static function makeActionState($actionContext) {
+        $arguments = array();
+        $modelState = new ModelState();
+        $hasModel = false;
+
+        // get http params
+        // TODO: подумать о возможности управлять этим
+        $get = $_GET;
+
+        // change case of keys
+        $get = array_change_key_case($get, CASE_LOWER);
+
+        // post params
+        $isPost = $_SERVER['REQUEST_METHOD'] === 'POST';
+        $post =  null;
+
+        if (!empty($_POST)) {
+            $postData = $_POST;
+            $post = self::arrayToObject($postData);
+        }
+
+        if (empty($post) && $isPost) {
+            $contentType = isset($_SERVER['HTTP_CONTENT_TYPE']) ? $_SERVER['HTTP_CONTENT_TYPE'] : null;
+            $contentType = empty($contentType) && isset($_SERVER['CONTENT_TYPE']) ? $_SERVER['CONTENT_TYPE'] : null;
+            $contentType = !empty($contentType) ? $contentType : '';
+
+            if (strrpos($contentType, '/json') !== false) {
+                $requestBody = file_get_contents('php://input');
+
+                $post = json_decode($requestBody);
+            }
+            else {
+                // TODO...
+            }
+        }
+
+        // get params of action method
+        $r = new \ReflectionMethod(get_class($actionContext->controller), $actionContext->actionName);
+
+        $methodParams = $r->getParameters();
+
+        // search for the necessary parameters
+        foreach ($methodParams as $param) {
+            $name = strtolower($param->getName());
+
+            if (!isset($get[$name]))
+            {
+                // parameter not found
+                if ($isPost && !$hasModel && !isset($get[$name])) {
+                    // post method and model not yet received
+                    $arguments[$name] = $post;
+                    
+                    // parse post data
+                    foreach (get_object_vars($post) as $key => $value) {
+                        if ($value !== null) {
+                            $modelState[$key] = new ModelStateEntry($key, $value);
+                        }
+                    }
+                    
+                    $hasModel = true;
+                    continue;
+                }
+
+                if ($param->isOptional())
+                {
+                    // is optional, skip
+                    $arguments[$name] = $param->getDefaultValue();
+                    continue;  
+                }
+
+                // required
+                // TODO: config
+                // throw new \ErrorException('"'.$name.'" is required.');
+                // at the moment, just add null to args
+                // and skip for model state
+                $arguments[$name] = null;
+            }
+            else {
+                $modelState[$name] = new ModelStateEntry($name, $arguments[$name] = $get[$name]);    
+            }
+        }
+
+        $actionContext->arguments = $arguments;
+        $actionContext->modelState = $modelState;
+    }
+
+    /**
+     * Converts array to object,
+     * 
+     * @param array $array The array to convert.
+     * @param \stdClass $parent The parent object.
+     */
+    private static function arrayToObject($array, $parent = null) {
+        $result = isset($parent) ? $parent : new \stdClass();
+        
+        ksort($array);
+
+        foreach ($array as $key => $value)
+        {
+            if (strpos($key, '_') === false) {
+                $result->$key = $value;
+            } else {
+                $name = explode('_', $key);
+                $newKey = array_shift($name);
+
+                if (!isset($result->$newKey)) {
+                    $result->$newKey = new \stdClass();
+                }
+                
+                self::arrayToObject(array($name[0] => $value), $result->$newKey);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Calls the action method and returns the result.
+     * 
+     * @return mixed
+     */
+    private static function executeAction($actionContext) {
+        return call_user_func_array(array($actionContext->controller, $actionContext->actionName), $actionContext->arguments);
     }
 
     public static function getView($path, $actionResult = NULL, $modelState = NULL) {

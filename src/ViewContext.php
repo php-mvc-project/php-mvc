@@ -4,7 +4,7 @@ namespace PhpMvc;
 /**
  * Represents the context of the current view.
  */
-class ViewContext {
+final class ViewContext {
  
     /**
      * Gets or sets layout file.
@@ -43,5 +43,19 @@ class ViewContext {
      * Gets or sets result of action.
      */
     public static $actionResult;
+
+    /**
+     * 
+     * @var ModelState
+     */
+    public static $modelState;
+
+    /**
+     * 
+     * @var ActionContext
+     */
+    public static $actionContext;
+
+    public static $viewFile;
 
 }

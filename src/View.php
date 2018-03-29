@@ -4,7 +4,7 @@ namespace PhpMvc;
 /**
  * Represents the properties and methods that are needed to render a view.
  */
-class View {
+final class View {
 
     /**
      * Sets layout.
@@ -25,18 +25,48 @@ class View {
         ViewContext::$title = $title;
     }
 
+    /**
+     * Injects model to state.
+     */
     public static function injectModel(&$model) {
         if (!empty(ViewContext::$actionResult)) {
-            $model = ViewContext::$actionResult;
+            if (ViewContext::$actionResult instanceof ViewResult && !empty(ViewContext::$actionResult->model)) {
+                $model = ViewContext::$actionResult->model;
+            }
         }
     }
 
+    /**
+     * Sets data to view.
+     * 
+     * @param string $key Key associated with the data entry.
+     * @param string $value The value to set.
+     * 
+     * @return void
+     */
     public static function setData($key, $value) {
         ViewContext::$viewData[$key] = $value;
     }
 
+    /**
+     * Gets the data with the specified key.
+     * If the specified key does not exist, function returns null.
+     * 
+     * @param string $key The key to get the data.
+     * 
+     * @return mixed
+     */
     public static function getData($key) {
-        return ViewContext::$viewData[$key];
+        return isset(ViewContext::$viewData[$key]) ? ViewContext::$viewData[$key] : null;
+    }
+
+    /**
+     * Gets model state.
+     * 
+     * @return ModelState
+     */
+    public static function getModelState() {
+        return ViewContext::$modelState;
     }
 
 }
