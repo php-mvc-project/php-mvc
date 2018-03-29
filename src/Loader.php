@@ -9,7 +9,12 @@ spl_autoload_register(function ($name) {
         array_shift($segments);
     }
 
-    $segments = array_map('strtolower', $segments);
+    $path = PHPMVC_ROOT_PATH . implode(PHPMVC_DS, $segments) . PHPMVC_DS . $fileName . '.php';
 
-    require_once PHPMVC_ROOT_PATH . implode(PHPMVC_DS, $segments) . PHPMVC_DS . $fileName . '.php';
+    if (!is_file($path)) {
+        $segments = array_map('strtolower', $segments);
+        $path = PHPMVC_ROOT_PATH . implode(PHPMVC_DS, $segments) . PHPMVC_DS . $fileName . '.php';
+    }
+
+    require_once $path;
 });
