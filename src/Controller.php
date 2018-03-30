@@ -98,10 +98,6 @@ class Controller {
         return new HttpStatusCodeResult(401, $statusDescription);
     }
 
-    protected function error($message, $model = null) {
-        throw new \Exception($message);
-    }
-
     /**
      * Returns TRUE if the request is POST.
      * 
