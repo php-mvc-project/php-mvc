@@ -22,12 +22,21 @@ class ModelStateEntry {
 
     /**
      * Get or sets the validation state for this entry.
+     * 
+     * @var bool|null
      */
     public $validationState;
    
+    /**
+     * Initializes a new instance of ModelStateEntry with the specified key and value.
+     * 
+     * @param string $key The key of element.
+     * @param string $value The value of element.
+     */
     public function __construct($key, $value) {
         $this->key = $key;
         $this->value = $value;
+        $this->validationState = null;
     }
 
 }

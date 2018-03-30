@@ -18,7 +18,7 @@ class Controller {
      * 
      * @return ViewResult
      */
-    public function view($model = null, $layout = null) {
+    protected function view($model = null, $layout = null) {
         return new ViewResult($model, $layout);
     }
 
@@ -35,7 +35,7 @@ class Controller {
      * 
      * @return JsonResult
      */
-    public function json($data, $options = 0, $depth = 512) {
+    protected function json($data, $options = 0, $depth = 512) {
         return new JsonResult($data, $options, $depth);
     }
 
@@ -48,11 +48,11 @@ class Controller {
      * 
      * @return FileResult
      */
-    public function file($path, $contentType = null, $downloadName = null) {
+    protected function file($path, $contentType = null, $downloadName = null) {
         return new FileResult($path, $contentType, $downloadName);
     }
 
-    public function error($message, $model = null) {
+    protected function error($message, $model = null) {
         throw new \Exception($message);
     }
 
@@ -61,11 +61,11 @@ class Controller {
      * 
      * @return bool
      */
-    public function isPost() {
+    protected function isPost() {
         return $_SERVER['REQUEST_METHOD'] === 'POST';
     }
 
-    public function redirect($actionName, $controllerName = null) {
+    protected function redirect($actionName, $controllerName = null) {
         // TODO: global helper method for route builder.
         if (empty($controllerName)) {
             $controllerName = VIEW;

@@ -13,6 +13,7 @@ final class Make {
      */
     public static function magic($appNamespace) {
         self::init($appNamespace);
+        self::requestValidation();
         self::include();
 
         header('X-Powered-By', 'https://github.com/meet-aleksey/php-mvc');
@@ -45,6 +46,12 @@ final class Make {
         define('PHPMVC_CURRENT_VIEW_PATH', PHPMVC_VIEW_PATH . PHPMVC_VIEW . PHPMVC_DS . PHPMVC_ACTION . '.php');
     }
 
+    private static function requestValidation() {
+        if (substr(PHPMVC_ACTION, 0, 2) == '__') {
+            throw new \Exception('Action names can not begin with a "_".');
+        }
+    }
+
     /**
      * Includes the required files. 
      */
@@ -71,10 +78,20 @@ final class Make {
         ViewContext::$modelState = $actionContext->modelState;
 
         // execute action
-        $actionResult = self::executeAction($actionContext);
+        try {
+            $actionResult = self::executeAction($actionContext);
+        }
+        catch (\Exception $ex) {
+            // add the error to the modelState
+            $actionContext->modelState->addError('.', $ex);
+            $actionResult = null;
+        }
+
+        // annotation and validation
+        self::annotateAndValidateModel($actionContext->modelState);
 
         // execute result
-        if ($actionResult instanceof ActionResult) {
+        if (isset($actionResult) && $actionResult instanceof ActionResult) {
             $actionResult->execute($actionContext);
         }
         
@@ -184,12 +201,12 @@ final class Make {
 
                 if ($param->isOptional())
                 {
-                    // is optional, skip
+                    // is optional parameter, skip it
                     $arguments[$name] = $param->getDefaultValue();
                     continue;  
                 }
 
-                // required
+                // required parameter
                 // TODO: config
                 // throw new \ErrorException('"'.$name.'" is required.');
                 // at the moment, just add null to args
@@ -203,6 +220,44 @@ final class Make {
 
         $actionContext->arguments = $arguments;
         $actionContext->modelState = $modelState;
+    }
+
+    /**
+     * @param ActionContext $actionContext Action context and descriptor.
+     * 
+     * @return void
+     */
+    private static function annotateAndValidateModel($modelState) {
+        foreach ($modelState->items as $key => $entry) {
+            self::annotateAndValidateModelEntry($modelState, $entry);
+        }
+    }
+
+    /**
+     * Checks the state of the model element and sets the result of the validation to the model.
+     * 
+     * @param ModelState $modelState
+     * @param string $key
+     * 
+     * @return void
+     */
+    private static function annotateAndValidateModelEntry($modelState, $entry) {
+        if (($dataAnnotation = ViewContext::getModelDataAnnotation($entry->key)) !== null) {
+            $displayName = $entry->key;
+
+            if (!empty($dataAnnotation->name)) {
+                $displayName = $dataAnnotation->name;
+            }
+
+            if (isset($dataAnnotation->required) && !($entry->validationState = !empty($entry->value))) {
+                if (!empty($dataAnnotation->required[0])) {
+                    $modelState->addError($entry->key, $dataAnnotation->required[0]);
+                }
+                else {
+                    $modelState->addError($entry->key, $displayName . ' is required. Value cannot be empty.');
+                }
+            }
+        }
     }
 
     /**
@@ -241,7 +296,13 @@ final class Make {
      * @return mixed
      */
     private static function executeAction($actionContext) {
-        return call_user_func_array(array($actionContext->controller, $actionContext->actionName), $actionContext->arguments);
+        $action = new \ReflectionMethod($actionContext->controller, $actionContext->actionName);
+
+        if (!$action->isPublic()) {
+            throw new \Exception('Action methods must have a public modifier. The action call "' . $actionContext->actionName . '" is denied.');
+        }
+
+        $action->invokeArgs($actionContext->controller, $actionContext->arguments);
     }
 
     public static function getView($path, $actionResult = NULL, $modelState = NULL) {

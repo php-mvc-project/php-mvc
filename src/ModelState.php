@@ -7,14 +7,45 @@ namespace PhpMvc;
 class ModelState implements \ArrayAccess {
 
     /**
-     * 
+     * @var ModelStateEntry[]
      */
-    public function isValid() {
+    public $items = array();
 
+    /**
+     * @var array
+     */
+    private $errors = array();
+
+    /**
+     * Returns true if the state does not contain errors; otherwise, false.
+     * 
+     * @param string $key If the key is specified, only the specified key will be checked for errors.
+     * 
+     * @return bool
+     */
+    public function isValid($key = null) {
+        if (isset($key)) {
+            return empty($this->errors[$key]);
+        }
+        else {
+            return empty($this->errors);
+        }
     }
 
-    public function getErrors() {
-
+    /**
+     * Returns errors of the model state.
+     * 
+     * @param string $key If the key is specified, only errors for the specified key will be returned.
+     * 
+     * @return array
+     */
+    public function getErrors($key = null) {
+        if (isset($key)) {
+            return !empty($this->errors[$key]) ? $this->errors[$key] : array();
+        }
+        else {
+            return $this->errors;
+        }
     }
 
     /**
@@ -54,19 +85,22 @@ class ModelState implements \ArrayAccess {
      * Adds the specified errorMessage to the Errors instance that is associated with the specified key.
      * 
      * @param string $key The key of state to add error.
-     * @param string $errorMessage The error message to add.
+     * @param mixed $error The error or error message to add.
      * 
      * @return void
      */
-    public function addError($key, $errorMessage) {
-
+    public function addError($key, $error) {
+        if (array_key_exists($key, $this->errors)) {
+            $this->errors[$key][] = $error;
+        }
+        else {
+            $this->errors[$key] = array($error);
+        }
     }
 
     public function toObject() {
         return (object)$this->items;
     }
-
-    public $items = array();
 
     /**
      * Whether or not an offset exists.

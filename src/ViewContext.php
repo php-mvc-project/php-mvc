@@ -57,5 +57,25 @@ final class ViewContext {
     public static $actionContext;
 
     public static $viewFile;
+    
+    /**
+     * 
+     * @var ModelDataAnnotation[]
+     */
+    public static $modelDataAnnotations = array();
+
+    /**
+     * @param string @key
+     * 
+     * @return ModelDataAnnotation
+     */
+    public static function getModelDataAnnotation($key) {
+        if (array_key_exists($key, ViewContext::$modelDataAnnotations)) {
+            return ViewContext::$modelDataAnnotations[$key];
+        }
+        else {
+            return null;
+        }
+    }
 
 }
