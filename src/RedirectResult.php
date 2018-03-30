@@ -11,7 +11,7 @@ class RedirectResult implements ActionResult {
      * 
      * @var string
      */
-    private $url;
+    protected $url;
 
     /**
      * Gets or sets a value that indicates whether the redirection should be permanent.

@@ -151,15 +151,19 @@ class Controller {
         return new RedirectResult($url, true, true);
     }
 
-    protected function redirectToAction($actionName, $controllerName = null) {
-        // TODO: global helper method for route builder.
-        if (empty($controllerName)) {
-            $controllerName = VIEW;
-        }
-
-        header('Location: /?controller=' . $controllerName . '&action=' . $actionName);
-        // header('Location: /' . $controllerName . '/' . $actionName);
-        exit;
+    /**
+     * Redirects (HTTP302 - Moved Temporarily) to the specified action, 
+     * using the specified actionName, controllerName, routeValues, and fragment.
+     * 
+     * @param string $actionName The name of the action to use for generating the URL.
+     * @param string $controllerName The name of the controller to use for generating the URL.
+     * @param array $routeValues The route data to use for generating the URL.
+     * @param string $fragment The fragment to add to the URL.
+     * 
+     * @return RedirectToActionResult
+     */
+    protected function redirectToAction($actionName, $controllerName = null, $routeValues = null, $fragment = null) {
+        return new RedirectToActionResult($actionName, $controllerName, $routeValues, $fragment);
     }
 
 }
