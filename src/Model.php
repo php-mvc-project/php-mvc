@@ -108,7 +108,7 @@ final class Model {
 
         self::makeDataAnnotation($propertyName);
 
-        ViewContext::$modelDataAnnotations[$propertyName]->compareWith = array($compareWith, $errorMessage);
+        ViewContext::$modelDataAnnotations[$propertyName]->stringLength = array($maxLength, $minLength, $errorMessage);
     }
 
     /**

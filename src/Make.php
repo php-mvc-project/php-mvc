@@ -102,7 +102,7 @@ final class Make {
 
         // get view
         if ((ViewContext::$viewFile = self::getViewFilePath(PHPMVC_CURRENT_VIEW_PATH)) !== false) {
-            ViewContext::$content = self::getView(ViewContext::$viewFile, ViewContext::$actionResult, $actionContext->modelState);
+            ViewContext::$content = self::getView(ViewContext::$viewFile);
         }
         else {
             ViewContext::$content = ViewContext::$actionResult;
@@ -110,7 +110,7 @@ final class Make {
 
         // get layout
         if (!empty(ViewContext::$layout)) {
-            $result = self::getView(self::getViewFilePath(ViewContext::$layout), ViewContext::$actionResult);
+            $result = self::getView(self::getViewFilePath(ViewContext::$layout));
         }
         else {
             $result = ViewContext::$content;
@@ -228,8 +228,8 @@ final class Make {
      * @return void
      */
     private static function annotateAndValidateModel($modelState) {
-        foreach ($modelState->items as $key => $entry) {
-            self::annotateAndValidateModelEntry($modelState, $entry);
+        foreach ($modelState->items as $item) {
+            self::annotateAndValidateModelEntry($modelState, $item->key);
         }
     }
 
@@ -241,20 +241,101 @@ final class Make {
      * 
      * @return void
      */
-    private static function annotateAndValidateModelEntry($modelState, $entry) {
-        if (($dataAnnotation = ViewContext::getModelDataAnnotation($entry->key)) !== null) {
-            $displayName = $entry->key;
+    private static function annotateAndValidateModelEntry($modelState, $key) {
+        $entry = $modelState[$key];
+
+        if (($dataAnnotation = ViewContext::getModelDataAnnotation($key)) !== null) {
+            $displayName = $key;
 
             if (!empty($dataAnnotation->name)) {
                 $displayName = $dataAnnotation->name;
             }
 
+            // required field
             if (isset($dataAnnotation->required) && !($entry->validationState = !empty($entry->value))) {
                 if (!empty($dataAnnotation->required[0])) {
-                    $modelState->addError($entry->key, $dataAnnotation->required[0]);
+                    $modelState->addError($key, $dataAnnotation->required[0]);
                 }
                 else {
-                    $modelState->addError($entry->key, $displayName . ' is required. Value cannot be empty.');
+                    $modelState->addError($key, $displayName . ' is required. Value cannot be empty.');
+                }
+            }
+
+            // compareWith
+            if (!empty($dataAnnotation->compareWith)) {
+                if (!empty($entry2 = $modelState[$dataAnnotation->compareWith[0]])) {
+                    if (!($entry->validationState = ($entry->value == $entry2->value))) {
+                        $displayName2 = $entry2->key;
+
+                        if (($dataAnnotation2 = ViewContext::getModelDataAnnotation($entry2->key)) !== null) {
+                            if (!empty($dataAnnotation2->name)) {
+                                $displayName2 = $dataAnnotation2->name;
+                            }
+                        }
+
+                        if (!empty($dataAnnotation->compareWith[1])) {
+                            $modelState->addError($key, $dataAnnotation->compareWith[1]);
+                        } else {
+                            $modelState->addError($key, 'The value of '. $displayName2 . ' must match the value of ' . $displayName . '.');
+                        }
+                    }
+                }
+                else {
+                    // TODO: exception or not exception?
+                }
+            }
+
+            // stringLength
+            if (!empty($dataAnnotation->stringLength)) {
+                $max = (int)$dataAnnotation->stringLength[0];
+                $min = (int)$dataAnnotation->stringLength[1];
+                $len = strlen($entry->value);
+
+                if (!($entry->validationState = ($len >= $min && $len <= $max))) {
+                    if (!empty($dataAnnotation->stringLength[2])) {
+                        $modelState->addError($key, $dataAnnotation->stringLength[2]);
+                    }
+                    else {
+                        // TODO: split messages (max only if min is zero)
+                        $modelState->addError($key, 'The value must be at least ' . $min . ' character and not more than ' . $max . ' characters.');
+                    }
+                }
+            }
+
+            // range
+            if (!empty($dataAnnotation->range)) {
+                $min = (int)$dataAnnotation->range[0];
+                $max = (int)$dataAnnotation->range[1];
+                $value = (int)$entry->value;
+                
+                if (!($entry->validationState = ($value >= $min && $value <= $max))) {
+                    if (!empty($dataAnnotation->range[2])) {
+                        $modelState->addError($key, $dataAnnotation->range[2]);
+                    }
+                    else {
+                        $modelState->addError($key, 'The value must be between ' . $min . ' and ' . $max . '.');
+                    }
+                }
+            }
+
+            // custom validation
+            if (!empty($dataAnnotation->customValidation)) {
+                $errorMessage = $displayName . ' is not valid.';
+
+                if (!empty($dataAnnotation->customValidation[1])) {
+                    $errorMessage = $dataAnnotation->customValidation[1];
+                }
+
+                try {
+                    $entry->validationState = $dataAnnotation->customValidation[0]($entry->value, $errorMessage);
+                }
+                catch (\Exception $ex) {
+                    $modelState->addError($key, $ex);
+                    $entry->validationState = false;
+                }
+
+                if (!$entry->validationState) {
+                    $modelState->addError($key, $errorMessage);
                 }
             }
         }
@@ -305,7 +386,7 @@ final class Make {
         $action->invokeArgs($actionContext->controller, $actionContext->arguments);
     }
 
-    public static function getView($path, $actionResult = NULL, $modelState = NULL) {
+    public static function getView($path) {
         ob_start();
 
         require($path);
