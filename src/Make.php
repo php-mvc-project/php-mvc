@@ -383,7 +383,7 @@ final class Make {
             throw new \Exception('Action methods must have a public modifier. The action call "' . $actionContext->actionName . '" is denied.');
         }
 
-        $action->invokeArgs($actionContext->controller, $actionContext->arguments);
+        return $action->invokeArgs($actionContext->controller, $actionContext->arguments);
     }
 
     public static function getView($path) {

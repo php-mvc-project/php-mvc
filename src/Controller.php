@@ -48,8 +48,20 @@ class Controller {
      * 
      * @return FileResult
      */
-    protected function file($path, $contentType = null, $downloadName = null) {
+    protected function file($path, $contentType = 'application/octet-stream', $downloadName = null) {
         return new FileResult($path, $contentType, $downloadName);
+    }
+
+    /**
+     * Creates a ContentResult object by using the content and content type.
+     * 
+     * @param string $content The content to output.
+     * @param string $contentType The content type.
+     * 
+     * @return ContentResult
+     */
+    protected function content($content, $contentType = 'text/plain') {
+        return new ContentResult($content, $contentType);
     }
 
     protected function error($message, $model = null) {

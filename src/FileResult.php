@@ -34,7 +34,7 @@ class FileResult implements ActionResult {
      * @param string $contentType The content type.
      * @param string $downloadName the content-disposition header so that a file-download dialog box is displayed in the browser with the specified file name.
      */
-    public function __construct($path, $contentType = null, $downloadName = null) {
+    public function __construct($path, $contentType = 'application/octet-stream', $downloadName = null) {
         $this->path = $path;
         $this->contentType = $contentType;
         $this->downloadName = $downloadName;
