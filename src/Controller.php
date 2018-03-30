@@ -64,6 +64,40 @@ class Controller {
         return new ContentResult($content, $contentType);
     }
 
+    /**
+     * Creates an HttpStatusCodeResult with the specified status code and description.
+     * 
+     * @param int $statusCode The HTTP status code.
+     * @param string $statusDescription The HTTP status description.
+     * 
+     * @return HttpStatusCodeResult
+     */
+    protected function statusCode($statusCode, $statusDescription = null) {
+        return new HttpStatusCodeResult($statusCode, $statusDescription);
+    }
+
+    /**
+     * Creates an HttpStatusCodeResult object with a status code of 404 and the specified description.
+     * 
+     * @param string $statusDescription The HTTP status description.
+     * 
+     * @return HttpStatusCodeResult
+     */
+    protected function notFound($statusDescription = null) {
+        return new HttpStatusCodeResult(404, $statusDescription);
+    }
+
+    /**
+     * Creates an HttpStatusCodeResult object with a status code of 401 and the specified description.
+     * 
+     * @param string $statusDescription The HTTP status description.
+     * 
+     * @return HttpStatusCodeResult
+     */
+    protected function unauthorized($statusDescription = null) {
+        return new HttpStatusCodeResult(401, $statusDescription);
+    }
+
     protected function error($message, $model = null) {
         throw new \Exception($message);
     }
@@ -77,7 +111,51 @@ class Controller {
         return $_SERVER['REQUEST_METHOD'] === 'POST';
     }
 
-    protected function redirect($actionName, $controllerName = null) {
+    /**
+     * Creates a RedirectResult object that redirects (HTTP302 - Moved Temporarily) to the specified url.
+     * 
+     * @param string $url The URL to redirect to.
+     * 
+     * @return RedirectResult
+     */
+    protected function redirect($url) {
+        return new RedirectResult($url);
+    }
+
+    /**
+     * Creates a RedirectResult object that redirects (HTTP301 - Moved Permanently) to the specified url.
+     * 
+     * @param string $url The URL to redirect to.
+     * 
+     * @return RedirectResult
+     */
+    protected function redirectPermanent($url) {
+        return new RedirectResult($url, true);
+    }
+
+    /**
+     * Creates a RedirectResult object that redirects (HTTP307 - Temporary Redirect) to the specified url.
+     * 
+     * @param string $url The URL to redirect to.
+     * 
+     * @return RedirectResult
+     */
+    protected function redirectPreserveMethod($url) {
+        return new RedirectResult($url, false, true);
+    }
+
+    /**
+     * Creates a RedirectResult object that redirects (HTTP308 - Permanent Redirect) to the specified url.
+     * 
+     * @param string $url The URL to redirect to.
+     * 
+     * @return RedirectResult
+     */
+    protected function redirectPermanentPreserveMethod($url) {
+        return new RedirectResult($url, true, true);
+    }
+
+    protected function redirectToAction($actionName, $controllerName = null) {
         // TODO: global helper method for route builder.
         if (empty($controllerName)) {
             $controllerName = VIEW;
