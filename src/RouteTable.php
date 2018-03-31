@@ -70,11 +70,11 @@ class RouteTable {
      * @return Route|null
      */
     public static function getRoute() {
-        $path = trim($_SERVER['REQUEST_URI'], '/');
+        $path = trim(ViewContext::$requestContext->getRequestUri(), '/');
         $queryString = array();
 
         if (($qsIndex = strpos($path, '?')) !== false) {
-            parse_str($_SERVER['QUERY_STRING'], $queryString);
+            parse_str(ViewContext::$requestContext->getQueryString(), $queryString);
             $path = substr($path, 0, $qsIndex);
         }
 

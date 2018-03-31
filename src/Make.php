@@ -13,8 +13,9 @@ final class Make {
      * 
      * @return void
      */
-    public static function magic($appNamespace) {
+    public static function magic($appNamespace, $requestContext = null) {
         self::init($appNamespace);
+        self::contextInit($requestContext);
         self::headers();
         self::routeInit();
         self::requestValidation();
@@ -50,6 +51,19 @@ final class Make {
         define('PHPMVC_UPLOAD_PATH', PHPMVC_ROOT_PATH . 'upload' . PHPMVC_DS);
         
         define('PHPMVC_APP_NAMESPACE', $appNamespace);
+    }
+
+    private static function contextInit($requestContext = null) {
+        if (isset($requestContext)) {
+            if (!$requestContext instanceof RequestContextBase) {
+                throw new \Exception('The request context type must be derived from "RequestContextBase".');
+            }
+
+            ViewContext::$requestContext = $requestContext;
+        }
+        else {
+            ViewContext::$requestContext = new RequestContext();
+        }
     }
 
     /**

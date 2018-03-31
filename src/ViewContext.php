@@ -7,6 +7,13 @@ namespace PhpMvc;
 final class ViewContext {
 
     /**
+     * Gets or sets conxtex of the current request.
+     * 
+     * @var RequestContext
+     */
+    public static $requestContext;
+
+    /**
      * Gets or sets Route of the current request.
      * 
      * @var Route
