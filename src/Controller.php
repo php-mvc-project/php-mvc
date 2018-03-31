@@ -5,10 +5,6 @@ namespace PhpMvc;
  * Base controller.
  */
 class Controller {
-   
-    public function __construct() {
-    
-    }
 
     /**
      * Creates a ViewResult object that renders a view to the response.

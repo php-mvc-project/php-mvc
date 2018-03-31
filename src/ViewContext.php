@@ -5,8 +5,9 @@ namespace PhpMvc;
  * Represents the context of the current view.
  */
 final class ViewContext {
- 
+
     /**
+     * Gets or sets Route of the current request.
      * 
      * @var Route
      */
@@ -51,29 +52,40 @@ final class ViewContext {
     public static $actionResult;
 
     /**
+     * Gets or sets ModelState.
      * 
      * @var ModelState
      */
     public static $modelState;
 
     /**
+     * Gets or sets ActionContext.
      * 
      * @var ActionContext
      */
     public static $actionContext;
 
-    public static $viewFile;
-    
     /**
+     * Gets or sets view file name.
+     * 
+     * @var string
+     */
+    public static $viewFile;
+
+    /**
+     * Gets or sets metadata of the $model.
      * 
      * @var ModelDataAnnotation[]
      */
     public static $modelDataAnnotations = array();
 
     /**
-     * @param string @key
+     * Gets the metadata for the specified model key.
+     * If there is no data, it returns null.
      * 
-     * @return ModelDataAnnotation
+     * @param string @key The key to get metadata.
+     * 
+     * @return ModelDataAnnotation|null
      */
     public static function getModelDataAnnotation($key) {
         if (array_key_exists($key, ViewContext::$modelDataAnnotations)) {

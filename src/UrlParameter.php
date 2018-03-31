@@ -6,6 +6,11 @@ namespace PhpMvc;
  */
 final class UrlParameter {
 
+    /**
+     * The value indicates that the URL parameter is optional.
+     * 
+     * @var string
+     */
     const OPTIONAL = '%OPTIONAL%';
 
 }

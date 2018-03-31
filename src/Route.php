@@ -7,29 +7,44 @@ namespace PhpMvc;
 class Route {
 
     /**
+     * Gets or sets sample of the URL on which the comparison was made.
+     * 
+     * @var string|null
+     */
+    protected $url;
+
+    /**
+     * Gets or sets unique route name.
      * 
      * @var string
      */
     public $name;
 
     /**
+     * Gets or sets route template.
+     * For example: {controller=Home}/{action=index}/{id?}
      * 
      * @var string
      */
     public $template;
 
     /**
+     * Gets or sets default value of the route segments.
      * 
      * @var array
      */
     public $defaults;
 
     /**
+     * Gets or sets route parse constraints.
+     * 
      * @var array
      */
     public $constraints;
 
     /**
+     * Gets or sets route values.
+     * 
      * @var array
      */
     public $values;
@@ -52,6 +67,15 @@ class Route {
         else {
             return $default;
         }
+    }
+
+    /**
+     * [INTERNAL] Sets url. Do not use this function, it is for internal needs.
+     * 
+     * @return void
+     */
+    public function setUrl($url) {
+        $this->url = $url;
     }
 
 }

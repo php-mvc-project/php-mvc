@@ -10,6 +10,7 @@ final class View {
      * Sets layout.
      * 
      * @param string $path The layout file name in the shared folder or full path to layout file.
+     * 
      * @return void
      */
     public static function setLayout($path) {
@@ -27,6 +28,10 @@ final class View {
 
     /**
      * Injects model to state.
+     * 
+     * @param mixed &$model Model to injection.
+     * 
+     * @return void
      */
     public static function injectModel(&$model) {
         if (!empty(ViewContext::$actionResult)) {
@@ -54,7 +59,7 @@ final class View {
      * 
      * @param string $key The key to get the data.
      * 
-     * @return mixed
+     * @return mixed|null
      */
     public static function getData($key) {
         return isset(ViewContext::$viewData[$key]) ? ViewContext::$viewData[$key] : null;

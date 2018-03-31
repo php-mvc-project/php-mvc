@@ -18,7 +18,7 @@ final class UrlHelper {
         $controllerName = !empty($controllerName) ? $controllerName : PHPMVC_VIEW;
 
         $controllerName = '/?controller=' . $controllerName . '&action=' . $actionName;
-        
+
         return $result;
     }
 

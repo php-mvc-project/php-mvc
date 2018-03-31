@@ -10,6 +10,8 @@ final class Make {
      * Magic!
      * 
      * @param string $appNamespace Root namespace of the application.
+     * 
+     * @return void
      */
     public static function magic($appNamespace) {
         self::init($appNamespace);
@@ -20,6 +22,11 @@ final class Make {
         self::render();
     }
 
+    /**
+     * Adds headers.
+     * 
+     * @return void
+     */
     private static function headers() {
         header('X-Powered-By', Info::XPOWEREDBY);
     }
@@ -28,6 +35,8 @@ final class Make {
      * Performs the initialization of the engine.
      * 
      * @param string $appNamespace Root namespace of the application.
+     * 
+     * @return void
      */
     private static function init($appNamespace) {
         define('PHPMVC_DS', DIRECTORY_SEPARATOR);
@@ -43,6 +52,11 @@ final class Make {
         define('PHPMVC_APP_NAMESPACE', $appNamespace);
     }
 
+    /**
+     * Searches and initializes a suitable route.
+     * 
+     * @return void
+     */
     private static function routeInit() {
         ViewContext::$route = $route = RouteTable::getRoute();
 
@@ -58,6 +72,11 @@ final class Make {
         define('PHPMVC_CURRENT_VIEW_PATH', PHPMVC_VIEW_PATH . PHPMVC_VIEW . PHPMVC_DS . PHPMVC_ACTION . '.php');
     }
 
+    /**
+     * Checks the request and throws an exception if the request contains dangerous data.
+     * 
+     * @return void
+     */
     private static function requestValidation() {
         if (substr(PHPMVC_ACTION, 0, 2) == '__') {
             throw new \Exception('Action names can not begin with a "_".');
@@ -66,12 +85,19 @@ final class Make {
 
     /**
      * Includes the required files. 
+     * 
+     * @return void
      */
     private static function include() {
         require_once PHPMVC_CORE_PATH . 'Loader.php';
         require_once PHPMVC_CORE_PATH . 'Controller.php';
     }
 
+    /**
+     * Generates and renders the final result.
+     * 
+     * @return void
+     */
     private static function render() {
         $result = null;
 
@@ -358,6 +384,8 @@ final class Make {
      * 
      * @param array $array The array to convert.
      * @param \stdClass $parent The parent object.
+     * 
+     * @return \stdClass
      */
     private static function arrayToObject($array, $parent = null) {
         $result = isset($parent) ? $parent : new \stdClass();
@@ -398,6 +426,13 @@ final class Make {
         return $action->invokeArgs($actionContext->controller, $actionContext->arguments);
     }
 
+    /**
+     * Gets the view.
+     * 
+     * @param string $path File name or path to the view file.
+     * 
+     * @return string
+     */
     public static function getView($path) {
         ob_start();
 
@@ -410,20 +445,12 @@ final class Make {
         return $result;
     }
 
-    private static function getRequestModel() {
-        // TODO: GET and other:
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            return NULL;
-        }
-
-        return (object)$_POST;
-    }
-
     /**
      * Searches for a file with a specified name and returns the correct path.
      * If the file is not found, returns FALSE. 
      * 
      * @param string $path The file name or file path.
+     * 
      * @return string|bool
      */
     public static function getViewFilePath($path) {

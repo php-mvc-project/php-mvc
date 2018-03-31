@@ -7,11 +7,15 @@ namespace PhpMvc;
 class ModelState implements \ArrayAccess {
 
     /**
+     * Gets or sets model state entries.
+     * 
      * @var ModelStateEntry[]
      */
     public $items = array();
 
     /**
+     * Gets or sets errors.
+     * 
      * @var array
      */
     private $errors = array();
@@ -50,6 +54,8 @@ class ModelState implements \ArrayAccess {
 
     /**
      * Gets the key-value pair.
+     * 
+     * @return array
      */
     public function getKeyValuePair() {
         $result = array();
@@ -63,6 +69,8 @@ class ModelState implements \ArrayAccess {
 
     /**
      * Gets the key sequence.
+     * 
+     * @return array
      */
     public function getKeys() {
         return array_keys($this->items);
@@ -70,6 +78,8 @@ class ModelState implements \ArrayAccess {
 
     /**
      * Gets the value sequence.
+     * 
+     * @return array
      */
     public function getValues() {
         $result = array();
@@ -98,6 +108,11 @@ class ModelState implements \ArrayAccess {
         }
     }
 
+    /**
+     * Creates an object from the model state entities.
+     * 
+     * @return object
+     */
     public function toObject() {
         return (object)$this->items;
     }
