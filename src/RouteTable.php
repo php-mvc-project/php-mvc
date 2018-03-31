@@ -20,15 +20,8 @@ class RouteTable {
      * 
      * @return void
      */
-    public static function Add($route) {
-        if (!$route instanceof Route) {
-            throw new \Exception('A type of Route or a derivative is expected.');
-        }
-
-        if (!self::isUniqueRouteName($route->name)) {
-            throw new \Exception('The name "' . $route->name . '" is already used for another route. Specify a unique name.');
-        }
-
+    public static function add($route) {
+        self::validateRoute($route);
         self::$routes[] = $route;
     }
 
@@ -49,11 +42,7 @@ class RouteTable {
      * 
      * @return void
      */
-    public static function AddRoute($name, $template, $defaults = null, $constraints = null) {
-        if (!self::isUniqueRouteName($name)) {
-            throw new \Exception('The name "' . $name . '" is already used for another route. Specify a unique name.');
-        }
-
+    public static function addRoute($name, $template, $defaults = null, $constraints = null) {
         $route = new Route();
 
         $route->name = $name;
@@ -61,7 +50,18 @@ class RouteTable {
         $route->defaults = $defaults;
         $route->constraints = $constraints;
 
+        self::validateRoute($route);
+
         self::$routes[] = $route;
+    }
+
+    /**
+     * Remove all routes.
+     * 
+     * @return void
+     */
+    public static function clear() {
+        self::$routes = array();
     }
 
     /**
@@ -159,6 +159,31 @@ class RouteTable {
         }
 
         return null;
+    }
+
+    /**
+     * Verifies that the data in the route instance is correct.
+     * 
+     * @param Route $route The route to check.
+     * 
+     * @return void
+     */
+    private static function validateRoute($route) {
+        if (!$route instanceof Route) {
+            throw new \Exception('A type of Route or a derivative is expected.');
+        }
+        
+        if (empty($route->name)) {
+            throw new \Exception('The name of the route is expected. The value cannot be empty.');
+        }
+
+        if (!self::isUniqueRouteName($route->name)) {
+            throw new \Exception('The name "' . $route->name . '" is already used for another route. Specify a unique name.');
+        }
+
+        if (empty($route->template)) {
+            throw new \Exception('The route "' . $route->name . '" does not specify a template. Please specify a template.');
+        }
     }
 
     /**
