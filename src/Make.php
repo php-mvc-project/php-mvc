@@ -13,12 +13,15 @@ final class Make {
      */
     public static function magic($appNamespace) {
         self::init($appNamespace);
+        self::headers();
+        self::routeInit();
         self::requestValidation();
         self::include();
-
-        header('X-Powered-By', 'https://github.com/meet-aleksey/php-mvc');
-        
         self::render();
+    }
+
+    private static function headers() {
+        header('X-Powered-By', Info::XPOWEREDBY);
     }
 
     /**
@@ -38,9 +41,18 @@ final class Make {
         define('PHPMVC_UPLOAD_PATH', PHPMVC_ROOT_PATH . 'upload' . PHPMVC_DS);
         
         define('PHPMVC_APP_NAMESPACE', $appNamespace);
+    }
 
-        define('PHPMVC_CONTROLLER', isset($_REQUEST['controller']) ? ucfirst($_REQUEST['controller']) : 'Home');
-        define('PHPMVC_ACTION', isset($_REQUEST['action']) ? lcfirst($_REQUEST['action']) : 'index');
+    private static function routeInit() {
+        ViewContext::$route = $route = RouteTable::getRoute();
+
+        if ($route == null) {
+            http_response_code(404);
+            exit;
+        }
+
+        define('PHPMVC_CONTROLLER', ucfirst($route->getValueOrDefault('controller', 'Home')));
+        define('PHPMVC_ACTION', $route->getValueOrDefault('action', 'indexHome'));
         define('PHPMVC_VIEW', strtolower(PHPMVC_CONTROLLER));
         define('PHPMVC_CURRENT_CONTROLLER_PATH', PHPMVC_CONTROLLER_PATH . PHPMVC_VIEW . PHPMVC_DS);
         define('PHPMVC_CURRENT_VIEW_PATH', PHPMVC_VIEW_PATH . PHPMVC_VIEW . PHPMVC_DS . PHPMVC_ACTION . '.php');
@@ -62,7 +74,7 @@ final class Make {
 
     private static function render() {
         $result = null;
-        
+
         $actionContext = new ActionContext();
 
         ViewContext::$actionContext = $actionContext;

@@ -7,6 +7,12 @@ namespace PhpMvc;
 final class ViewContext {
  
     /**
+     * 
+     * @var Route
+     */
+    public static $route;
+
+    /**
      * Gets or sets layout file.
      * 
      * @var string
