@@ -106,35 +106,99 @@ final class RouteTableTest extends TestCase
     }
 
     public function testGetRoute(): void {
-        ViewContext::$requestContext = new RequestContext(array(
-            'REQUEST_URI' => '/?controller=home&action=index&id=123',
-            'QUERY_STRING' => 'controller=home&action=index&id=123'
-        ));
+        // routes
         RouteTable::clear();
-        
+
         RouteTable::addRoute(
-            'image', 
-            'image', 
+            'defaultControllerAndAction', 
+            'image-{id}', 
             array(
                 'controller' => 'Home', 
-                'action' => 'image', 
-                'id' => UrlParameter::OPTIONAL
+                'action' => 'image'
             )
         );
 
         RouteTable::addRoute(
-            'actionId', 
-            '{controller}/{action}-id{id}', 
+            'actionIdAfter',
+            '{controller}/test-id{id}', 
             array(
                 'controller' => 'Home', 
-                'action' => 'index'
+                'action' => 'test'
             )
         );
 
         RouteTable::addRoute('default', '{controller=Home}/{action=index}/{id?}');
 
-        $route = RouteTable::getRoute();
+        // test requests
+        $requests = array(
+            array(
+                'uri' => '/',
+                'expectPath' => 'home/index',
+                'expectRoute' => 'default',
+            ),
+            array(
+                'uri' => '/home',
+                'expectPath' => 'home/index',
+                'expectRoute' => 'default',
+            ),
+            array(
+                'uri' => '/home/index',
+                'expectPath' => 'home/index',
+                'expectRoute' => 'default',
+            ),
+            array(
+                'uri' => '/home/test',
+                'expectPath' => 'home/test',
+                'expectRoute' => 'default',
+            ),
+            array(
+                'uri' => '/about',
+                'expectPath' => 'about/index',
+                'expectRoute' => 'default',
+            ),
+            array(
+                'uri' => '/about/contacts',
+                'expectPath' => 'about/contacts',
+                'expectRoute' => 'default',
+            ),
+            array(
+                'uri' => '/arTicles/SeCtIons/1',
+                'expectPath' => 'articles/sections/1',
+                'expectRoute' => 'default',
+            ),
+            array(
+                'uri' => '/Articles/sections/5',
+                'expectPath' => 'articles/sections/5',
+                'expectRoute' => 'default',
+            ),
+            array(
+                'uri' => '/articles/sections/123?page=10&filter=test',
+                'expectPath' => 'articles/sections/123',
+                'expectRoute' => 'default',
+            ),
+            array(
+                'uri' => '/forum/mvc/123',
+                'expectPath' => 'forum/mvc/123',
+                'expectRoute' => 'default',
+            ),
+            array(
+                'uri' => '/image-123',
+                'expectPath' => 'home/image/123',
+                'expectRoute' => 'defaultControllerAndAction',
+            ),
+        );
 
-        $this->assertNotNull($route);
+        // run
+        foreach ($requests as $request) {
+            ViewContext::$requestContext = new RequestContext(array(
+                'REQUEST_URI' => $request['uri']
+            ));
+    
+            $route = RouteTable::getRoute();
+
+            $this->assertNotNull($route);
+            $this->assertEquals($request['expectPath'], $route->getUrl());
+            $this->assertEquals($request['expectRoute'], $route->name);
+        }
     }
 }

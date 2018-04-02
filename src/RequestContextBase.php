@@ -30,7 +30,13 @@ abstract class RequestContextBase {
     protected function __construct($serverVariables) {
         $this->serverVariables = $serverVariables;
         $this->requestUri = $serverVariables['REQUEST_URI'];
-        $this->queryString = !empty($serverVariables['QUERY_STRING']) ? $serverVariables['QUERY_STRING'] : null;
+
+        if (($qsIndex = strpos($this->requestUri, '?')) !== false) {
+            $this->queryString = substr($this->requestUri, $qsIndex + 1);
+        }
+        else {
+            $this->queryString = !empty($serverVariables['QUERY_STRING']) ? $serverVariables['QUERY_STRING'] : null;
+        }
     }
 
     /**

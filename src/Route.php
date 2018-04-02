@@ -72,10 +72,21 @@ class Route {
     /**
      * [INTERNAL] Sets url. Do not use this function, it is for internal needs.
      * 
+     * @param string $url Url to set.
+     * 
      * @return void
      */
     public function setUrl($url) {
         $this->url = $url;
+    }
+
+    /**
+     * [INTERNAL] Gets url.
+     * 
+     * @return void
+     */
+    public function getUrl() {
+        return $this->url;
     }
 
 }

@@ -14,6 +14,25 @@ class RouteTable {
     private static $routes = array();
 
     /**
+     * Indicates whether the case of characters should be case-sensitive in determining the URL or not.
+     * Default: false (case insensitive).
+     * 
+     * @var bool
+     */
+    private static $caseSensitive = false;
+
+    /**
+     * Sets the case sensitivity mode when searching for URL.
+     * 
+     * @param bool $value
+     * 
+     * @return void
+     */
+    public static function setCaseSensitive($value) {
+        RouteTable::$caseSensitive = $value;
+    }
+
+    /**
      * Adds a rule.
      * 
      * @param Route|string $route A rule to add. 
@@ -55,6 +74,10 @@ class RouteTable {
         self::$routes[] = $route;
     }
 
+    public static function ignoreRoute() {
+
+    }
+
     /**
      * Remove all routes.
      * 
@@ -70,52 +93,39 @@ class RouteTable {
      * @return Route|null
      */
     public static function getRoute() {
+        $csm = RouteTable::$caseSensitive ? '' : 'i';
         $path = trim(ViewContext::$requestContext->getRequestUri(), '/');
-        $queryString = array();
-
+        
         if (($qsIndex = strpos($path, '?')) !== false) {
-            parse_str(ViewContext::$requestContext->getQueryString(), $queryString);
             $path = substr($path, 0, $qsIndex);
         }
 
+        if ($path == 'index.php') {
+            $path = '';
+        }
+
         foreach(self::$routes as $route) {
+            // required parameters
+            $required = $route->defaults;
+
             // escape special characters
             $safeTemplate = self::escapeTemplate($route->template);
 
             // make patterns for each path segments
-            $segments = self::getSegmentPatterns($route, $safeTemplate);
+            $segments = self::extractSegments($route, $safeTemplate, $required);
 
-            // make final pattern and url to test
-            $url = $defaultUrl = '';
+            // make final pattern
             $pattern = '';
 
             foreach ($segments as $segment) {
                 if (!empty($segment['before'])) {
                     $pattern .= $segment['before'];
-                    $beforeUrl = str_replace('\\', '', $segment['before']);
-                    $url .= $beforeUrl;
-                    $defaultUrl .= $beforeUrl;
                 }
 
                 $pattern .= $segment['pattern'];
 
                 if (!empty($segment['after'])) {
                     $pattern .= $segment['after'];
-                    $afterUrl = str_replace('\\', '', $segment['after']);
-                    $url .= $afterUrl;
-                    $defaultUrl .= $afterUrl;
-                }
-
-                if (!empty($segment['name'])) {
-                    if (!empty($queryString[$segment['name']])) {
-                        $url .= $queryString[$segment['name']];
-                        $defaultUrl .= $queryString[$segment['name']];
-                    }
-                    else {
-                        if (!empty($segment['default']) && $segment['default'] != UrlParameter::OPTIONAL) {
-                            $defaultUrl .= $segment['default'];
-                        }
-                    }
                 }
 
                 if (empty($segment['glued'])) {
@@ -125,36 +135,54 @@ class RouteTable {
                     else {
                         $pattern .= '\/';
                     }
-
-                    $url .= '/';
-                    $defaultUrl .= '/';
                 }
             }
 
-            $url = rtrim($url, '/');
-
-            if (empty($url)) {
-                $url = rtrim($defaultUrl, '/');
-            }
-
             // test url
-            if (preg_match('/^' . $pattern . '$/si', $url, $matches) === 1) {
+            if (preg_match('/^' . $pattern . '$/s' . $csm, $path, $matches) === 1) {
                 // match is found
-                // filling the values
+                $result = clone $route;
+                $defaults = array();
                 $values = array();
+                $url = '';
+
+                if (!empty($required)) {
+                    foreach ($required as $key => $value) {
+                        $url .= $value . '/';
+                    }
+                }
 
                 foreach ($segments as $segment) {
                     if (!empty($matches[$segment['name']])) {
                         $values[$segment['name']] = $matches[$segment['name']];
+                        $url .= $matches[$segment['name']];
                     }
+
+                    if (!empty($segment['default'])) {
+                        $defaults[$segment['name']] = $segment['default'];
+
+                        if (empty($values[$segment['name']]) && $segment['default'] != UrlParameter::OPTIONAL) {
+                            $values[$segment['name']] = $segment['default'];
+                            $url .= $segment['default'];
+                        }
+                    }
+
+                    $url .= '/';
                 }
 
-                $route->values = $values;
+                $url = rtrim($url, '/');
+
+                $result->defaults = $defaults;
+                $result->values = $values;
+
+                if (!RouteTable::$caseSensitive) {
+                    $url = strtolower($url);
+                }
 
                 // set url (for debug)
-                $route->setUrl($url);
+                $result->setUrl($url);
 
-                return $route;
+                return $result;
             }
         }
 
@@ -229,10 +257,12 @@ class RouteTable {
      * 
      * @param Route $route The route instance.
      * @param string $template The template to parse.
+     * @param array &$required Required parameters.
      * 
      * @return array
      */
-    private static function getSegmentPatterns($route, $template) {
+    private static function extractSegments($route, $template, &$required) {
+        $required = $route->defaults;
         $segments = array();
 
         if (preg_match_all('/\{([^\}]+)\}/', $template, $matches, \PREG_SET_ORDER | \PREG_OFFSET_CAPTURE)) {
@@ -268,13 +298,11 @@ class RouteTable {
                 }
 
                 // default value is allowed or not
-                if (!empty($default)) {
-                    if (!empty($route->defaults[$name])) {
-                        throw new \Exception('The route parameter "' . $name . '" has both an inline default value and an explicit default value specified. A route parameter cannot contain an inline default value when a default value is specified explicitly. Consider removing one of them.');
-                    }
-                    else {
-                        $route->defaults[$name] = $default;
-                    }
+                if (!empty($default) && !empty($route->defaults[$name])) {
+                    throw new \Exception('The route parameter "' . $name . '" has both an inline default value and an explicit default value specified. A route parameter cannot contain an inline default value when a default value is specified explicitly. Consider removing one of them.');
+                }
+                elseif (empty($default) && !empty($route->defaults[$name])) {
+                    $default = $route->defaults[$name];
                 }
 
                 // before and after text
@@ -282,24 +310,26 @@ class RouteTable {
                     $before = mb_substr($template, $prevIndex + $prevLen, $index - $prevIndex - $prevLen);
                 }
 
-                $prevGlued = !empty($before) && $before != '/';
+                $prevGlued = !empty($before) && $before[0] != '/';
 
                 if (count($parts = explode('/', $before)) > 1) {
                     $prevAfter = $parts[0];
                     $before = $parts[1];
                 }
 
-                if (!empty($prevAfter)) {
-                    $segments[$i - 1]['after'] = $prevAfter;
-                }
-
-                if ($prevGlued) {
-                    $segments[$i - 1]['glued'] = true;
+                if ($i > 0) {
+                    if (!empty($prevAfter)) {
+                        $segments[$i - 1]['after'] = $prevAfter;
+                    }
+    
+                    if ($prevGlued) {
+                        $segments[$i - 1]['glued'] = true;
+                    }
                 }
 
                 // make pattern
                 if (!empty($route->constraints[$name])) {
-                    if (!empty($route->defaults[$name]) && $route->defaults[$name] === UrlParameter::OPTIONAL) {
+                    if (!empty($default)) {
                         $segmentPattern = '(?<' . $name . '>(' . $route->constraints[$name] . ')|)';
                         $optional = true;
                     }
@@ -308,7 +338,7 @@ class RouteTable {
                     }
                 }
                 else {
-                    if (!empty($route->defaults[$name]) && $route->defaults[$name] === UrlParameter::OPTIONAL) {
+                    if (!empty($default)) {
                         $segmentPattern = '(?<' . $name . '>[^\/]*)';
                         $optional = true;
                     }
