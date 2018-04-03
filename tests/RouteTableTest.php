@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once 'RequestContext.php';
 
 use PHPUnit\Framework\TestCase;
+
 use PhpMvc\RouteTable;
 use PhpMvc\Route;
 use PhpMvc\UrlParameter;
@@ -12,6 +13,7 @@ use PhpMvc\ViewContext;
 final class RouteTableTest extends TestCase
 {
 
+    /*
     public function testAddEmptyNameException(): void
     {
         $this->expectExceptionMessageRegExp('/cannot be empty/');
@@ -103,7 +105,7 @@ final class RouteTableTest extends TestCase
 
         RouteTable::addRoute('test', 'test');
         RouteTable::addRoute('default', '{controller=Home}/{action=index}/{id?}');
-    }
+    }*/
 
     public function testGetRoute(): void {
         // routes
@@ -120,10 +122,38 @@ final class RouteTableTest extends TestCase
 
         RouteTable::addRoute(
             'actionIdAfter',
-            '{controller}/test-id{id}', 
+            '{controller}/{action}-id{id}', 
             array(
                 'controller' => 'Home', 
                 'action' => 'test'
+            )
+        );
+
+        RouteTable::addRoute(
+            'actionIdBefore',
+            '{controller}/{id}-{action}', 
+            array(
+                'controller' => 'Home', 
+                'action' => 'abc'
+            ),
+            array(
+                'id' => '\d+'
+            )
+        );
+
+        RouteTable::addRoute(
+            'manyDifferentParameters',
+            '{yyyy}-{mm}-{dd}/{id}', 
+            array(
+                'controller' => 'news', 
+                'action' => 'show', 
+                'id' => UrlParameter::OPTIONAL
+            ),
+            array(
+                'yyyy' => '\d{4}',
+                'mm' => '([0]{1}[1-9]{1})|([1]{1}[0-2]{1})',
+                'dd' => '[0-3]{1}[0-9]{1}',
+                'id' => '\d+'
             )
         );
 
@@ -133,72 +163,174 @@ final class RouteTableTest extends TestCase
         $requests = array(
             array(
                 'uri' => '/',
-                'expectPath' => 'home/index',
                 'expectRoute' => 'default',
+                'expectSegments' => array(
+                    'controller' => 'home',
+                    'action' => 'index',
+                ),
             ),
             array(
                 'uri' => '/home',
-                'expectPath' => 'home/index',
                 'expectRoute' => 'default',
+                'expectSegments' => array(
+                    'controller' => 'home',
+                    'action' => 'index',
+                ),
             ),
             array(
                 'uri' => '/home/index',
-                'expectPath' => 'home/index',
                 'expectRoute' => 'default',
+                'expectSegments' => array(
+                    'controller' => 'home',
+                    'action' => 'index',
+                ),
             ),
             array(
                 'uri' => '/home/test',
-                'expectPath' => 'home/test',
                 'expectRoute' => 'default',
+                'expectSegments' => array(
+                    'controller' => 'home',
+                    'action' => 'test',
+                ),
             ),
             array(
                 'uri' => '/about',
-                'expectPath' => 'about/index',
                 'expectRoute' => 'default',
+                'expectSegments' => array(
+                    'controller' => 'about',
+                    'action' => 'index',
+                ),
             ),
             array(
                 'uri' => '/about/contacts',
-                'expectPath' => 'about/contacts',
                 'expectRoute' => 'default',
+                'expectSegments' => array(
+                    'controller' => 'about',
+                    'action' => 'contacts',
+                ),
             ),
             array(
                 'uri' => '/arTicles/SeCtIons/1',
-                'expectPath' => 'articles/sections/1',
                 'expectRoute' => 'default',
+                'expectSegments' => array(
+                    'controller' => 'articles',
+                    'action' => 'sections',
+                    'id' => '1',
+                ),
             ),
             array(
                 'uri' => '/Articles/sections/5',
-                'expectPath' => 'articles/sections/5',
                 'expectRoute' => 'default',
+                'expectSegments' => array(
+                    'controller' => 'articles',
+                    'action' => 'sections',
+                    'id' => '5',
+                ),
             ),
             array(
                 'uri' => '/articles/sections/123?page=10&filter=test',
-                'expectPath' => 'articles/sections/123',
                 'expectRoute' => 'default',
+                'expectSegments' => array(
+                    'controller' => 'articles',
+                    'action' => 'sections',
+                    'id' => '123',
+                ),
             ),
             array(
                 'uri' => '/forum/mvc/123',
-                'expectPath' => 'forum/mvc/123',
                 'expectRoute' => 'default',
+                'expectSegments' => array(
+                    'controller' => 'forum',
+                    'action' => 'mvc',
+                    'id' => '123',
+                ),
             ),
             array(
                 'uri' => '/image-123',
-                'expectPath' => 'home/image/123',
                 'expectRoute' => 'defaultControllerAndAction',
+                'expectSegments' => array(
+                    'controller' => 'home',
+                    'action' => 'image',
+                    'id' => '123',
+                ),
+            ),
+            array(
+                'uri' => '/news/show-id100500',
+                'expectRoute' => 'actionIdAfter',
+                'expectSegments' => array(
+                    'controller' => 'news',
+                    'action' => 'show',
+                    'id' => '100500',
+                ),
+            ),
+            array(
+                'uri' => '/news/show-500100',
+                'expectRoute' => 'default',
+                'expectSegments' => array(
+                    'controller' => 'news',
+                    'action' => 'show-500100',
+                ),
+            ),
+            array(
+                'uri' => '/2018-04-03/123',
+                'expectRoute' => 'manyDifferentParameters',
+                'expectSegments' => array(
+                    'controller' => 'news',
+                    'action' => 'show',
+                    'yyyy' => '2018',
+                    'mm' => '04',
+                    'dd' => '03',
+                    'id' => '123',
+                ),
+            ),
+            array(
+                'uri' => '/2018-55-66/123',
+                'expectRoute' => 'default',
+                'expectSegments' => array(
+                    'controller' => '2018-55-66',
+                    'action' => '123',
+                ),
+            ),
+            array(
+                'uri' => '/2018-04-03/www',
+                'expectRoute' => 'default',
+                'expectSegments' => array(
+                    'controller' => '2018-04-03',
+                    'action' => 'www',
+                ),
+            ),
+            array(
+                'uri' => '/2018/04/03/show/9999/abc',
+                'expectRoute' => null,
             ),
         );
 
+        echo "\n";
+
         // run
         foreach ($requests as $request) {
+            echo $request['uri'];
+
             ViewContext::$requestContext = new RequestContext(array(
                 'REQUEST_URI' => $request['uri']
             ));
-    
+
             $route = RouteTable::getRoute();
 
-            $this->assertNotNull($route);
-            $this->assertEquals($request['expectPath'], $route->getUrl());
-            $this->assertEquals($request['expectRoute'], $route->name);
+            if ($request['expectRoute'] !== null) {
+                $this->assertNotNull($route);
+                $this->assertEquals($request['expectRoute'], $route->name);
+                $this->assertEquals(count($request['expectSegments']), count($route->values));
+    
+                foreach ($request['expectSegments'] as $key => $value) {
+                    $this->assertEquals($value, $route->values[$key]);
+                }
+            }
+            else {
+                $this->assertNull($route);
+            }
+
+            echo ' - OK' . "\n";
         }
     }
 }

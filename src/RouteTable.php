@@ -142,45 +142,37 @@ class RouteTable {
             if (preg_match('/^' . $pattern . '$/s' . $csm, $path, $matches) === 1) {
                 // match is found
                 $result = clone $route;
-                $defaults = array();
                 $values = array();
-                $url = '';
-
-                if (!empty($required)) {
-                    foreach ($required as $key => $value) {
-                        $url .= $value . '/';
-                    }
-                }
 
                 foreach ($segments as $segment) {
-                    if (!empty($matches[$segment['name']])) {
-                        $values[$segment['name']] = $matches[$segment['name']];
-                        $url .= $matches[$segment['name']];
-                    }
+                    $name = $segment['name'];
 
-                    if (!empty($segment['default'])) {
-                        $defaults[$segment['name']] = $segment['default'];
-
-                        if (empty($values[$segment['name']]) && $segment['default'] != UrlParameter::OPTIONAL) {
-                            $values[$segment['name']] = $segment['default'];
-                            $url .= $segment['default'];
+                    if (!empty($matches[$name])) {
+                        if (empty($values[$name])) {
+                            $values[$name] = $matches[$name];
                         }
                     }
 
-                    $url .= '/';
+                    if (!empty($segment['default'])) {
+                        if (empty($values[$name]) && $segment['default'] != UrlParameter::OPTIONAL) {
+                            $values[$name] = $segment['default'];
+                        }
+                    }
                 }
 
-                $url = rtrim($url, '/');
-
-                $result->defaults = $defaults;
-                $result->values = $values;
+                if (!empty($route->defaults)) {
+                    foreach ($route->defaults as $name => $defaultValue) {
+                        if (empty($values[$name])) {
+                            $values[$name] = $defaultValue;
+                        }
+                    }
+                }
 
                 if (!RouteTable::$caseSensitive) {
-                    $url = strtolower($url);
+                    $values = array_map('strtolower', $values);
                 }
 
-                // set url (for debug)
-                $result->setUrl($url);
+                $result->values = $values;
 
                 return $result;
             }
@@ -264,6 +256,7 @@ class RouteTable {
     private static function extractSegments($route, $template, &$required) {
         $required = $route->defaults;
         $segments = array();
+        $names = array();
 
         if (preg_match_all('/\{([^\}]+)\}/', $template, $matches, \PREG_SET_ORDER | \PREG_OFFSET_CAPTURE)) {
             $prevMatchString = $prevName = '';
@@ -303,6 +296,18 @@ class RouteTable {
                 }
                 elseif (empty($default) && !empty($route->defaults[$name])) {
                     $default = $route->defaults[$name];
+                }
+
+                // check uniqueness
+                if (in_array($name, $names)) {
+                    trigger_error(
+                        'The route "' . $route->name . '" contains more than one parameter named "' . 
+                        $name . '". Route parsing may not work correctly. ' .
+                        'Please, try not to use elements with the same name.', 
+                        E_USER_WARNING
+                    );
+
+                    continue;
                 }
 
                 // before and after text
@@ -360,7 +365,8 @@ class RouteTable {
                 }
 
                 $segments[] = $segment;
-
+                $names[] = $name;
+                
                 $prevName = $name;
                 $prevIndex = $index;
                 $prevMatchString = $matchString;
