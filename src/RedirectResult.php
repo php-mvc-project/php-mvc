@@ -49,19 +49,21 @@ class RedirectResult implements ActionResult {
      * @return void
      */
     public function execute($actionContext) {
+        $response = $actionContext->httpContext->getResponse();
+
         if ($this->permanent === true && $this->preserveMethod !== true) {
-            http_response_code(301);
+            $response->setStatusCode(301);
         }
         else if ($this->permanent !== true && $this->preserveMethod === true) {
-            http_response_code(307);
+            $response->setStatusCode(307);
         }
         else if ($this->permanent === true && $this->preserveMethod === true) {
-            http_response_code(308);
+            $response->setStatusCode(308);
         }
 
-        header('Location: ' . $this->url);
+        $response->addHeader('Location', $this->url);
 
-        exit;
+        $response->end();
     }
 
 }

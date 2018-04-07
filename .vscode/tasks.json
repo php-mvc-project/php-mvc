@@ -6,7 +6,7 @@
         {
             "label": "Test",
             "type": "shell",
-            "command": "vendor/bin/phpunit --bootstrap vendor/autoload.php tests"
+            "command": "vendor/bin/phpunit --bootstrap tests/autoload.php tests --colors always"
         }
     ]
 }

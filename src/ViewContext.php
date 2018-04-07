@@ -4,87 +4,77 @@ namespace PhpMvc;
 /**
  * Represents the context of the current view.
  */
-final class ViewContext {
-
-    /**
-     * Gets or sets conxtex of the current request.
-     * 
-     * @var RequestContext
-     */
-    public static $requestContext;
-
-    /**
-     * Gets or sets Route of the current request.
-     * 
-     * @var Route
-     */
-    public static $route;
+final class ViewContext extends ActionContext {
 
     /**
      * Gets or sets layout file.
      * 
      * @var string
      */
-    public static $layout;
+    public $layout;
 
     /**
      * Gets or sets page title.
      * 
      * @var string
      */
-    public static $title;
+    public $title;
 
     /**
      * Gets or sets content of the view.
      * 
      * @var string
      */
-    public static $content;
+    public $content;
 
     /**
      * Gets or sets model.
      * 
      * @var mixed
      */
-    public static $model;
+    public $model;
 
     /**
      * Gets or sets view data.
+     * 
+     * @var array
      */
-    public static $viewData = array();
+    public $viewData = array();
 
     /**
      * Gets or sets result of action.
-     */
-    public static $actionResult;
-
-    /**
-     * Gets or sets ModelState.
      * 
-     * @var ModelState
+     * @var mixed
      */
-    public static $modelState;
-
-    /**
-     * Gets or sets ActionContext.
-     * 
-     * @var ActionContext
-     */
-    public static $actionContext;
+    public $actionResult;
 
     /**
      * Gets or sets view file name.
      * 
      * @var string
      */
-    public static $viewFile;
+    public $viewFile;
+
+    public function __construct($actionContext, $actionResult, $viewData) {
+        parent::__construct($actionContext->httpContext, $actionContext->route);
+
+        $this->controller = $actionContext->controller;
+        $this->modelState = $actionContext->modelState;
+        $this->arguments = $actionContext->arguments;
+        $this->actionName = $actionContext->actionName;
+
+        $this->viewData = $viewData;
+        $this->actionResult = $actionResult;
+    }
 
     /**
-     * Gets or sets metadata of the $model.
+     * Gets model state.
      * 
-     * @var ModelDataAnnotation[]
+     * @return ModelState
      */
-    public static $modelDataAnnotations = array();
+    public function getModelState() {
+        return $this->modelState;
+    }
 
     /**
      * Gets the metadata for the specified model key.
@@ -94,9 +84,9 @@ final class ViewContext {
      * 
      * @return ModelDataAnnotation|null
      */
-    public static function getModelDataAnnotation($key) {
-        if (array_key_exists($key, ViewContext::$modelDataAnnotations)) {
-            return ViewContext::$modelDataAnnotations[$key];
+    public function getModelDataAnnotation($key) {
+        if (array_key_exists($key, $this->modelState->annotations)) {
+            return $this->modelState->annotations[$key];
         }
         else {
             return null;

@@ -7,6 +7,13 @@ namespace PhpMvc;
 class Html {
 
     /**
+     * Defines ViewContext.
+     * 
+     * @var ViewContext
+     */
+    private static $viewContext;
+
+    /**
      * Gets the page title.
      * 
      * @param string $default Default value.
@@ -14,12 +21,12 @@ class Html {
      * @return string
      */
     public static function getTitle($default) {
-        if (empty(ViewContext::$title)) {
+        if (empty(self::$viewContext->title)) {
             return htmlspecialchars($default);
         }
         else
         {
-            return htmlspecialchars(ViewContext::$title);
+            return htmlspecialchars(self::$viewContext->title);
         }
     }
 
@@ -31,7 +38,7 @@ class Html {
      * @return string
      */
     public static function displayName($propertyName) {
-        if (($dataAnnotation = ViewContext::getModelDataAnnotation($propertyName)) !== null) {
+        if (($dataAnnotation = self::$viewContext->getModelDataAnnotation($propertyName)) !== null) {
             return htmlspecialchars($dataAnnotation->displayName);
         }
     }
@@ -44,7 +51,7 @@ class Html {
      * @return string
      */
     public static function displayText($propertyName) {
-        if (($dataAnnotation = ViewContext::getModelDataAnnotation($propertyName)) !== null) {
+        if (($dataAnnotation = self::$viewContext->getModelDataAnnotation($propertyName)) !== null) {
             return htmlspecialchars($dataAnnotation->displayText);
         }
     }
@@ -59,7 +66,7 @@ class Html {
     public static function validationSummary($validationMessage = null) {
         $li = array();
 
-        $errors = ViewContext::$modelState->getErrors();
+        $errors = self::$viewContext->getModelState()->getErrors();
 
         foreach ($errors as $key => $value) {
             foreach ($value as $error) {
@@ -94,7 +101,7 @@ class Html {
      * @return string
      */
     public static function validationMessage($propertyName, $validationMessage = null) {
-        if (!empty($errors = ViewContext::$modelState->getErrors($propertyName))) {
+        if (!empty($errors = self::$viewContext->modelState->getErrors($propertyName))) {
             $result = '<span class="field-validation-error">';
             
             if (!empty($validationMessage)) {
@@ -116,7 +123,7 @@ class Html {
      */
     public static function renderBody() {
         // echo self::view(PHPMVC_CURRENT_VIEW_PATH);
-        echo ViewContext::$content;
+        echo self::$viewContext->content;
     }
 
     /**
@@ -140,7 +147,7 @@ class Html {
      * @return string
      */
     public static function view($path, $model = null) {
-        if (($viewPath = Make::getViewFilePath($path)) !== false) {
+        if (($viewPath = PathUtility::getViewFilePath($path)) !== false) {
             return Make::getView($viewPath, $model);
         }
         else {
@@ -175,7 +182,7 @@ class Html {
      * @return ModelState
      */
     public static function getModelState() {
-        return ViewContext::$modelState;
+        return View::getModelState();
     }
 
 }

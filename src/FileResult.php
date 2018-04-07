@@ -32,12 +32,16 @@ class FileResult implements ActionResult {
      * 
      * @param string $path The file path to output.
      * @param string $contentType The content type.
-     * @param string $downloadName the content-disposition header so that a file-download dialog box is displayed in the browser with the specified file name.
+     * @param string|bool $downloadName the content-disposition header so that a file-download dialog box is displayed in the browser with the specified file name.
      */
     public function __construct($path, $contentType = 'application/octet-stream', $downloadName = null) {
         $this->path = $path;
         $this->contentType = $contentType;
         $this->downloadName = $downloadName;
+
+        if ($downloadName === true) {
+            $downloadName = basename($this->path);
+        }
     }
     
     /**
@@ -49,20 +53,21 @@ class FileResult implements ActionResult {
      * @return void
      */
     public function execute($actionContext) {
-        $fp = fopen($this->path, 'rb');
-        
-        // headers
-        header('Content-Type: ' . (!empty($this->contentType) ? $this->contentType : 'application/octet-stream'));
-        header('Content-Length: ' . filesize($this->path));
-        
-        if (!empty($this->downloadName)) {
-            header('Content-Disposition: attachment; filename="' . $this->downloadName . '"');
+        if (($path = PathUtility::getFilePath($this->path)) === false) {
+            throw new \Exception('File "' . $this->path . '" not found.');
         }
 
-        // output and exit
-        fpassthru($fp);
+        $response = $actionContext->httpContext->getResponse();
+        $response->addHeader('Content-Type', (!empty($this->contentType) ? $this->contentType : 'application/octet-stream'));
+        $response->addHeader('Content-Length', filesize($path));
 
-        exit;
+        if (!empty($this->downloadName)) {
+            $response->addHeader('Content-Disposition', 'attachment; filename="' . $this->downloadName . '"');
+        }
+
+        $response->writeFile($path);
+
+        $response->end();
     }
 
 }

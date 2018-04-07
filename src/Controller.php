@@ -2,20 +2,85 @@
 namespace PhpMvc;
 
 /**
- * Base controller.
+ * A base class for an MVC controller.
  */
 class Controller {
 
     /**
+     * Gets or sets view data.
+     * 
+     * @var array
+     */
+    protected $viewData = array();
+
+    /**
+     * Instance of ActionContext.
+     * 
+     * @var ActionContext
+     */
+    protected $actionContext;
+
+    /**
+     * Sets data to view.
+     * 
+     * @param string $key The key associated with the data.
+     * @param mixed $value The value to add or update.
+     * 
+     * @return void
+     */
+    protected function setViewData($key, $value) {
+        $this->viewData[$key] = $value;
+    }
+
+    /**
+     * Gets data.
+     * 
+     * @param string $key The key associated with the data.
+     * 
+     * @return mixed
+     */
+    protected function getViewData($key) {
+        return $this->viewData[$key];
+    }
+
+    /**
+     * Returns current Route.
+     * 
+     * @return Route
+     */
+    protected function getRoute() {
+        return $this->actionContext->route;
+    }
+
+    /**
+     * Returns context of the current request.
+     * 
+     * @return HttpContextBase
+     */
+    protected function getHttpContext() {
+        return $this->actionContext->httpContext;
+    }
+
+    /**
+     * Returns ModelState.
+     * 
+     * @return ModelState
+     */
+    protected function getModelState() {
+        return $this->actionContext->modelState;
+    }
+
+    /**
      * Creates a ViewResult object that renders a view to the response.
      * 
-     * @param mixed $model Model.
-     * @param string $layout Layout file name or path.
+     * @param string|object|null $viewOrModel View name or model.
+     * @param object|null $model Model.
+     * @param string|null $layout Layout file name or path.
      * 
      * @return ViewResult
      */
-    protected function view($model = null, $layout = null) {
-        return new ViewResult($model, $layout);
+    protected function view($viewOrModel = null, $model = null, $layout = null) {
+        return new ViewResult($viewOrModel, $model, $layout);
     }
 
     /**
@@ -40,7 +105,7 @@ class Controller {
      * 
      * @param string $path The file path to output.
      * @param string $contentType The content type.
-     * @param string $downloadName the content-disposition header so that a file-download dialog box is displayed in the browser with the specified file name.
+     * @param string|bool $downloadName the content-disposition header so that a file-download dialog box is displayed in the browser with the specified file name.
      * 
      * @return FileResult
      */
@@ -100,7 +165,7 @@ class Controller {
      * @return bool
      */
     protected function isPost() {
-        return $_SERVER['REQUEST_METHOD'] === 'POST';
+        return $this->actionContext->httpContext->getRequest()->isPost();
     }
 
     /**

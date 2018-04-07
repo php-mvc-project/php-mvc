@@ -21,7 +21,7 @@ class EmptyResult implements ActionResult {
      * @return void
      */
     public function execute($actionContext) {
-        exit;
+        $actionContext->httpContext->getResponse()->end();
     }
 
 }

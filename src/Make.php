@@ -7,18 +7,38 @@ namespace PhpMvc;
 final class Make {
 
     /**
+     * Defines the ActionContext.
+     * 
+     * @var ActionContext
+     */
+    private static $actionContext;
+
+    /**
+     * Gets or sets request of the HTTP context.
+     * 
+     * @var HttpRequestBase
+     */
+    private static $request;
+
+    /**
+     * Gets or sets response of the HTTP context.
+     * 
+     * @var HttpResponseBase
+     */
+    private static $response;
+
+    /**
      * Magic!
      * 
      * @param string $appNamespace Root namespace of the application.
      * 
      * @return void
      */
-    public static function magic($appNamespace, $requestContext = null) {
-        self::init($appNamespace);
-        self::contextInit($requestContext);
+    public static function magic($appNamespace, $httpContext = null, $basePath = null, $routes = null) {
+        self::init($appNamespace, $basePath);
+        self::context($httpContext, $routes);
         self::headers();
-        self::routeInit();
-        self::requestValidation();
+        self::validation();
         self::include();
         self::render();
     }
@@ -29,19 +49,24 @@ final class Make {
      * @return void
      */
     private static function headers() {
-        header('X-Powered-By', Info::XPOWEREDBY);
+        self::$response->addHeader('X-Powered-By', Info::XPOWEREDBY);
     }
 
     /**
      * Performs the initialization of the engine.
      * 
      * @param string $appNamespace Root namespace of the application.
+     * @param string $basePath Base path.
      * 
      * @return void
      */
-    private static function init($appNamespace) {
+    private static function init($appNamespace, $basePath = null) {
+        if (empty($basePath)) {
+            $basePath = getcwd();
+        }
+
         define('PHPMVC_DS', DIRECTORY_SEPARATOR);
-        define('PHPMVC_ROOT_PATH', getcwd() . PHPMVC_DS);
+        define('PHPMVC_ROOT_PATH', $basePath . PHPMVC_DS);
         define('PHPMVC_CORE_PATH', __DIR__ .PHPMVC_DS);
         define('PHPMVC_CONFIG_PATH', PHPMVC_ROOT_PATH . 'config' . PHPMVC_DS);
         define('PHPMVC_CONTROLLER_PATH', PHPMVC_ROOT_PATH . 'controllers' . PHPMVC_DS);
@@ -49,41 +74,87 @@ final class Make {
         define('PHPMVC_VIEW_PATH', PHPMVC_ROOT_PATH . 'views' . PHPMVC_DS);
         define('PHPMVC_SHARED_PATH', PHPMVC_VIEW_PATH . 'shared' . PHPMVC_DS);
         define('PHPMVC_UPLOAD_PATH', PHPMVC_ROOT_PATH . 'upload' . PHPMVC_DS);
-        
+
         define('PHPMVC_APP_NAMESPACE', $appNamespace);
     }
 
-    private static function contextInit($requestContext = null) {
-        if (isset($requestContext)) {
-            if (!$requestContext instanceof RequestContextBase) {
-                throw new \Exception('The request context type must be derived from "RequestContextBase".');
-            }
-
-            ViewContext::$requestContext = $requestContext;
-        }
-        else {
-            ViewContext::$requestContext = new RequestContext();
-        }
-    }
-
     /**
-     * Searches and initializes a suitable route.
+     * Initializes the contexts associated with the current request.
+     * 
+     * @param HttpContextBase $httpContext Context of the request.
+     * @param RouteCollection $routes
      * 
      * @return void
      */
-    private static function routeInit() {
-        ViewContext::$route = $route = RouteTable::getRoute();
+    private static function context($httpContext = null, $routes = null) {
+        // check request context
+        if (isset($httpContext)) {
+            if (!$httpContext instanceof HttpContextBase) {
+                throw new \Exception('The $httpContext type must be derived from "\PhpMvc\HttpContextBase".');
+            }
+        }
+        else {
+            $httpContext = new HttpContext();
+        }
+
+        self::$request = $httpContext->getRequest();
+        self::$response = $httpContext->getResponse();
+
+        if (isset($routes)) {
+            if (!$routes instanceof RouteCollection) {
+                throw new \Exception('The $routes type must be derived from "\PhpMvc\RouteCollection".');
+            }
+        }
+        else {
+            $routesProperty = new \ReflectionProperty('\PhpMvc\RouteTable', 'routes');
+            $routesProperty->setAccessible(true);
+            $routes = $routesProperty->getValue(null);
+        }
+
+        // search route
+        $route = $routes->getRoute($httpContext);
 
         if ($route == null) {
-            http_response_code(404);
-            exit;
+            self::$response->setStatusCode(404);
+            self::$response->end();
         }
 
         define('PHPMVC_CONTROLLER', ucfirst($route->getValueOrDefault('controller', 'Home')));
-        define('PHPMVC_ACTION', $route->getValueOrDefault('action', 'indexHome'));
+        define('PHPMVC_ACTION', $route->getValueOrDefault('action', 'index'));
         define('PHPMVC_VIEW', strtolower(PHPMVC_CONTROLLER));
         define('PHPMVC_CURRENT_CONTROLLER_PATH', PHPMVC_CONTROLLER_PATH . PHPMVC_VIEW . PHPMVC_DS);
         define('PHPMVC_CURRENT_VIEW_PATH', PHPMVC_VIEW_PATH . PHPMVC_VIEW . PHPMVC_DS . PHPMVC_ACTION . '.php');
+
+        // create action context
+        self::$actionContext = $actionContext = new ActionContext($httpContext, $route);
+
+        // preparing to create an instance of the controller class 
+        $controllerClass = new \ReflectionClass('\\' . PHPMVC_APP_NAMESPACE . '\\Controllers\\' . PHPMVC_CONTROLLER . 'Controller');
+        
+        if (!$controllerClass->isSubclassOf('\\PhpMvc\\Controller')) {
+            throw new \Exception('The controller type must be derived from "\PhpMvc\Controller".');
+        }
+
+        $actionContextProperty = $controllerClass->getProperty('actionContext');
+        $actionContextProperty->setAccessible(true);
+
+        // set action context to model
+        $modelActionContextProperty = new \ReflectionProperty('\PhpMvc\Model', 'actionContext');
+        $modelActionContextProperty->setAccessible(true);
+        $modelActionContextProperty->setValue(null, $actionContext);
+
+        // create instance of controller
+        if ($controllerClass->getConstructor() != null) {
+            $controllerInstance = $controllerClass->newInstance();
+        }
+        else {
+            $controllerInstance = $controllerClass->newInstanceWithoutConstructor();
+        }
+
+        $actionContextProperty->setValue($controllerInstance, $actionContext);
+
+        $actionContext->controller = $controllerInstance;
+        $actionContext->actionName = PHPMVC_ACTION;
     }
 
     /**
@@ -91,7 +162,7 @@ final class Make {
      * 
      * @return void
      */
-    private static function requestValidation() {
+    private static function validation() {
         if (substr(PHPMVC_ACTION, 0, 2) == '__') {
             throw new \Exception('Action names can not begin with a "_".');
         }
@@ -115,19 +186,13 @@ final class Make {
     private static function render() {
         $result = null;
 
-        $actionContext = new ActionContext();
+        $actionContext = self::$actionContext;
 
-        ViewContext::$actionContext = $actionContext;
-
-        // create instance of controller
-        $controllerName = PHPMVC_APP_NAMESPACE . '\\Controllers\\' . PHPMVC_CONTROLLER . 'Controller';
-        $actionContext->controller = new $controllerName();
-        $actionContext->actionName = PHPMVC_ACTION;
-        
         // arguments and model state
         self::makeActionState($actionContext);
 
-        ViewContext::$modelState = $actionContext->modelState;
+        // annotation and validation
+        self::annotateAndValidateModel($actionContext->modelState);
 
         // execute action
         try {
@@ -139,46 +204,76 @@ final class Make {
             $actionResult = null;
         }
 
-        // annotation and validation
-        self::annotateAndValidateModel($actionContext->modelState);
-
-        // execute result
-        if (isset($actionResult) && $actionResult instanceof ActionResult) {
-            $actionResult->execute($actionContext);
-        }
-        
-        ViewContext::$actionResult = $actionResult;
-
-        // append model state keys to view data
-        ViewContext::$viewData = array_merge(ViewContext::$viewData, $actionContext->modelState->getKeyValuePair());
-
-        // get view
-        if ((ViewContext::$viewFile = self::getViewFilePath(PHPMVC_CURRENT_VIEW_PATH)) !== false) {
-            ViewContext::$content = self::getView(ViewContext::$viewFile);
-        }
-        else {
-            ViewContext::$content = ViewContext::$actionResult;
-        }
-
-        // get layout
-        if (!empty(ViewContext::$layout)) {
-            $result = self::getView(self::getViewFilePath(ViewContext::$layout));
-        }
-        else {
-            $result = ViewContext::$content;
-        }
-
-        // preparation for render
-        if (!is_string($result)) {
-            if (($result = json_encode(ViewContext::$actionResult)) === false) {
-                throw new \ErrorException('JSON encode error #' . json_last_error() . ': ' . json_last_error_msg());
+        if (isset($actionResult)) {
+            // transformation of known types
+            if (is_callable($actionResult)) {
+                $actionResult = $actionResult();
             }
 
-            header('Content-Type: application/json');
+            if (is_scalar($actionResult)) {
+                $actionResult = new ContentResult($actionResult, 'text/plain');
+            }
+            if ((($resultType = gettype($actionResult)) === 'object' || $resultType === 'array') && !$actionResult instanceof ActionResult) {
+                $actionResult = new JsonResult($actionResult);
+            }
+
+            // make result
+            if ($actionResult instanceof ViewResult) {
+                // create view data
+                $viewData = $actionContext->modelState->getKeyValuePair();
+
+                $viewDataProperty = new \ReflectionProperty('\PhpMvc\Controller', 'viewData');
+                $viewDataProperty->setAccessible(true);
+                $controllerViewData = $viewDataProperty->getValue($actionContext->controller);
+
+                if (!empty($controllerViewData)) {
+                    $viewData = array_unique(array_merge($viewData, $controllerViewData), \SORT_STRING);
+                }
+
+                // create instance of view context
+                $viewContext = new ViewContext($actionContext, $actionResult, $viewData);
+
+                // get path of view file
+                $viewContext->viewFile = PathUtility::getViewFilePath(PHPMVC_CURRENT_VIEW_PATH);
+    
+                // set view context
+                $viewContextProperty = new \ReflectionProperty('\PhpMvc\View', 'viewContext');
+                $viewContextProperty->setAccessible(true);
+                $viewContextProperty->setValue(null, $viewContext);
+    
+                $viewContextProperty = new \ReflectionProperty('\PhpMvc\Html', 'viewContext');
+                $viewContextProperty->setAccessible(true);
+                $viewContextProperty->setValue(null, $viewContext);
+
+                // execute result with view context
+                $actionResult->execute($viewContext);
+
+                // get view
+                if ($viewContext->viewFile === false) {
+                    throw new ViewNotFoundException(PHPMVC_CURRENT_VIEW_PATH); // TODO
+                }
+
+                $viewContext->content = self::getView($viewContext->viewFile);
+
+                // get layout
+                if (!empty($viewContext->layout)) {
+                    if (($layoutFile = PathUtility::getViewFilePath($viewContext->layout)) !== false) {
+                        $result = self::getView($layoutFile);
+                    }
+                    else {
+                        throw new ViewNotFoundException($viewContext->layout);
+                    }
+                }
+            }
+            elseif ($actionResult instanceof ActionResult) {
+                // execute result with action context
+                $actionResult->execute($actionContext);
+            }
         }
 
         // render
-        echo $result;
+        self::$response->write($result);
+        self::$response->end();
     }
 
     /**
@@ -191,28 +286,27 @@ final class Make {
     private static function makeActionState($actionContext) {
         $arguments = array();
         $modelState = new ModelState();
+        $modelState->annotations = $actionContext->modelState->annotations;
         $hasModel = false;
 
         // get http params
         // TODO: подумать о возможности управлять этим
-        $get = $_GET;
+        $get = self::$request->getGetData();
 
         // change case of keys
         $get = array_change_key_case($get, CASE_LOWER);
 
         // post params
-        $isPost = $_SERVER['REQUEST_METHOD'] === 'POST';
+        $isPost = self::$request->isPost();
+        $postData = $isPost ? self::$request->getPostData() : null;
         $post =  null;
 
-        if (!empty($_POST)) {
-            $postData = $_POST;
+        if (!empty($postData)) {
             $post = self::arrayToObject($postData);
         }
-
+        
         if (empty($post) && $isPost) {
-            $contentType = isset($_SERVER['HTTP_CONTENT_TYPE']) ? $_SERVER['HTTP_CONTENT_TYPE'] : null;
-            $contentType = empty($contentType) && isset($_SERVER['CONTENT_TYPE']) ? $_SERVER['CONTENT_TYPE'] : null;
-            $contentType = !empty($contentType) ? $contentType : '';
+            $contentType = self::$request->getContentType();
 
             if (strrpos($contentType, '/json') !== false) {
                 $requestBody = file_get_contents('php://input');
@@ -238,13 +332,15 @@ final class Make {
                 // parameter not found
                 if ($isPost && !$hasModel && !isset($get[$name])) {
                     // post method and model not yet received
+                    if ($post == null) {
+                        throw new \Exception('"' . $name . ' is required.');
+                    }
+
                     $arguments[$name] = $post;
                     
                     // parse post data
                     foreach (get_object_vars($post) as $key => $value) {
-                        if ($value !== null) {
-                            $modelState[$key] = new ModelStateEntry($key, $value);
-                        }
+                        $modelState[$key] = new ModelStateEntry($key, $value);
                     }
                     
                     $hasModel = true;
@@ -296,7 +392,7 @@ final class Make {
     private static function annotateAndValidateModelEntry($modelState, $key) {
         $entry = $modelState[$key];
 
-        if (($dataAnnotation = ViewContext::getModelDataAnnotation($key)) !== null) {
+        if (($dataAnnotation = $modelState->getAnnotation($key)) !== null) {
             $displayName = $key;
 
             if (!empty($dataAnnotation->name)) {
@@ -309,7 +405,7 @@ final class Make {
                     $modelState->addError($key, $dataAnnotation->required[0]);
                 }
                 else {
-                    $modelState->addError($key, $displayName . ' is required. Value cannot be empty.');
+                    $modelState->addError($key, $displayName . ' is required. Value must not be empty.');
                 }
             }
 
@@ -319,7 +415,7 @@ final class Make {
                     if (!($entry->validationState = ($entry->value == $entry2->value))) {
                         $displayName2 = $entry2->key;
 
-                        if (($dataAnnotation2 = ViewContext::getModelDataAnnotation($entry2->key)) !== null) {
+                        if (($dataAnnotation2 = $modelState->getAnnotation($entry2->key)) !== null) {
                             if (!empty($dataAnnotation2->name)) {
                                 $displayName2 = $dataAnnotation2->name;
                             }
@@ -448,6 +544,10 @@ final class Make {
      * @return string
      */
     public static function getView($path) {
+        if ($path === false) {
+            throw new \Exception('The view file is not specified. Probably the correct path to the file was not found. Make sure that all paths are specified correctly, the files exists and is available.');
+        }
+
         ob_start();
 
         require($path);
@@ -459,33 +559,4 @@ final class Make {
         return $result;
     }
 
-    /**
-     * Searches for a file with a specified name and returns the correct path.
-     * If the file is not found, returns FALSE. 
-     * 
-     * @param string $path The file name or file path.
-     * 
-     * @return string|bool
-     */
-    public static function getViewFilePath($path) {
-        if (empty($path)) {
-            return false;
-        }
-        elseif (is_file($result = $path)) {
-            return $result;
-        }
-        elseif (is_file($result = PHPMVC_VIEW_PATH . PHPMVC_VIEW . PHPMVC_DS . $path)) {
-            return $result;
-        }
-        elseif (is_file($result = PHPMVC_SHARED_PATH . $path)) {
-            return $result;
-        }
-
-        if (strlen($path) > 4 && substr($path, -4) != '.php') {
-            return self::getViewFilePath($path . '.php');
-        }
-
-        return false;
-    }
-    
 }

@@ -40,16 +40,11 @@ class HttpStatusCodeResult implements ActionResult {
      * @return void
      */
     public function execute($actionContext) {
-        if (empty($this->statusDescription)) {
-            http_response_code($this->statusCode);
-        }
-        else {
-            $protocol = (isset($_SERVER['SERVER_PROTOCOL']) ? $_SERVER['SERVER_PROTOCOL'] : 'HTTP/1.0');
-            header($protocol . ' ' . $this->statusCode . ' ' . $this->statusDescription);
-            $GLOBALS['http_response_code'] = $this->statusCode;
-        }
-
-        exit;
+        $response = $actionContext->httpContext->getResponse();
+        $response->setStatusCode($this->statusCode);
+        $response->setStatusDescription($this->statusDescription);
+        $response->write($result);
+        $response->end();
     }
 
 }

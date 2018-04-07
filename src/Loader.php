@@ -16,5 +16,9 @@ spl_autoload_register(function ($name) {
         $path = PHPMVC_ROOT_PATH . implode(PHPMVC_DS, $segments) . PHPMVC_DS . $fileName . '.php';
     }
 
+    if (!is_file($path)) {
+        return false;
+    }
+
     require_once $path;
 });

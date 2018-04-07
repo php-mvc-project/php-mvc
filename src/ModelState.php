@@ -21,6 +21,13 @@ class ModelState implements \ArrayAccess {
     private $errors = array();
 
     /**
+     * Gets or sets metadata of Model.
+     * 
+     * @var ModelDataAnnotation[]
+     */
+    public $annotations = array();
+
+    /**
      * Returns true if the state does not contain errors; otherwise, false.
      * 
      * @param string $key If the key is specified, only the specified key will be checked for errors.
@@ -105,6 +112,23 @@ class ModelState implements \ArrayAccess {
         }
         else {
             $this->errors[$key] = array($error);
+        }
+    }
+
+    /**
+     * Gets the metadata for the specified model key.
+     * If there is no data, it returns null.
+     * 
+     * @param string @key The key to get metadata.
+     * 
+     * @return ModelDataAnnotation|null
+     */
+    public function getAnnotation($key) {
+        if (array_key_exists($key, $this->annotations)) {
+            return $this->annotations[$key];
+        }
+        else {
+            return null;
         }
     }
 

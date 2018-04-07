@@ -2,9 +2,9 @@
 namespace PhpMvc;
 
 /**
- * Represents base class for the request context.
+  * Represents base class for the HTTP request.
  */
-abstract class RequestContextBase {
+abstract class HttpRequestBase {
 
     /**
      * URI of the current request.
@@ -63,7 +63,7 @@ abstract class RequestContextBase {
     protected $files;
 
     /**
-     * Initializes a new instance of the RequestContextBase with the specified parameters.
+     * Initializes a new instance of the HttpRequestBase with the specified parameters.
      */
     protected function __construct(
         $serverVariables, 

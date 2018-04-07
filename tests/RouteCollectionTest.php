@@ -1,135 +1,82 @@
 <?php
 declare(strict_types=1);
 
-require_once 'RequestContext.php';
+require_once 'HttpContext.php';
 
 use PHPUnit\Framework\TestCase;
 
-use PhpMvc\RouteTable;
 use PhpMvc\Route;
+use PhpMvc\RouteCollection;
 use PhpMvc\UrlParameter;
-use PhpMvc\ViewContext;
 
-final class RouteTableTest extends TestCase
+final class RouteCollectionTest extends TestCase
 {
 
-    /*
     public function testAddEmptyNameException(): void
     {
-        $this->expectExceptionMessageRegExp('/cannot be empty/');
+        $this->expectExceptionMessageRegExp('/must not be empty/');
 
-        RouteTable::clear();
+        $routes = new RouteCollection();
 
         $route = new Route();
 
-        RouteTable::add($route);
+        $routes->add($route);
     }
 
     public function testAddEmptyTemplateException(): void
     {
         $this->expectExceptionMessageRegExp('/template/');
 
+        $routes = new RouteCollection();
+
         $route = new Route();
         $route->name = 'default';
 
-        RouteTable::add($route);
+        $routes->add($route);
     }
 
     public function testAddNonUniqueNameException(): void
     {
         $this->expectExceptionMessageRegExp('/unique name/');
 
-        RouteTable::clear();
+        $routes = new RouteCollection();
 
         $route = new Route();
         $route->name = 'default';
         $route->template = '{controller}';
 
-        RouteTable::add($route);
+        $routes->add($route);
 
         $route = new Route();
         $route->name = 'default';
         $route->template = '{controller}';
 
-        RouteTable::add($route);
+        $routes->add($route);
     }
-
-    public function testAddOK(): void
-    {
-        RouteTable::clear();
-
-        $route = new Route();
-        $route->name = 'first';
-        $route->template = '{controller}/{action}/{id}';
-
-        RouteTable::add($route);
-        
-        $route2 = new Route();
-        $route2->name = 'default';
-        $route2->template = '{controller}';
-
-        RouteTable::add($route2);
-    }
-
-    public function testAddRouteEmptyNameException(): void
-    {
-        $this->expectExceptionMessageRegExp('/cannot be empty/');
-
-        RouteTable::clear();
-
-        RouteTable::addRoute('', '{controller}/{action}');
-    }
-
-    public function testAddRouteEmptyTemplateException(): void
-    {
-        $this->expectExceptionMessageRegExp('/template/');
-        RouteTable::addRoute('default', null);
-
-        $this->expectExceptionMessageRegExp('/template/');
-        RouteTable::addRoute('default', '');
-    }
-
-    public function testAddRouteNonUniqueNameException(): void
-    {
-        $this->expectExceptionMessageRegExp('/unique name/');
-
-        RouteTable::clear();
-
-        RouteTable::addRoute('default', 'first');
-        RouteTable::addRoute('default', 'second');
-    }
-
-    public function testAddRouteOK(): void
-    {
-        RouteTable::clear();
-
-        RouteTable::addRoute('test', 'test');
-        RouteTable::addRoute('default', '{controller=Home}/{action=index}/{id?}');
-    }*/
 
     public function testGetRoute(): void {
         // routes
-        RouteTable::clear();
+        $routes = new RouteCollection();
 
-        RouteTable::addRoute(
+        $routes->add(new Route(
             'defaultControllerAndAction', 
             'image-{id}', 
             array(
                 'controller' => 'Home', 
                 'action' => 'image'
             )
-        );
+        ));
 
-        RouteTable::addRoute(
+        $routes->add(new Route(
             'actionIdAfter',
             '{controller}/{action}-id{id}', 
             array(
                 'controller' => 'Home', 
                 'action' => 'test'
             )
-        );
+        ));
 
-        RouteTable::addRoute(
+        $routes->add(new Route(
             'actionIdBefore',
             '{controller}/{id}-{action}', 
             array(
@@ -139,9 +86,9 @@ final class RouteTableTest extends TestCase
             array(
                 'id' => '\d+'
             )
-        );
+        ));
 
-        RouteTable::addRoute(
+        $routes->add(new Route(
             'manyDifferentParameters',
             '{yyyy}-{mm}-{dd}/{id}', 
             array(
@@ -155,9 +102,9 @@ final class RouteTableTest extends TestCase
                 'dd' => '[0-3]{1}[0-9]{1}',
                 'id' => '\d+'
             )
-        );
+        ));
 
-        RouteTable::addRoute('default', '{controller=Home}/{action=index}/{id?}');
+        $routes->add(new Route('default', '{controller=Home}/{action=index}/{id?}'));
 
         // test requests
         $requests = array(
@@ -311,11 +258,11 @@ final class RouteTableTest extends TestCase
         foreach ($requests as $request) {
             echo $request['uri'];
 
-            ViewContext::$requestContext = new RequestContext(array(
+            $httpContext = new HttpContext(array(
                 'REQUEST_URI' => $request['uri']
             ));
 
-            $route = RouteTable::getRoute();
+            $route = $routes->getRoute($httpContext);
 
             if ($request['expectRoute'] !== null) {
                 $this->assertNotNull($route);

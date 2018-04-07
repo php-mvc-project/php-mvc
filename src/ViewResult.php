@@ -14,6 +14,11 @@ class ViewResult implements ActionResult {
     public $layout;
 
     /**
+     * Gets or sets view file.
+     */
+    public $viewFile = null;
+
+    /**
      * Gets or sets page title.
      * 
      * @var string
@@ -32,7 +37,29 @@ class ViewResult implements ActionResult {
      */
     public $viewData = array();
 
-    public function __construct($model = null, $layout = null) {
+    public function __construct($viewOrModel = null, $model = null, $layout = null) {
+        if (gettype($viewOrModel) === 'string') {
+            if (($path = PathUtility::getViewFilePath($viewOrModel)) !== false) {
+                $this->viewFile = $path;
+            }
+            else {
+                if (empty($model)) {
+                    $model = $viewOrModel;
+                }
+                else {
+                    throw new ViewNotFoundException($viewOrModel);
+                }
+            }
+        }
+        else {
+            if (empty($model)) {
+                $model = $viewOrModel;
+            }
+            else {
+                throw new \Exception('The $viewOrModel parameter must contain the name of the view or the model. If the $viewOrModel parameter contains a model, the $model parameter value must be null.');
+            }
+        }
+
         $this->model = $model;
         $this->layout = $layout;
     }
@@ -40,20 +67,19 @@ class ViewResult implements ActionResult {
     /**
      * Executes the action and outputs the result.
      * 
-     * @param ActionContext $actionContext The context in which the result is executed.
-     * The context information includes information about the action that was executed and request information.
+     * @param ViewContext $viewContext The view context.
      * 
      * @return void
      */
-    public function execute($actionContext) {
-        !empty($this->layout) ? ViewContext::$layout = $this->layout : null;
-        !empty($this->title) ? ViewContext::$title = $this->title : null;
-        
-        if (!empty($this->viewData)) {
-            ViewContext::$viewData = array_unique(array_merge(ViewContext::$viewData, $this->viewData), SORT_REGULAR);
-        }
+    public function execute($viewContext) {
+        !empty($this->title) ? $viewContext->title = $this->title : null;
+        !empty($this->viewFile) ? $viewContext->viewFile = PathUtility::getViewFilePath($this->viewFile) : null;
+        !empty($this->layout) ? $viewContext->layout = PathUtility::getViewFilePath($this->layout) : null;
+        !empty($this->model) ? $viewContext->model = $this->model : null;
 
-        ViewContext::$actionResult = $this->model;
+        if (!empty($this->viewData)) {
+            $viewContext->viewData = array_unique(array_merge($viewContext->viewData, $this->viewData), SORT_REGULAR);
+        }
     }
 
 }

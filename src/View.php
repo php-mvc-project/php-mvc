@@ -7,6 +7,13 @@ namespace PhpMvc;
 final class View {
 
     /**
+     * Defines ViewContext.
+     * 
+     * @var ViewContext
+     */
+    private static $viewContext;
+
+    /**
      * Sets layout.
      * 
      * @param string $path The layout file name in the shared folder or full path to layout file.
@@ -14,7 +21,7 @@ final class View {
      * @return void
      */
     public static function setLayout($path) {
-        ViewContext::$layout = $path;
+        self::$viewContext->layout = $path;
     }
 
     /**
@@ -23,7 +30,7 @@ final class View {
      * @return void
      */
     public static function setTitle($title) {
-        ViewContext::$title = $title;
+        self::$viewContext->title = $title;
     }
 
     /**
@@ -34,9 +41,11 @@ final class View {
      * @return void
      */
     public static function injectModel(&$model) {
-        if (!empty(ViewContext::$actionResult)) {
-            if (ViewContext::$actionResult instanceof ViewResult && !empty(ViewContext::$actionResult->model)) {
-                $model = ViewContext::$actionResult->model;
+        $actionResult = self::$viewContext->actionResult;
+
+        if (!empty($actionResult)) {
+            if ($actionResult instanceof ViewResult && !empty($actionResult->model)) {
+                $model = $actionResult->model;
             }
         }
     }
@@ -50,19 +59,34 @@ final class View {
      * @return void
      */
     public static function setData($key, $value) {
-        ViewContext::$viewData[$key] = $value;
+        self::$viewContext->viewData[$key] = $value;
     }
 
     /**
      * Gets the data with the specified key.
      * If the specified key does not exist, function returns null.
+     * If no key is specified, returns all data.
      * 
      * @param string $key The key to get the data.
      * 
+     * @return mixed|array|null
+     */
+    public static function getData($key = null) {
+        if (!isset($key)) {
+            return self::$viewContext->viewData;
+        }
+        else {
+            return isset(self::$viewContext->viewData[$key]) ? self::$viewContext->viewData[$key] : null;
+        }
+    }
+
+    /**
+     * Gets model.
+     * 
      * @return mixed|null
      */
-    public static function getData($key) {
-        return isset(ViewContext::$viewData[$key]) ? ViewContext::$viewData[$key] : null;
+    public static function getModel() {
+        return self::$viewContext->model;
     }
 
     /**
@@ -71,7 +95,7 @@ final class View {
      * @return ModelState
      */
     public static function getModelState() {
-        return ViewContext::$modelState;
+        return self::$viewContext->modelState;
     }
 
 }

@@ -40,11 +40,10 @@ class ContentResult implements ActionResult {
      * @return void
      */
     public function execute($actionContext) {
-        header('Content-Type: ' . (!empty($this->contentType) ? $this->contentType : 'text/plain'));
-        
-        echo $this->content;
-
-        exit;
+        $response = $actionContext->httpContext->getResponse();
+        $response->addHeader('Content-Type', (!empty($this->contentType) ? $this->contentType : 'text/plain'));
+        $response->write($this->content);
+        $response->end();
     }
 
 }

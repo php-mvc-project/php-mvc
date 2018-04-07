@@ -7,6 +7,13 @@ namespace PhpMvc;
 final class Model {
 
     /**
+     * Defines ActionContext.
+     * 
+     * @var ActionContext
+     */
+    private static $actionContext;
+
+    /**
      * Marks the specified property with the attribute "requred" 
      * and it is expected that the property value must be specified.
      * 
@@ -23,11 +30,11 @@ final class Model {
         }
 
         if (empty($actionName)) {
-            throw new \Exception('$actionName cannot be empty.');
+            throw new \Exception('$actionName must not be empty.');
         }
 
         if (empty($propertyName)) {
-            throw new \Exception('$propertyName cannot be empty.');
+            throw new \Exception('$propertyName must not be empty.');
         }
 
         foreach ($propertyName as $item) {
@@ -42,7 +49,7 @@ final class Model {
 
             self::makeDataAnnotation($key);
 
-            ViewContext::$modelDataAnnotations[$key]->required = array($errorMessage);
+            self::$actionContext->modelState->annotations[$key]->required = array($errorMessage);
         }
     }
 
@@ -62,15 +69,15 @@ final class Model {
         }
 
         if (empty($actionName)) {
-            throw new \Exception('$actionName cannot be empty.');
+            throw new \Exception('$actionName must not be empty.');
         }
 
         if (empty($propertyName)) {
-            throw new \Exception('$propertyName cannot be empty.');
+            throw new \Exception('$propertyName must not be empty.');
         }
 
         if (empty($compareWith)) {
-            throw new \Exception('$compareWith cannot be empty.');
+            throw new \Exception('$compareWith must not be empty.');
         }
 
         if ($propertyName === $compareWith) {
@@ -79,7 +86,7 @@ final class Model {
 
         self::makeDataAnnotation($propertyName);
 
-        ViewContext::$modelDataAnnotations[$propertyName]->compareWith = array($compareWith, $errorMessage);
+        self::$actionContext->modelState->annotations[$propertyName]->compareWith = array($compareWith, $errorMessage);
     }
 
     /**
@@ -99,16 +106,16 @@ final class Model {
         }
 
         if (empty($actionName)) {
-            throw new \Exception('$actionName cannot be empty.');
+            throw new \Exception('$actionName must not be empty.');
         }
 
         if (empty($propertyName)) {
-            throw new \Exception('$propertyName cannot be empty.');
+            throw new \Exception('$propertyName must not be empty.');
         }
 
         self::makeDataAnnotation($propertyName);
 
-        ViewContext::$modelDataAnnotations[$propertyName]->stringLength = array($maxLength, $minLength, $errorMessage);
+        self::$actionContext->modelState->annotations[$propertyName]->stringLength = array($maxLength, $minLength, $errorMessage);
     }
 
     /**
@@ -128,20 +135,20 @@ final class Model {
         }
 
         if (empty($actionName)) {
-            throw new \Exception('$actionName cannot be empty.');
+            throw new \Exception('$actionName must not be empty.');
         }
 
         if (empty($propertyName)) {
-            throw new \Exception('$propertyName cannot be empty.');
+            throw new \Exception('$propertyName must not be empty.');
         }
 
         if ((int)$min > (int)$max) {
-            throw new \Exception('The minimum value cannot be greater than the maximum value.');
+            throw new \Exception('The minimum value must not be greater than the maximum value.');
         }
 
         self::makeDataAnnotation($propertyName);
 
-        ViewContext::$modelDataAnnotations[$propertyName]->range = array($min, $max, $errorMessage);
+        self::$actionContext->modelState->annotations[$propertyName]->range = array($min, $max, $errorMessage);
     }
 
     /**
@@ -162,11 +169,11 @@ final class Model {
         }
 
         if (empty($actionName)) {
-            throw new \Exception('$actionName cannot be empty.');
+            throw new \Exception('$actionName must not be empty.');
         }
 
         if (empty($propertyName)) {
-            throw new \Exception('$propertyName cannot be empty.');
+            throw new \Exception('$propertyName must not be empty.');
         }
 
         if (!is_callable($callback)) {
@@ -175,7 +182,7 @@ final class Model {
 
         self::makeDataAnnotation($propertyName);
 
-        ViewContext::$modelDataAnnotations[$propertyName]->customValidation = array($callback, $errorMessage);
+        self::$actionContext->modelState->annotations[$propertyName]->customValidation = array($callback, $errorMessage);
     }
 
     /**
@@ -194,22 +201,22 @@ final class Model {
         }
 
         if (empty($actionName)) {
-            throw new \Exception('$actionName cannot be empty.');
+            throw new \Exception('$actionName must not be empty.');
         }
 
         if (empty($propertyName)) {
-            throw new \Exception('$propertyName cannot be empty.');
+            throw new \Exception('$propertyName must not be empty.');
         }
 
         self::makeDataAnnotation($propertyName);
 
-        ViewContext::$modelDataAnnotations[$propertyName]->displayName = $name;
-        ViewContext::$modelDataAnnotations[$propertyName]->displayText = $text;
+        self::$actionContext->modelState->annotations[$propertyName]->displayName = $name;
+        self::$actionContext->modelState->annotations[$propertyName]->displayText = $text;
     }
 
     private static function makeDataAnnotation($propertyName) {
-        if (!isset(ViewContext::$modelDataAnnotations[$propertyName])) {
-            ViewContext::$modelDataAnnotations[$propertyName] = new ModelDataAnnotation();
+        if (!isset(self::$actionContext->modelState->annotations[$propertyName])) {
+            self::$actionContext->modelState->annotations[$propertyName] = new ModelDataAnnotation();
         }
     }
 

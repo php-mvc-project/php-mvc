@@ -50,6 +50,28 @@ class Route {
     public $values;
 
     /**
+     * Initializes a new instance of the ActionContext for the current request.
+     * 
+     * @param string $name The unique name of the route.
+     * @param string $template The template by which the route will be searched.
+     * Use curly braces to denote the elements of the route.
+     * For example: {controller}/{action}/{id}
+     * {controller=Home}/{action=index}/{id?}
+     * @param array $defaults An associative array containing the default values for the elements defined in the $template.
+     * For example, $template is {controller}/{action}/{id}
+     * $defaults = array('controller' => 'Home', 'action' => 'index', id => \PhpMvc\UrlParameter.OPTIONAL)
+     * @param array $constraints An associative array containing regular expressions for checking the elements of the route.
+     * For example, $template is {controller}/{action}/{id}
+     * $constraints = array('id' => '\w+')
+     */
+    public function __construct($name = null, $template = null, $defaults = null, $constraints = null) {
+        $this->name = $name;
+        $this->template = $template;
+        $this->defaults = $defaults;
+        $this->constraints = $constraints;
+    }
+
+    /**
      * Get value or default.
      * 
      * @param string $key The key whose value is to try to get.

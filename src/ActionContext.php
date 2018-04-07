@@ -7,6 +7,20 @@ namespace PhpMvc;
 class ActionContext {
 
     /**
+     * Gets or sets context of the current request.
+     * 
+     * @var HttpContextBase
+     */
+    public $httpContext;
+
+    /**
+     * Gets or sets the Route for the current request.
+     * 
+     * @var Route
+     */
+    public $route;
+
+    /**
      * Gets or sets the controller.
      * 
      * @var Controller
@@ -33,5 +47,17 @@ class ActionContext {
      * @var string
      */
     public $actionName;
+
+    /**
+     * Initializes a new instance of the ActionContext for the current request.
+     * 
+     * @param HttpContextBase $httpContext Context of the request.
+     * @param Route $route Route for the current request.
+     */
+    public function __construct($httpContext, $route) {
+        $this->httpContext = $httpContext;
+        $this->route = $route;
+        $this->modelState = new ModelState();
+    }
 
 }
