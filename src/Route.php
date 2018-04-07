@@ -215,20 +215,24 @@ class Route {
                 $prevGlued = !empty($before) && $before[0] != '/';
 
                 if (count($parts = explode('/', $before)) > 1) {
-                    $prevAfter = $parts[0];
-                    $before = $parts[1];
+                    $partsCount = count($parts);
+                    $prevAfter = array_slice($parts, 0, $partsCount - 1);
+                    $before = $parts[$partsCount - 1];
                 }
 
                 if (!empty($prevAfter)) {
                     if ($i > 0) {
-                        $segments[$i - 1]->after = $prevAfter;
+                        // TODO: widthout implode
+                        $segments[$i - 1]->after = implode('\/', $prevAfter);
                     }
                     else {
-                        $first = new RouteSegment();
-                        $first->pattern = $prevAfter;
-                        $first->optional = false;
-
-                        $segments[] = $first;
+                        foreach ($prevAfter as $prevAfterItem) {
+                            $first = new RouteSegment();
+                            $first->pattern = $prevAfterItem;
+                            $first->optional = false;
+    
+                            $segments[] = $first;
+                        }
                     }
                 }
 
@@ -273,6 +277,19 @@ class Route {
                 $prevName = $name;
                 $prevIndex = $index;
                 $prevMatchString = $matchString;
+            }
+
+            // tail
+            if ($prevIndex + ($prevLen = mb_strlen($prevMatchString)) < mb_strlen($template)) {
+                $before = mb_substr($template, $prevIndex + $prevLen);
+
+                if (!empty($before)) {
+                    $last = new RouteSegment();
+                    $last->pattern = ltrim($before, '/');
+                    $last->optional = false;
+
+                    $segments[] = $last;
+                }
             }
         }
         else {

@@ -22,11 +22,44 @@ final class UrlHelperTest extends TestCase
 
         $routes = new RouteCollection();
 
-        // TODO: fix route parse for:
-        // $routes->add(new Route('123', 'test/abc/aaa/{action=1123}/ffff'));
-
+        $routes->add(new Route('strange', 'test/abc/aaa/{action=1123}/ffff'), array('controller' => 'home'));
         $routes->add(new Route('test', 'testovich/{action=index}/{id?}', array('controller' => 'abc')));
+
+        $routes->add(
+            new Route(
+                'news', 
+                '{yyyy}-{mm}-{dd}/{id}', 
+                array(
+                    'controller' => 'news',
+                    'action' => 'show'
+                )
+            ),
+            array(
+                'yyyy' => '\d{4}',
+                'mm' => '([0]{1}[1-9]{1})|([1]{1}[0-2]{1})',
+                'dd' => '[0-3]{1}[0-9]{1}',
+                'id' => '\d+'
+            )
+        );
+
         $routes->add(new Route('default', '{controller=Test}/{action=index}/{id?}'));
+
+        $httpContext = new HttpContext(
+            $routes,
+            array(
+                'REQUEST_URI' => 'test/abc/aaa/aaaaa/ffff',
+                'REQUEST_METHOD' => 'GET'
+            )
+        );
+
+        $actionContext = new ActionContext($httpContext);
+
+        $this->assertEquals(
+            'test/abc/aaa/bbbbb/ffff',
+            $result = UrlHelper::action($actionContext, 'bbbbb')
+        );
+
+        echo $result . ' - OK' . chr(10);
 
         $httpContext = new HttpContext(
             $routes,
