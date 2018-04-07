@@ -252,15 +252,18 @@ final class RouteCollectionTest extends TestCase
             ),
         );
 
-        echo "\n";
+        echo chr(10);
 
         // run
         foreach ($requests as $request) {
             echo $request['uri'];
 
-            $httpContext = new HttpContext(array(
-                'REQUEST_URI' => $request['uri']
-            ));
+            $httpContext = new HttpContext(
+                $routes,
+                array(
+                    'REQUEST_URI' => $request['uri']
+                )
+            );
 
             $route = $routes->getRoute($httpContext);
 
@@ -277,7 +280,7 @@ final class RouteCollectionTest extends TestCase
                 $this->assertNull($route);
             }
 
-            echo ' - OK' . "\n";
+            echo ' - OK' . chr(10);
         }
     }
 }

@@ -34,9 +34,9 @@ final class Make {
      * 
      * @return void
      */
-    public static function magic($appNamespace, $httpContext = null, $basePath = null, $routes = null) {
+    public static function magic($appNamespace, $httpContext = null, $basePath = null) {
         self::init($appNamespace, $basePath);
-        self::context($httpContext, $routes);
+        self::context($httpContext);
         self::headers();
         self::validation();
         self::include();
@@ -82,11 +82,10 @@ final class Make {
      * Initializes the contexts associated with the current request.
      * 
      * @param HttpContextBase $httpContext Context of the request.
-     * @param RouteCollection $routes
      * 
      * @return void
      */
-    private static function context($httpContext = null, $routes = null) {
+    private static function context($httpContext = null) {
         // check request context
         if (isset($httpContext)) {
             if (!$httpContext instanceof HttpContextBase) {
@@ -100,19 +99,8 @@ final class Make {
         self::$request = $httpContext->getRequest();
         self::$response = $httpContext->getResponse();
 
-        if (isset($routes)) {
-            if (!$routes instanceof RouteCollection) {
-                throw new \Exception('The $routes type must be derived from "\PhpMvc\RouteCollection".');
-            }
-        }
-        else {
-            $routesProperty = new \ReflectionProperty('\PhpMvc\RouteTable', 'routes');
-            $routesProperty->setAccessible(true);
-            $routes = $routesProperty->getValue(null);
-        }
-
-        // search route
-        $route = $routes->getRoute($httpContext);
+        // check route
+        $route = $httpContext->getRoute();
 
         if ($route == null) {
             self::$response->setStatusCode(404);
@@ -126,7 +114,7 @@ final class Make {
         define('PHPMVC_CURRENT_VIEW_PATH', PHPMVC_VIEW_PATH . PHPMVC_VIEW . PHPMVC_DS . PHPMVC_ACTION . '.php');
 
         // create action context
-        self::$actionContext = $actionContext = new ActionContext($httpContext, $route);
+        self::$actionContext = $actionContext = new ActionContext($httpContext);
 
         // preparing to create an instance of the controller class 
         $controllerClass = new \ReflectionClass('\\' . PHPMVC_APP_NAMESPACE . '\\Controllers\\' . PHPMVC_CONTROLLER . 'Controller');

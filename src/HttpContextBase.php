@@ -21,11 +21,49 @@ abstract class HttpContextBase {
     protected $response;
 
     /**
+     * Route collection.
+     * 
+     * @var RouteCollection
+     */
+    protected $routes;
+
+    /**
+     * Current route.
+     * 
+     * @var Route
+     */
+    protected $route;
+
+    /**
      * Initializes a new instance of the HttpContextBase.
      */
-    public function __construct($request, $response) {
+    public function __construct($routes, $request, $response) {
+        if (!isset($routes) || !$routes instanceof RouteCollection) {
+            throw new \Exception('The $routes is requred and type must be derived from "\PhpMvc\RouteCollection".');
+        }
+
+        if (!isset($request) || !$request instanceof HttpRequestBase) {
+            throw new \Exception('The $request is requred and type must be derived from "\PhpMvc\HttpRequestBase".');
+        }
+
+        if (!isset($response) || !$response instanceof HttpResponseBase) {
+            throw new \Exception('The $response is requred and type must be derived from "\PhpMvc\HttpResponseBase".');
+        }
+
+        $this->routes = $routes;
         $this->request = $request;
         $this->response = $response;
+
+        $this->route = $routes->getRoute($this);
+    }
+
+    /**
+     * Gets list of routes.
+     * 
+     * @return RouteCollection
+     */
+    public function getRoutes() {
+        return $this->routes;
     }
 
     /**
@@ -44,6 +82,15 @@ abstract class HttpContextBase {
      */
     public function getResponse() {
         return $this->response;
+    }
+
+    /**
+     * Returns a route that is comparable to the current request context.
+     * 
+     * @return Route|null
+     */
+    public function getRoute() {
+        return $this->route;
     }
 
 }

@@ -4,7 +4,7 @@ namespace PhpMvc;
 /**
  * Provides utility methods for path operations.
  */
-class PathUtility {
+final class PathUtility {
 
     /**
      * Converts a virtual path to an physical path.

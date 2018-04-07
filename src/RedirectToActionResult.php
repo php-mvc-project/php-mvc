@@ -75,6 +75,7 @@ class RedirectToActionResult extends RedirectResult {
     private function buildUrl() {
         $this->url = '/?controller=' . $this->controllerName . '&action=' . $this->actionName;
 
+        // $this->actionContext->route
         // header('Location: /' . $controllerName . '/' . $actionName);
     }
 

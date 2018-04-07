@@ -52,11 +52,10 @@ class ActionContext {
      * Initializes a new instance of the ActionContext for the current request.
      * 
      * @param HttpContextBase $httpContext Context of the request.
-     * @param Route $route Route for the current request.
      */
-    public function __construct($httpContext, $route) {
+    public function __construct($httpContext) {
         $this->httpContext = $httpContext;
-        $this->route = $route;
+        $this->route = $httpContext->getRoute();
         $this->modelState = new ModelState();
     }
 
