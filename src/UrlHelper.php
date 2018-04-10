@@ -30,9 +30,34 @@ final class UrlHelper {
             $modelState->addError($key, '$actionName is required. Value must not be empty.');
         }
 
-        $routeValues = isset($routeValues) ? $routeValues : array();
-
         $result = '';
+
+        if (!empty($schema)) {
+            $result .= $schema . '://';
+
+            if (empty($host)) {
+                $server = $actionContext->httpContext->getRequest()->getServerVariables();
+                $result .= $server['HTTP_HOST'] . '/';
+            }
+        }
+
+        if (!empty($host)) {
+            if (empty($schema)) {
+                $server = $actionContext->httpContext->getRequest()->getServerVariables();
+                if (!empty($server['HTTPS']) && $server['HTTPS'] !== 'off' || $server['SERVER_PORT'] == 443) {
+                    $schema = 'https';
+                }
+                else {
+                    $schema = 'http';
+                }
+
+                $result .= $schema . '://';
+            }
+
+            $result .= $host . '/';
+        }
+
+        $routeValues = isset($routeValues) ? $routeValues : array();
 
         if (empty($controllerName)) {
             // use current route

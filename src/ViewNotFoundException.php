@@ -6,6 +6,11 @@ namespace PhpMvc;
  */
 class ViewNotFoundException extends \Exception {
 
+    /**
+     * Initializes a new instance of the ViewNotFoundException.
+     * 
+     * @param string $path The path to the view file.
+     */
     public function __construct($path) {
         $message = "The view file could not be found. Search paths:\r\n";
         $message .= $path . "\r\n";

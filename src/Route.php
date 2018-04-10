@@ -57,6 +57,13 @@ class Route {
     private $segments;
 
     /**
+     * Gets or sets named list of segments.
+     * 
+     * @var RouteSegment[]
+     */
+    private $segmentsNamed;
+
+    /**
      * Initializes a new instance of the ActionContext for the current request.
      * 
      * @param string $name The unique name of the route.
@@ -153,7 +160,7 @@ class Route {
     private function extractSegments($route, $template, &$required) {
         $required = $route->defaults;
         $segments = array();
-        $names = array();
+        $namedSegments = array();
 
         if (preg_match_all('/\{([^\}]+)\}/', $template, $matches, \PREG_SET_ORDER | \PREG_OFFSET_CAPTURE)) {
             $prevMatchString = $prevName = '';
@@ -196,7 +203,7 @@ class Route {
                 }
 
                 // check uniqueness
-                if (in_array($name, $names)) {
+                if (!empty($namedSegments[$name])) {
                     trigger_error(
                         'The route "' . $route->name . '" contains more than one parameter named "' . 
                         $name . '". Route parsing may not work correctly. ' .
@@ -272,7 +279,7 @@ class Route {
                 }
 
                 $segments[] = $segment;
-                $names[] = $name;
+                $namedSegments[$name] = $segment;;
 
                 $prevName = $name;
                 $prevIndex = $index;
@@ -301,6 +308,12 @@ class Route {
         }
 
         $this->setBounds($segments);
+
+        if ((empty($namedSegments['controller']) && empty($this->defaults['controller'])) || (empty($namedSegments['action']) && empty($this->defaults['action']))) {
+            throw new RouteSegmentsRequiredException($this);
+        }
+
+        $this->segmentsNamed = $namedSegments;
 
         return $segments;
     }

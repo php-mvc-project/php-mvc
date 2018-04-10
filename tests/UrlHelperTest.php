@@ -22,7 +22,7 @@ final class UrlHelperTest extends TestCase
 
         $routes = new RouteCollection();
 
-        $routes->add(new Route('strange', 'test/abc/aaa/{action=1123}/ffff'), array('controller' => 'home'));
+        $routes->add(new Route('strange', 'test/abc/aaa/{action=1123}/ffff', array('controller' => 'home')));
         $routes->add(new Route('test', 'testovich/{action=index}/{id?}', array('controller' => 'abc')));
 
         $routes->add(
@@ -74,6 +74,20 @@ final class UrlHelperTest extends TestCase
         $this->assertEquals(
             'Test/index', // TODO: remove index
             $result = UrlHelper::action($actionContext, 'index')
+        );
+
+        echo $result . ' - OK' . chr(10);
+
+        $this->assertEquals(
+            'https://example.org/Test/index#test', // TODO: remove index
+            $result = UrlHelper::action($actionContext, 'index', null, null, 'test', 'https', 'example.org')
+        );
+
+        echo $result . ' - OK' . chr(10);
+
+        $this->assertEquals(
+            'http://example.org/Test/index', // TODO: remove index
+            $result = UrlHelper::action($actionContext, 'index', null, null, null, null, 'example.org')
         );
 
         echo $result . ' - OK' . chr(10);
