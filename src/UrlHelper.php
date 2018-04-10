@@ -44,7 +44,8 @@ final class UrlHelper {
         if (!empty($host)) {
             if (empty($schema)) {
                 $server = $actionContext->httpContext->getRequest()->getServerVariables();
-                if (!empty($server['HTTPS']) && $server['HTTPS'] !== 'off' || $server['SERVER_PORT'] == 443) {
+
+                if ((!empty($server['HTTPS']) && $server['HTTPS'] !== 'off') || $server['SERVER_PORT'] == 443) {
                     $schema = 'https';
                 }
                 else {

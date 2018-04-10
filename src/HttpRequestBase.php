@@ -115,7 +115,7 @@ abstract class HttpRequestBase {
      * @return array
      */
     public function getServerVariables() {
-        return $this->queryString;
+        return $this->serverVariables;
     }
 
     /**

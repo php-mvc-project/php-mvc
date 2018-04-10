@@ -65,7 +65,9 @@ final class UrlHelperTest extends TestCase
             $routes,
             array(
                 'REQUEST_URI' => '/abc/test',
-                'REQUEST_METHOD' => 'GET'
+                'REQUEST_METHOD' => 'GET',
+                'HTTPS' => 'on',
+                'HTTP_HOST' => 'example.org',
             )
         );
 
@@ -86,8 +88,15 @@ final class UrlHelperTest extends TestCase
         echo $result . ' - OK' . chr(10);
 
         $this->assertEquals(
-            'http://example.org/Test/index', // TODO: remove index
+            'https://example.org/Test/index', // TODO: remove index
             $result = UrlHelper::action($actionContext, 'index', null, null, null, null, 'example.org')
+        );
+
+        echo $result . ' - OK' . chr(10);
+
+        $this->assertEquals(
+            'git://example.org/Test/index', // TODO: remove index
+            $result = UrlHelper::action($actionContext, 'index', null, null, null, 'git')
         );
 
         echo $result . ' - OK' . chr(10);
