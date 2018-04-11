@@ -67,6 +67,15 @@ abstract class HttpContextBase {
     }
 
     /**
+     * Gets route options.
+     * 
+     * @return RouteOptions
+     */
+    public function getRouteOptions() {
+        return $this->routes->getOptions();
+    }
+
+    /**
      * Gets request.
      * 
      * @return HttpRequestBase

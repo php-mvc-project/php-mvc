@@ -74,35 +74,35 @@ final class UrlHelperTest extends TestCase
         $actionContext = new ActionContext($httpContext);
 
         $this->assertEquals(
-            'Test/index', // TODO: remove index
+            'test',
             $result = UrlHelper::action($actionContext, 'index')
         );
 
         echo $result . ' - OK' . chr(10);
 
         $this->assertEquals(
-            'https://example.org/Test/index#test', // TODO: remove index
+            'https://example.org/test#test',
             $result = UrlHelper::action($actionContext, 'index', null, null, 'test', 'https', 'example.org')
         );
 
         echo $result . ' - OK' . chr(10);
 
         $this->assertEquals(
-            'https://example.org/Test/index', // TODO: remove index
+            'https://example.org/test',
             $result = UrlHelper::action($actionContext, 'index', null, null, null, null, 'example.org')
         );
 
         echo $result . ' - OK' . chr(10);
 
         $this->assertEquals(
-            'git://example.org/Test/index', // TODO: remove index
+            'git://example.org/test',
             $result = UrlHelper::action($actionContext, 'index', null, null, null, 'git')
         );
 
         echo $result . ' - OK' . chr(10);
 
         $this->assertEquals(
-            'Test/page/123?text=hello+world%21&n=555', // TODO: remove index
+            'test/page/123?text=hello+world%21&n=555',
             $result = UrlHelper::action(
                 $actionContext, 
                 'page', 
@@ -118,7 +118,7 @@ final class UrlHelperTest extends TestCase
         echo $result . ' - OK' . chr(10);
 
         $this->assertEquals(
-            'testovich/index', // TODO: remove index
+            'testovich',
             $result = UrlHelper::action($actionContext, 'index', 'abc')
         );
 

@@ -30,22 +30,22 @@ final class UrlHelper {
             $modelState->addError($key, '$actionName is required. Value must not be empty.');
         }
 
+        $httpContext = $actionContext->httpContext;
+        $options = $httpContext->getRouteOptions();
         $result = '';
 
         if (!empty($schema)) {
             $result .= $schema . '://';
 
             if (empty($host)) {
-                $server = $actionContext->httpContext->getRequest()->getServerVariables();
+                $server = $httpContext->getRequest()->getServerVariables();
                 $result .= $server['HTTP_HOST'] . '/';
             }
         }
 
         if (!empty($host)) {
             if (empty($schema)) {
-                $server = $actionContext->httpContext->getRequest()->getServerVariables();
-
-                if ((!empty($server['HTTPS']) && $server['HTTPS'] !== 'off') || $server['SERVER_PORT'] == 443) {
+                if ($httpContext->getRequest()->isSecureConnection()) {
                     $schema = 'https';
                 }
                 else {
@@ -66,7 +66,7 @@ final class UrlHelper {
         }
         else {
             // search route
-            $routes = $actionContext->httpContext->getRoutes();
+            $routes = $httpContext->getRoutes();
 
             foreach ($routes as $route) {
                 if (empty($route->defaults)) {
@@ -80,6 +80,7 @@ final class UrlHelper {
         }
 
         $segments = $route->getSegments();
+        $last = null;
 
         foreach ($segments as $segment) {
             $result .= $segment->after;
@@ -98,7 +99,7 @@ final class UrlHelper {
                     $result .= $routeValues[$segment->name];
                     unset($routeValues[$segment->name]);
                 }
-                else 
+                else
                 {
                     if ($segment->default !== UrlParameter::OPTIONAL) {
                         $result .= $segment->default;
@@ -109,9 +110,30 @@ final class UrlHelper {
             $result .= $segment->before;
 
             $result .= '/';
+
+            if ($segment->preEnd === true || ($segment->end === true && $segment->default !== UrlParameter::OPTIONAL)) {
+                $last = $segment;
+            }
         }
 
         $result = rtrim($result, '/');
+
+        if ($options->removeLastSegmentIfValueIsDefault === true) {
+            $lastSegmentPos = strrpos($result, '/');
+            $lastSegment = trim(mb_substr($result, $lastSegmentPos), '/');
+
+            if (empty($last->before) && !empty($last->default) && mb_strtolower($last->default) === mb_strtolower($lastSegment)) {
+                $result = mb_substr($result, 0, $lastSegmentPos);
+            }
+        }
+
+        if ($options->lowercaseUrls === true) {
+            $result = mb_strtolower($result);
+        }
+
+        if ($options->appendTrailingSlash === true) {
+            $result .= '/';
+        }
 
         if (!empty($routeValues)) {
             $result .= '?' . http_build_query($routeValues);
@@ -120,9 +142,6 @@ final class UrlHelper {
         if (!empty($fragment)) {
             $result .= '#' . $fragment;
         }
-
-        // TODO: remove index
-        // TODO: lowercase
 
         return $result;
     }

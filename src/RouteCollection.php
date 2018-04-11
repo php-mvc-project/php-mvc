@@ -21,6 +21,35 @@ class RouteCollection implements \ArrayAccess, \Iterator {
     private $routes = array();
 
     /**
+     * Route options.
+     * 
+     * @var RouteOptions
+     */
+    private $options;
+
+    public function __construct() {
+        $this->options = new RouteOptions();
+    }
+
+    /**
+     * Sets options.
+     * 
+     * @return void
+     */
+    public function setOptions($options) {
+        $this->options = $options;
+    }
+
+    /**
+     * Gets options.
+     * 
+     * @return void
+     */
+    public function getOptions() {
+        return $this->options;
+    }
+
+    /**
      * Adds a route to collection.
      * 
      * @param Route $route The route to add.

@@ -173,6 +173,15 @@ abstract class HttpRequestBase {
     }
 
     /**
+     * Gets a value indicating whether the HTTP connection uses secure sockets (HTTPS).
+     * 
+     * @return bool
+     */
+    public function isSecureConnection() {
+        return (!empty($this->serverVariables['HTTPS']) && $this->serverVariables['HTTPS'] !== 'off') || $this->serverVariables['SERVER_PORT'] == 443;
+    }
+
+    /**
      * Returns HTTP method of the request.
      * 
      * @return string
