@@ -58,6 +58,10 @@ final class UrlHelper {
             $result .= $host . '/';
         }
 
+        if (empty($result)) {
+            $result = '/';
+        }
+
         $routeValues = isset($routeValues) ? $routeValues : array();
 
         if (empty($controllerName)) {

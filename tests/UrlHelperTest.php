@@ -55,7 +55,7 @@ final class UrlHelperTest extends TestCase
         $actionContext = new ActionContext($httpContext);
 
         $this->assertEquals(
-            'test/abc/aaa/bbbbb/ffff',
+            '/test/abc/aaa/bbbbb/ffff',
             $result = UrlHelper::action($actionContext, 'bbbbb')
         );
 
@@ -74,7 +74,7 @@ final class UrlHelperTest extends TestCase
         $actionContext = new ActionContext($httpContext);
 
         $this->assertEquals(
-            'test',
+            '/test',
             $result = UrlHelper::action($actionContext, 'index')
         );
 
@@ -102,7 +102,7 @@ final class UrlHelperTest extends TestCase
         echo $result . ' - OK' . chr(10);
 
         $this->assertEquals(
-            'test/page/123?text=hello+world%21&n=555',
+            '/test/page/123?text=hello+world%21&n=555',
             $result = UrlHelper::action(
                 $actionContext, 
                 'page', 
@@ -118,14 +118,14 @@ final class UrlHelperTest extends TestCase
         echo $result . ' - OK' . chr(10);
 
         $this->assertEquals(
-            'testovich',
+            '/testovich',
             $result = UrlHelper::action($actionContext, 'index', 'abc')
         );
 
         echo $result . ' - OK' . chr(10);
 
         $this->assertEquals(
-            'testovich/examplovich', 
+            '/testovich/examplovich', 
             $result = UrlHelper::action($actionContext, 'examplovich', 'abc')
         );
 

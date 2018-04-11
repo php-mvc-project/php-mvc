@@ -158,22 +158,17 @@ class Html {
     /**
      * Returns the path to action.
      * 
+     * @param string $actionName The name of the action.
+     * @param string $controllerName The name of the controller. Default: current controller.
+     * @param array $routeValues An array that contains the parameters for a route.
+     * @param string $fragment The URL fragment name (the anchor name).
+     * @param string $schema The protocol for the URL, such as "http" or "https".
+     * @param string $host The host name for the URL.
+     * 
      * @return string
      */
-    public static function action($actionName, $controllerName = null) {
-        $params = '';
-
-        if (empty($controllerName)) {
-            $controllerName = PHPMVC_VIEW;
-        }
-        elseif (is_array($controllerName)) {
-            $params = '&' . http_build_query($controllerName);
-            $controllerName = PHPMVC_VIEW;
-        }
-
-        // TODO: url mode
-        return '/?controller=' . $controllerName . '&action=' . $actionName . $params;
-        // return '/' . $controllerName . '/' . $actionName;
+    public static function action($actionName, $controllerName = null, $routeValues = null, $fragment = null, $schema = null, $host = null) {
+        return UrlHelper::action(self::$viewContext, $actionName, $controllerName, $routeValues, $fragment, $schema, $host);
     }
 
     /**

@@ -484,6 +484,11 @@ final class MakeTest extends TestCase
         );
 
         $this->assertContains(
+            '<form id="loginForm" action="/account/login" method="post" enctype="application/x-www-form-urlencoded">',
+            $result
+        );
+
+        $this->assertContains(
             '<label for="login">Username:</label>',
             $result
         );
@@ -500,6 +505,11 @@ final class MakeTest extends TestCase
 
         $this->assertContains(
             'Your password.',
+            $result
+        );
+
+        $this->assertContains(
+            '<a href="/home" class="btn btn-default">Cancel</a>',
             $result
         );
 
