@@ -172,12 +172,63 @@ class Html {
     }
 
     /**
+     * Returns a link (<a />) to the specified action.
+     * 
+     * @param string $linkText The link text.
+     * @param string $actionName The name of the action.
+     * @param string $controllerName The name of the controller. Default: current controller.
+     * @param array $routeValues An array that contains the parameters for a route.
+     * @param string $fragment The URL fragment name (the anchor name).
+     * @param string $schema The protocol for the URL, such as "http" or "https".
+     * @param string $host The host name for the URL.
+     * @param string $htmlAttributes Additional HTML attributes that will be used when creating the link.
+     * 
+     * @return string
+     */
+    public static function actionLink($linkText, $actionName, $controllerName = null, $routeValues = null, $htmlAttributes = null, $fragment = null, $schema = null, $host = null) {
+        $url = UrlHelper::action(self::$viewContext, $actionName, $controllerName, $routeValues, $fragment, $schema, $host);
+        $attr = self::buildAttributes($htmlAttributes, array('href'));
+
+        return '<a href="' . $url . '"' . (!empty($attr) ? ' ' : '') . $attr . '>' . htmlspecialchars($linkText) . '</a>';
+    }
+
+    /**
      * Gets model state.
      * 
      * @return ModelState
      */
     public static function getModelState() {
         return View::getModelState();
+    }
+
+    /**
+     * Generates HTML-attributes string.
+     * 
+     * @param array $htmlAttributes Associative array of attributes.
+     * @param array $ignore List of attributes to ignore.
+     * 
+     * @return string
+     */
+    private static function buildAttributes($htmlAttributes, $ignore = array())
+    {
+        if (empty($htmlAttributes))
+        {
+            return '';
+        }
+
+        if ($ignore === null) {
+            $ignore = array();
+        }
+
+        $filtered = array_filter($htmlAttributes, function($key) use ($ignore) {
+            return !in_array($key, $ignore);
+        }, \ARRAY_FILTER_USE_KEY);
+
+        array_walk($filtered, function(&$value, $key) {
+            $value = sprintf('%s="%s"', $key, str_replace('"', '\"', $value));
+        });
+
+        return implode(' ', $filtered);
     }
 
 }

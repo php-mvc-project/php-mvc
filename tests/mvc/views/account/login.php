@@ -52,7 +52,7 @@ View::injectModel($model);
         </form>
       </div>
       <div class="modal-footer">
-        <a href="<?=Html::action('Index', 'Home')?>" class="btn btn-default">Cancel</a>
+        <?=Html::actionLink('Cancel', 'Index', 'Home', null, array('class' => 'btn btn-default'))?>
         <button type="button" class="btn btn-primary" onclick="$('#loginForm').submit()">Login</button>
       </div>
     </div>
