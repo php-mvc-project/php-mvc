@@ -25,14 +25,15 @@ View::injectModel($model);
         <form id="loginForm" action="<?=Html::action('Login', 'Account')?>" method="post" enctype="application/x-www-form-urlencoded">
             <div class="form-group">
                 <label for="login"><?=Html::displayName('username')?>:</label>
-                <input 
-                    required 
-                    type="text" 
-                    class="form-control" 
-                    id="login" 
-                    name="username" 
-                    value="<?=$model->username?>" 
-                />
+                <?=Html::textBox(
+                  'username',
+                  null, 
+                  array(
+                    'required' => 'required', 
+                    'class' => 'form-control',
+                    'id' => 'login'
+                  )
+                )?>
                 <?=Html::validationMessage('username')?>
                 <?=Html::displayText('username')?>
             </div>

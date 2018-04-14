@@ -115,6 +115,7 @@ final class Make {
 
         // create action context
         self::$actionContext = $actionContext = new ActionContext($httpContext);
+        $actionContext->actionName = PHPMVC_ACTION;
 
         // preparing to create an instance of the controller class 
         $controllerClass = new \ReflectionClass('\\' . PHPMVC_APP_NAMESPACE . '\\Controllers\\' . PHPMVC_CONTROLLER . 'Controller');
@@ -142,7 +143,6 @@ final class Make {
         $actionContextProperty->setValue($controllerInstance, $actionContext);
 
         $actionContext->controller = $controllerInstance;
-        $actionContext->actionName = PHPMVC_ACTION;
     }
 
     /**
@@ -279,14 +279,14 @@ final class Make {
 
         // get http params
         // TODO: подумать о возможности управлять этим
-        $get = self::$request->getGetData();
+        $get = self::$request->get();
 
         // change case of keys
         $get = array_change_key_case($get, CASE_LOWER);
 
         // post params
         $isPost = self::$request->isPost();
-        $postData = $isPost ? self::$request->getPostData() : null;
+        $postData = $isPost ? self::$request->post() : null;
         $post =  null;
 
         if (!empty($postData)) {
@@ -294,7 +294,7 @@ final class Make {
         }
         
         if (empty($post) && $isPost) {
-            $contentType = self::$request->getContentType();
+            $contentType = self::$request->contentType();
 
             if (strrpos($contentType, '/json') !== false) {
                 $requestBody = file_get_contents('php://input');
@@ -383,8 +383,8 @@ final class Make {
         if (($dataAnnotation = $modelState->getAnnotation($key)) !== null) {
             $displayName = $key;
 
-            if (!empty($dataAnnotation->name)) {
-                $displayName = $dataAnnotation->name;
+            if (!empty($dataAnnotation->displayName)) {
+                $displayName = $dataAnnotation->displayName;
             }
 
             // required field
@@ -404,8 +404,8 @@ final class Make {
                         $displayName2 = $entry2->key;
 
                         if (($dataAnnotation2 = $modelState->getAnnotation($entry2->key)) !== null) {
-                            if (!empty($dataAnnotation2->name)) {
-                                $displayName2 = $dataAnnotation2->name;
+                            if (!empty($dataAnnotation2->displayName)) {
+                                $displayName2 = $dataAnnotation2->displayName;
                             }
                         }
 

@@ -96,7 +96,7 @@ abstract class HttpRequestBase {
      * 
      * @return string
      */
-    public function getRequestUri() {
+    public function requestUri() {
         return $this->requestUri;
     }
 
@@ -105,7 +105,7 @@ abstract class HttpRequestBase {
      * 
      * @return string
      */
-    public function getQueryString() {
+    public function queryString() {
         return $this->queryString;
     }
 
@@ -114,7 +114,7 @@ abstract class HttpRequestBase {
      * 
      * @return array
      */
-    public function getServerVariables() {
+    public function serverVariables() {
         return $this->serverVariables;
     }
 
@@ -123,7 +123,7 @@ abstract class HttpRequestBase {
      * 
      * @return array
      */
-    public function getCookies() {
+    public function cookies() {
         return $this->cookies;
     }
 
@@ -132,7 +132,7 @@ abstract class HttpRequestBase {
      * 
      * @return array
      */
-    public function getSession() {
+    public function session() {
         return $this->session;
     }
 
@@ -141,7 +141,7 @@ abstract class HttpRequestBase {
      * 
      * @return array
      */
-    public function getGetData() {
+    public function get() {
         return $this->get;
     }
 
@@ -150,7 +150,7 @@ abstract class HttpRequestBase {
      * 
      * @return array
      */
-    public function getPostData() {
+    public function post() {
         return $this->post;
     }
 
@@ -159,7 +159,7 @@ abstract class HttpRequestBase {
      * 
      * @return array
      */
-    public function getFiles() {
+    public function files() {
         return $this->files;
     }
 
@@ -173,6 +173,15 @@ abstract class HttpRequestBase {
     }
 
     /**
+     * Gets the HTTP data transfer method (such as GET, POST, or HEAD) used by the client.
+     * 
+     * @return string
+     */
+    public function httpMethod() {
+        return $this->serverVariables['REQUEST_METHOD'];
+    }
+
+    /**
      * Gets a value indicating whether the HTTP connection uses secure sockets (HTTPS).
      * 
      * @return bool
@@ -182,12 +191,21 @@ abstract class HttpRequestBase {
     }
 
     /**
-     * Returns HTTP method of the request.
+     * Returns user agent.
      * 
      * @return string
      */
-    public function httpMethod() {
-        return $this->serverVariables['REQUEST_METHOD'];
+    public function userAgent() {
+        return $this->serverVariables['HTTP_USER_AGENT'];
+    }
+
+    /**
+     * The IP address from which the user is viewing the current page.
+     * 
+     * @return string
+     */
+    public function userHostAddress() {
+        return $this->serverVariables['REMOTE_ADDR'];
     }
 
     /**
@@ -195,7 +213,7 @@ abstract class HttpRequestBase {
      * 
      * @return string
      */
-    public function getContentType() {
+    public function contentType() {
         $headers = array('CONTENT_TYPE', 'HTTP_CONTENT_TYPE');
 
         foreach ($headers as $header) {
@@ -203,8 +221,27 @@ abstract class HttpRequestBase {
                 return $this->serverVariables[$header];
             }
         }
-        
+
         return '';
+    }
+
+    /**
+     * Returns HTTP headers of the request.
+     * 
+     * @return array
+     */
+    public function headers() {
+        $result = array(); 
+
+        foreach ($this->serverVariables as $key => $value) 
+        {
+            if (substr($key, 0, 5) == 'HTTP_') 
+            {
+                $result[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($key, 5)))))] = $value; 
+            }
+        }
+
+        return $result; 
     }
 
 }

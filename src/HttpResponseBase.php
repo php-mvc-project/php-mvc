@@ -28,6 +28,23 @@ abstract class HttpResponseBase {
     protected $headers = array();
 
     /**
+     * Gets or sets cookies list.
+     * 
+     * @var array
+     */
+    protected $cookies = array();
+
+    /**
+     * Data to output.
+     */
+    protected $output = '';
+
+    /**
+     * Files to output.
+     */
+    protected $files = array();
+
+    /**
      * Sets the HTTP status code of the output that is returned to the client.
      * 
      * @param int $statusCode HTTP status code to set.
@@ -62,13 +79,22 @@ abstract class HttpResponseBase {
     }
 
     /**
+     * Send a cookie.
+     */
+    public function setCookie(string $name, string $value = '', int $expire = 0, string $path = '', string $domain = '', bool $secure = false, bool $httponly = false) {
+        $this->cookies[] = func_get_args();
+    }
+
+    /**
      * Writes the specified string to the HTTP response output stream.
      * 
      * @param string $value The string to write to the HTTP output stream.
      * 
      * @return void
      */
-    abstract public function write($value);
+    public function write($value) {
+        $this->output .= $value;
+    }
 
     /**
      * Writes the contents of the specified file to the HTTP response output stream.
@@ -77,14 +103,21 @@ abstract class HttpResponseBase {
      * 
      * @return void
      */
-    abstract public function writeFile($path);
+    public function writeFile($path) {
+        $this->files[] = $path;
+    }
 
     /**
      * Clears all headers and content output from the current response.
      * 
      * @return void
      */
-    abstract public function clear();
+    public function clear() {
+        $this->header = array();
+        $this->cookies = array();
+        $this->files = array();
+        $this->output = '';
+    }
 
     /**
      * Sends all currently buffered output to the client and stops execution of the requested process.

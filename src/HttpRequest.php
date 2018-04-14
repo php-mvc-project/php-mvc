@@ -12,5 +12,5 @@ final class HttpRequest extends HttpRequestBase {
     public function __construct() {
         parent::__construct($_SERVER, $_COOKIE, $_SESSION, $_GET, $_POST, $_FILES);
     }
-    
+
 }

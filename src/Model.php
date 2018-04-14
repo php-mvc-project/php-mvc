@@ -25,7 +25,7 @@ final class Model {
      * @return void
      */
     public static function required($actionName, ...$propertyName) {
-        if ($actionName != PHPMVC_ACTION) {
+        if ($actionName != self::$actionContext->actionName) {
             return;
         }
 
@@ -64,7 +64,7 @@ final class Model {
      * @return void
      */
     public static function compare($actionName, $propertyName, $compareWith, $errorMessage = null) {
-        if ($actionName != PHPMVC_ACTION) {
+        if ($actionName != self::$actionContext->actionName) {
             return;
         }
 
@@ -101,7 +101,7 @@ final class Model {
      * @return void
      */
     public static function stringLength($actionName, $propertyName, $maxLength, $minLength = null, $errorMessage = null) {
-        if ($actionName != PHPMVC_ACTION) {
+        if ($actionName != self::$actionContext->actionName) {
             return;
         }
 
@@ -130,7 +130,7 @@ final class Model {
      * @return void
      */
     public static function range($actionName, $propertyName, $min, $max, $errorMessage = null) {
-        if ($actionName != PHPMVC_ACTION) {
+        if ($actionName != self::$actionContext->actionName) {
             return;
         }
 
@@ -164,7 +164,7 @@ final class Model {
      * @return void
      */
     public static function validation($actionName, $propertyName, $callback, $errorMessage = null) {
-        if ($actionName != PHPMVC_ACTION) {
+        if ($actionName != self::$actionContext->actionName) {
             return;
         }
 
@@ -196,7 +196,7 @@ final class Model {
      * @return void
      */
     public static function display($actionName, $propertyName, $name, $text = null) {
-        if ($actionName != PHPMVC_ACTION) {
+        if ($actionName != self::$actionContext->actionName) {
             return;
         }
 

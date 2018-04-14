@@ -79,7 +79,7 @@ class RouteCollection implements \ArrayAccess, \Iterator {
      */
     public function getRoute($httpContext) {
         $csm = false ? '' : 'i';
-        $path = trim($httpContext->getRequest()->getRequestUri(), '/');
+        $path = trim($httpContext->getRequest()->requestUri(), '/');
         
         if (($qsIndex = strpos($path, '?')) !== false) {
             $path = substr($path, 0, $qsIndex);

@@ -40,7 +40,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->getRequestUri();
+        echo 'Request: ' . $httpContext->getRequest()->requestUri();
 
         ob_start();
         
@@ -95,7 +95,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->getRequestUri();
+        echo 'Request: ' . $httpContext->getRequest()->requestUri();
 
         ob_start();
         
@@ -124,7 +124,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->getRequestUri();
+        echo 'Request: ' . $httpContext->getRequest()->requestUri();
 
         ob_start();
         
@@ -193,7 +193,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->getRequestUri();
+        echo 'Request: ' . $httpContext->getRequest()->requestUri();
 
         ob_start();
         
@@ -232,7 +232,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->getRequestUri();
+        echo 'Request: ' . $httpContext->getRequest()->requestUri();
 
         ob_start();
         
@@ -287,7 +287,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->getRequestUri();
+        echo 'Request: ' . $httpContext->getRequest()->requestUri();
 
         $this->expectExceptionMessageRegExp('/The view file could not be found/');
 
@@ -309,7 +309,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->getRequestUri();
+        echo 'Request: ' . $httpContext->getRequest()->requestUri();
 
         ob_start();
         
@@ -335,7 +335,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->getRequestUri();
+        echo 'Request: ' . $httpContext->getRequest()->requestUri();
 
         ob_start();
         
@@ -361,7 +361,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->getRequestUri();
+        echo 'Request: ' . $httpContext->getRequest()->requestUri();
 
         ob_start();
         
@@ -387,7 +387,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->getRequestUri();
+        echo 'Request: ' . $httpContext->getRequest()->requestUri();
 
         ob_start();
         
@@ -413,7 +413,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->getRequestUri();
+        echo 'Request: ' . $httpContext->getRequest()->requestUri();
 
         ob_start();
         
@@ -439,7 +439,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->getRequestUri();
+        echo 'Request: ' . $httpContext->getRequest()->requestUri();
 
         ob_start();
         
@@ -465,7 +465,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->getRequestUri();
+        echo 'Request: ' . $httpContext->getRequest()->requestUri();
 
         ob_start();
         
@@ -539,7 +539,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->getRequestUri();
+        echo 'Request: ' . $httpContext->getRequest()->requestUri();
 
         ob_start();
         
@@ -623,7 +623,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->getRequestUri();
+        echo 'Request: ' . $httpContext->getRequest()->requestUri();
 
         ob_start();
         
@@ -662,12 +662,12 @@ final class MakeTest extends TestCase
         );
 
         $this->assertContains(
-            '<div class="validation-summary-errors"><ul><li>Password is required.</li><li>username is required. Value must not be empty.</li><li>Only &quot;root&quot; can login.</li></ul></div>',
+            '<div class="validation-summary-errors"><ul><li>Password is required.</li><li>Username is required. Value must not be empty.</li><li>Only &quot;root&quot; can login.</li></ul></div>',
             $result
         );
 
         $this->assertContains(
-            '<span class="field-validation-error">username is required. Value must not be empty.<br />Only &quot;root&quot; can login.</span>',
+            '<span class="field-validation-error">Username is required. Value must not be empty.<br />Only &quot;root&quot; can login.</span>',
             $result
         );
 
@@ -702,7 +702,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->getRequestUri();
+        echo 'Request: ' . $httpContext->getRequest()->requestUri();
 
         ob_start();
         
