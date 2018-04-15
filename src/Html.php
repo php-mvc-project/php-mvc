@@ -301,18 +301,17 @@ class Html {
      */
     public static function checkBox($name, $checked = null, $htmlAttributes = array()) {
         $htmlAttributes = $htmlAttributes === null ? array() : $htmlAttributes;
-        $model = self::$viewContext->model;
 
-        if (self::getModelValue($model, $name, $modelValue) === true && $modelValue === true) {
+        if (self::getModelValue($name, $modelValue, \FILTER_VALIDATE_BOOLEAN) === true && $modelValue === true) {
             $htmlAttributes['checked'] = 'checked';
             $checked = null;
         }
 
-        if ($checked === true) {
+        if (filter_var($checked, \FILTER_VALIDATE_BOOLEAN) === true) {
             $htmlAttributes['checked'] = 'checked';
         }
 
-        return self::input($name, 'checkbox', $value, $htmlAttributes);
+        return self::input($name, 'checkbox', 'true', $htmlAttributes, true);
     }
 
     /**
@@ -328,24 +327,26 @@ class Html {
     public static function dropDownList($name, $list, $selectedValue = null, $htmlAttributes = array()) {
         $result = '';
 
-        $model = self::$viewContext->model;
-
-        if (self::getModelValue($model, $name, $modelValue) === true) {
+        if (self::getModelValue($name, $modelValue) === true) {
             $selectedValue = $modelValue;
         }
 
         $htmlAttributes = $htmlAttributes === null ? array() : $htmlAttributes;
-        $htmlAttributes['name'] = $name;
+        $htmlAttributes['name'] = isset($htmlAttributes['name']) ? $htmlAttributes['name'] : $name;
 
         $result .= '<select ' . self::buildAttributes($htmlAttributes) . '>';
 
         $groups = array_filter($list, function($item) {
-            return !isset($item->group);
+            return $item instanceof SelectListItem && isset($item->group);
         });
 
         $groups = array_unique(array_map(function($item) {
             return $item->group;
         }, $groups), SORT_REGULAR);
+
+        if (count($groups) == 1 && $groups[0] === null) {
+            $groups = array();
+        }
 
         if (!empty($groups)) {
             $listByGroup = array();
@@ -369,6 +370,14 @@ class Html {
                 $result .= '<optgroup' . (!empty($attr) ? ' ' : '') . $attr . '>';
                 $result .= self::getSelectOptions($listByGroup, $selectedValue);
                 $result .= '</optgroup>';
+            }
+
+            $listByGroup = array_filter($list, function($item) {
+                return $item->group === null;
+            });
+
+            if (!empty($listByGroup)) {
+                $result .= self::getSelectOptions($listByGroup, $selectedValue);
             }
         }
         else {
@@ -521,9 +530,7 @@ class Html {
             throw new \Exception('The $value must not be null if $checked is also null and no "checked" entry exists in $htmlAttributes.');
         }
 
-        $model = self::$viewContext->model;
-
-        if (self::getModelValue($model, $name, $modelValue) === true) {
+        if (self::getModelValue($name, $modelValue) === true) {
             if ($modelValue == $value) {
                 $htmlAttributes['checked'] = 'checked';
                 $checked = null;
@@ -551,11 +558,9 @@ class Html {
     public static function textArea($name, $value = '', $rows = null, $columns = null, $htmlAttributes = array()) {
         $htmlAttributes = $htmlAttributes === null ? array() : $htmlAttributes;
 
-        $htmlAttributes['name'] = $name;
+        $htmlAttributes['name'] = isset($htmlAttributes['name']) ? $htmlAttributes['name'] : $name;
 
-        $model = self::$viewContext->model;
-
-        if (self::getModelValue($model, $name, $modelValue) === true) {
+        if (self::getModelValue($name, $modelValue) === true) {
             $value = $modelValue;
         }
 
@@ -635,14 +640,13 @@ class Html {
      * 
      * @return string
      */
-    private static function input($name, $type = 'text', $value = null, $htmlAttributes = null) {
+    private static function input($name, $type = 'text', $value = null, $htmlAttributes = null, $ignoreModelValue = false) {
         $htmlAttributes = $htmlAttributes === null ? array() : $htmlAttributes;
-        $model = self::$viewContext->model;
 
-        $htmlAttributes['type'] = $type;
-        $htmlAttributes['name'] = $name;
+        $htmlAttributes['type'] = isset($htmlAttributes['type']) ? $htmlAttributes['type'] : $type;
+        $htmlAttributes['name'] = isset($htmlAttributes['name']) ? $htmlAttributes['name'] : $name;
 
-        if (self::getModelValue($model, $name, $modelValue) === true) {
+        if ($ignoreModelValue !== true && self::getModelValue($name, $modelValue) === true) {
             $value = $modelValue;
         }
 
@@ -698,27 +702,50 @@ class Html {
         return str_replace('"', '&quot;', $value);
     }
 
-    private static function getModelValue($model, $name, &$value) {
-        if (empty($model)) {
-            $value = null;
-            return false;
+    /**
+     * Gets value from model state or model.
+     * 
+     * @param string $name The name of model item.
+     * @param mixed $value The result.
+     * @param int $filter See http://php.net/manual/en/filter.filters.php
+     * 
+     * @return bool
+     */
+    private static function getModelValue($name, &$value, $filter = \FILTER_DEFAULT) {
+        if (empty(self::$viewContext->modelState->items)) {
+            $model = self::$viewContext->model;
+        }
+        else {
+            if (isset(self::$viewContext->modelState->items[$name])) {
+                $model = self::$viewContext->modelState->items;
+            }
+            else {
+                $model = self::$viewContext->model;
+            }
         }
         
+        if (empty($model)) {
+            $value = filter_var(null, $filter);
+            return false;
+        }
+
         if (is_object($model)) {
             if (isset($model->$name)) {
-                $value = $model->$name;
+                $value = filter_var($model->$name, $filter);
                 return true;
             }
             else {
+                $value = filter_var(null, $filter);
                 return false;
             }
         }
         elseif (is_array($model)) {
             if (isset($model[$name])) {
-                $value = $model[$name];
+                $value = filter_var($model[$name] instanceof ModelStateEntry ? $model[$name]->value : $model[$name], $filter);
                 return true;
             }
             else {
+                $value = filter_var(null, $filter);
                 return false;
             }
         }

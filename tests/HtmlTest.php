@@ -7,15 +7,17 @@ require_once 'mvc/controllers/HomeController.php';
 
 use PHPUnit\Framework\TestCase;
 
-use PhpMvc\UrlHelper;
-use PhpMvc\ActionContext;
-use PhpMvc\ViewContext;
-use PhpMvc\UrlParameter;
-use PhpMvc\RouteTable;
 use PhpMvc\RouteCollection;
+use PhpMvc\SelectListGroup;
+use PhpMvc\SelectListItem;
+use PhpMvc\ActionContext;
+use PhpMvc\UrlParameter;
+use PhpMvc\ViewContext;
+use PhpMvc\RouteTable;
+use PhpMvc\UrlHelper;
 use PhpMvc\Route;
-use PhpMvc\Html;
 use PhpMvc\Model;
+use PhpMvc\Html;
 
 final class HtmlTest extends TestCase
 {
@@ -292,6 +294,229 @@ final class HtmlTest extends TestCase
 
         $endForm = Html::endForm();
         $this->assertEquals('</form>', $endForm);
+    }
+
+    public function testCheckBox(): void {
+        // #1
+        $viewContext = $this->setContext();
+
+        $checkBox = Html::checkBox('remember');
+        $this->assertEquals('<input type="checkbox" name="remember" value="true" />', $checkBox);
+
+        // #2
+        $viewContext = $this->setContext(
+            'POST', 
+            array(),
+            array(
+                'remember' => 'true'
+            )
+        );
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $checkBox = Html::checkBox('remember');
+        $this->assertEquals('<input checked="checked" type="checkbox" name="remember" value="true" />', $checkBox);
+
+        // #3
+        $viewContext = $this->setContext(
+            'POST', 
+            array(),
+            array(
+                'remember' => 'false'
+            )
+        );
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $checkBox = Html::checkBox('remember');
+        $this->assertEquals('<input type="checkbox" name="remember" value="true" />', $checkBox);
+
+        // #4
+        $viewContext = $this->setContext(
+            'POST', 
+            array(),
+            array(
+                'remember' => ''
+            )
+        );
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $checkBox = Html::checkBox('remember');
+        $this->assertEquals('<input type="checkbox" name="remember" value="true" />', $checkBox);
+
+        // #5
+        $viewContext = $this->setContext();
+
+        $viewContext->model = $this->getModelA();
+        $viewContext->model->boolean = false;
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $checkBox = Html::checkBox('boolean');
+        $this->assertEquals('<input type="checkbox" name="boolean" value="true" />', $checkBox);
+
+        // #6
+        $viewContext = $this->setContext();
+
+        $viewContext->model = $this->getModelA();
+        $viewContext->model->boolean = true;
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $checkBox = Html::checkBox('boolean');
+        $this->assertEquals('<input checked="checked" type="checkbox" name="boolean" value="true" />', $checkBox);
+
+        // #7
+        $viewContext = $this->setContext(
+            'POST', 
+            array(),
+            array(
+                'boolean' => 'TRUE'
+            )
+        );
+
+        $viewContext->model = $this->getModelA();
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $checkBox = Html::checkBox('boolean');
+        $this->assertEquals('<input checked="checked" type="checkbox" name="boolean" value="true" />', $checkBox);
+    }
+
+    public function testDropDownList(): void {
+        // #1
+        $viewContext = $this->setContext();
+
+        $dropDownList = Html::dropDownList('list', array());
+        $this->assertEquals('<select name="list"></select>', $dropDownList);
+
+        // #2
+        $dropDownList = Html::dropDownList('list', array('one', 'two', 'three'));
+        $this->assertEquals('<select name="list"><option>one</option><option>two</option><option>three</option></select>', $dropDownList);
+
+        // #3
+        $dropDownList = Html::dropDownList('list', array('one', 'two', 'three'), 'two');
+        $this->assertEquals('<select name="list"><option>one</option><option selected="selected">two</option><option>three</option></select>', $dropDownList);
+
+        // #4
+        $dropDownList = Html::dropDownList('list', array('one', 'two', 'three'), null, array('class' => 'dropdown', 'name' => 'renamed'));
+        $this->assertEquals('<select class="dropdown" name="renamed"><option>one</option><option>two</option><option>three</option></select>', $dropDownList);
+
+        // #5
+        $items = array();
+        $items[] = new SelectListItem('one', '1');
+        $items[] = new SelectListItem('two', '2');
+        $items[] = new SelectListItem('three', '3');
+
+        $dropDownList = Html::dropDownList('list', $items);
+        $this->assertEquals('<select name="list"><option value="1">one</option><option value="2">two</option><option value="3">three</option></select>', $dropDownList);
+
+        // #6
+        $items = array();
+        $items[] = new SelectListItem('one', '1');
+        $items[] = new SelectListItem('two', '2');
+        $items[] = new SelectListItem('three', '3', true);
+
+        $dropDownList = Html::dropDownList('list', $items);
+        $this->assertEquals('<select name="list"><option value="1">one</option><option value="2">two</option><option value="3" selected="selected">three</option></select>', $dropDownList);
+
+        // #7
+        $group1 = new SelectListGroup('Odd numbers');
+        $group2 = new SelectListGroup('Even numbers', true);
+        $group3 = new SelectListGroup('Not numbers');
+
+        $items = array();
+        $items[] = new SelectListItem('one', '1', null, null, $group1);
+        $items[] = new SelectListItem('two', '2', null, null, $group2);
+        $items[] = new SelectListItem('three', '3', null, null, $group1);
+        $items[] = new SelectListItem('four', '4', null, null, $group2);
+        $items[] = new SelectListItem('five', '5', true, null, $group1);
+        $items[] = new SelectListItem('a', null, null, null, $group3);
+        $items[] = new SelectListItem('b', null, null, null, $group3);
+        $items[] = new SelectListItem('c', null, null, null, $group3);
+
+        $dropDownList = Html::dropDownList('list', $items);
+        $this->assertEquals('<select name="list"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3">three</option><option value="5" selected="selected">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup><optgroup lable="Not numbers"><option value="">a</option><option value="">b</option><option value="">c</option></optgroup></select>', $dropDownList);
+
+        // #8
+        $group1 = new SelectListGroup('Odd numbers');
+        $group2 = new SelectListGroup('Even numbers', true);
+
+        $items = array();
+        $items[] = new SelectListItem('one', '1', null, null, $group1);
+        $items[] = new SelectListItem('two', '2', null, null, $group2);
+        $items[] = new SelectListItem('three', '3', null, null, $group1);
+        $items[] = new SelectListItem('four', '4', null, null, $group2);
+        $items[] = new SelectListItem('five', '5', true, null, $group1);
+        $items[] = new SelectListItem('a');
+        $items[] = new SelectListItem('b');
+        $items[] = new SelectListItem('c', null, true);
+
+        $dropDownList = Html::dropDownList('list', $items);
+        $this->assertEquals('<select name="list"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3">three</option><option value="5" selected="selected">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup><option value="">a</option><option value="">b</option><option value="" selected="selected">c</option></select>', $dropDownList);
+
+        // #9
+        $viewContext = $this->setContext();
+
+        $viewContext->model = $this->getModelA();
+        $viewContext->model->number = 3;
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $items = array();
+        $items[] = new SelectListItem('one', '1', null, null, $group1);
+        $items[] = new SelectListItem('two', '2', null, null, $group2);
+        $items[] = new SelectListItem('three', '3', null, null, $group1);
+        $items[] = new SelectListItem('four', '4', null, null, $group2);
+        $items[] = new SelectListItem('five', '5', null, null, $group1);
+
+        $dropDownList = Html::dropDownList('number', $items);
+        $this->assertEquals('<select name="number"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3" selected="selected">three</option><option value="5">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup></select>', $dropDownList);
+
+        // #10
+        $viewContext = $this->setContext(
+            'POST', 
+            array(),
+            array(
+                'number' => '5'
+            )
+        );
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $items = array();
+        $items[] = new SelectListItem('one', '1', null, null, $group1);
+        $items[] = new SelectListItem('two', '2', null, null, $group2);
+        $items[] = new SelectListItem('three', '3', null, null, $group1);
+        $items[] = new SelectListItem('four', '4', null, null, $group2);
+        $items[] = new SelectListItem('five', '5', null, null, $group1);
+
+        $dropDownList = Html::dropDownList('number', $items);
+        $this->assertEquals('<select name="number"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3">three</option><option value="5" selected="selected">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup></select>', $dropDownList);
+
+        // #11
+        $viewContext = $this->setContext(
+            'POST', 
+            array(),
+            array(
+                'list' => 'two'
+            )
+        );
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $dropDownList = Html::dropDownList('list', array('one', 'two', 'three'));
+        $this->assertEquals('<select name="list"><option>one</option><option selected="selected">two</option><option>three</option></select>', $dropDownList);
     }
 
     private function getModelA($text = '', $number = null, $boolean = null) {
