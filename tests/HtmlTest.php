@@ -253,14 +253,14 @@ final class HtmlTest extends TestCase
         $antiForgeryToken = Html::antiForgeryToken();
 
         $this->assertRegExp(
-            '/\<input type="hidden" name="__requestVerificationToken" value="[0-9a-f]{128}" \/\>/i',
+            '/\<input type="hidden" name="__requestVerificationToken" id="__requestVerificationToken" value="[0-9a-f]{128}" \/\>/i',
             $antiForgeryToken
         );
 
         $antiForgeryToken = Html::antiForgeryToken(true);
 
         $this->assertRegExp(
-            '/\<script\>document\.write\(\'\<input type="hidden" name="__requestVerificationToken" value="[0-9a-f]{128}" \/\>\'\);\<\/script\>/i',
+            '/\<script\>document\.write\(\'\<input type="hidden" name="__requestVerificationToken" id="__requestVerificationToken" value="[0-9a-f]{128}" \/\>\'\);\<\/script\>/i',
             $antiForgeryToken
         );
     }
@@ -279,13 +279,13 @@ final class HtmlTest extends TestCase
 
         $beginForm = Html::beginForm('support', 'feedback', null, null, true);
         $this->assertRegExp(
-            '/\<form method="post" action="\/feedback\/support"\>\<input type="hidden" name="__requestVerificationToken" value="[0-9a-f]{128}" \/\>/i',
+            '/\<form method="post" action="\/feedback\/support"\>\<input type="hidden" name="__requestVerificationToken" id="__requestVerificationToken" value="[0-9a-f]{128}" \/\>/i',
             $beginForm
         );
 
         $beginForm = Html::beginForm('support', 'feedback', null, null, array());
         $this->assertRegExp(
-            '/\<form method="post" action="\/feedback\/support"\>\<script\>document\.write\(\'\<input type="hidden" name="__requestVerificationToken" value="[0-9a-f]{128}" \/\>\'\);\<\/script\>/i',
+            '/\<form method="post" action="\/feedback\/support"\>\<script\>document\.write\(\'\<input type="hidden" name="__requestVerificationToken" id="__requestVerificationToken" value="[0-9a-f]{128}" \/\>\'\);\<\/script\>/i',
             $beginForm
         );
 
@@ -301,7 +301,7 @@ final class HtmlTest extends TestCase
         $viewContext = $this->setContext();
 
         $checkBox = Html::checkBox('remember');
-        $this->assertEquals('<input type="checkbox" name="remember" value="true" />', $checkBox);
+        $this->assertEquals('<input type="checkbox" name="remember" id="remember" value="true" />', $checkBox);
 
         // #2
         $viewContext = $this->setContext(
@@ -316,7 +316,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $checkBox = Html::checkBox('remember');
-        $this->assertEquals('<input checked="checked" type="checkbox" name="remember" value="true" />', $checkBox);
+        $this->assertEquals('<input checked="checked" type="checkbox" name="remember" id="remember" value="true" />', $checkBox);
 
         // #3
         $viewContext = $this->setContext(
@@ -331,7 +331,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $checkBox = Html::checkBox('remember');
-        $this->assertEquals('<input type="checkbox" name="remember" value="true" />', $checkBox);
+        $this->assertEquals('<input type="checkbox" name="remember" id="remember" value="true" />', $checkBox);
 
         // #4
         $viewContext = $this->setContext(
@@ -346,7 +346,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $checkBox = Html::checkBox('remember');
-        $this->assertEquals('<input type="checkbox" name="remember" value="true" />', $checkBox);
+        $this->assertEquals('<input type="checkbox" name="remember" id="remember" value="true" />', $checkBox);
 
         // #5
         $viewContext = $this->setContext();
@@ -358,7 +358,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $checkBox = Html::checkBox('boolean');
-        $this->assertEquals('<input type="checkbox" name="boolean" value="true" />', $checkBox);
+        $this->assertEquals('<input type="checkbox" name="boolean" id="boolean" value="true" />', $checkBox);
 
         // #6
         $viewContext = $this->setContext();
@@ -370,7 +370,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $checkBox = Html::checkBox('boolean');
-        $this->assertEquals('<input checked="checked" type="checkbox" name="boolean" value="true" />', $checkBox);
+        $this->assertEquals('<input checked="checked" type="checkbox" name="boolean" id="boolean" value="true" />', $checkBox);
 
         // #7
         $viewContext = $this->setContext(
@@ -387,7 +387,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $checkBox = Html::checkBox('boolean');
-        $this->assertEquals('<input checked="checked" type="checkbox" name="boolean" value="true" />', $checkBox);
+        $this->assertEquals('<input checked="checked" type="checkbox" name="boolean" id="boolean" value="true" />', $checkBox);
     }
 
     public function testDropDownList(): void {
@@ -395,19 +395,19 @@ final class HtmlTest extends TestCase
         $viewContext = $this->setContext();
 
         $dropDownList = Html::dropDownList('list', array());
-        $this->assertEquals('<select name="list"></select>', $dropDownList);
+        $this->assertEquals('<select name="list" id="list"></select>', $dropDownList);
 
         // #2
         $dropDownList = Html::dropDownList('list', array('one', 'two', 'three'));
-        $this->assertEquals('<select name="list"><option>one</option><option>two</option><option>three</option></select>', $dropDownList);
+        $this->assertEquals('<select name="list" id="list"><option>one</option><option>two</option><option>three</option></select>', $dropDownList);
 
         // #3
         $dropDownList = Html::dropDownList('list', array('one', 'two', 'three'), 'two');
-        $this->assertEquals('<select name="list"><option>one</option><option selected="selected">two</option><option>three</option></select>', $dropDownList);
+        $this->assertEquals('<select name="list" id="list"><option>one</option><option selected="selected">two</option><option>three</option></select>', $dropDownList);
 
         // #4
         $dropDownList = Html::dropDownList('list', array('one', 'two', 'three'), null, array('class' => 'dropdown', 'name' => 'renamed'));
-        $this->assertEquals('<select class="dropdown" name="renamed"><option>one</option><option>two</option><option>three</option></select>', $dropDownList);
+        $this->assertEquals('<select class="dropdown" name="renamed" id="list"><option>one</option><option>two</option><option>three</option></select>', $dropDownList);
 
         // #5
         $items = array();
@@ -416,7 +416,7 @@ final class HtmlTest extends TestCase
         $items[] = new SelectListItem('three', '3');
 
         $dropDownList = Html::dropDownList('list', $items);
-        $this->assertEquals('<select name="list"><option value="1">one</option><option value="2">two</option><option value="3">three</option></select>', $dropDownList);
+        $this->assertEquals('<select name="list" id="list"><option value="1">one</option><option value="2">two</option><option value="3">three</option></select>', $dropDownList);
 
         // #6
         $items = array();
@@ -425,7 +425,7 @@ final class HtmlTest extends TestCase
         $items[] = new SelectListItem('three', '3', true);
 
         $dropDownList = Html::dropDownList('list', $items);
-        $this->assertEquals('<select name="list"><option value="1">one</option><option value="2">two</option><option value="3" selected="selected">three</option></select>', $dropDownList);
+        $this->assertEquals('<select name="list" id="list"><option value="1">one</option><option value="2">two</option><option value="3" selected="selected">three</option></select>', $dropDownList);
 
         // #7
         $group1 = new SelectListGroup('Odd numbers');
@@ -443,7 +443,7 @@ final class HtmlTest extends TestCase
         $items[] = new SelectListItem('c', null, null, null, $group3);
 
         $dropDownList = Html::dropDownList('list', $items);
-        $this->assertEquals('<select name="list"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3">three</option><option value="5" selected="selected">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup><optgroup lable="Not numbers"><option value="">a</option><option value="">b</option><option value="">c</option></optgroup></select>', $dropDownList);
+        $this->assertEquals('<select name="list" id="list"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3">three</option><option value="5" selected="selected">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup><optgroup lable="Not numbers"><option value="">a</option><option value="">b</option><option value="">c</option></optgroup></select>', $dropDownList);
 
         // #8
         $group1 = new SelectListGroup('Odd numbers');
@@ -460,7 +460,7 @@ final class HtmlTest extends TestCase
         $items[] = new SelectListItem('c', null, true);
 
         $dropDownList = Html::dropDownList('list', $items);
-        $this->assertEquals('<select name="list"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3">three</option><option value="5" selected="selected">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup><option value="">a</option><option value="">b</option><option value="" selected="selected">c</option></select>', $dropDownList);
+        $this->assertEquals('<select name="list" id="list"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3">three</option><option value="5" selected="selected">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup><option value="">a</option><option value="">b</option><option value="" selected="selected">c</option></select>', $dropDownList);
 
         // #9
         $viewContext = $this->setContext();
@@ -479,7 +479,7 @@ final class HtmlTest extends TestCase
         $items[] = new SelectListItem('five', '5', null, null, $group1);
 
         $dropDownList = Html::dropDownList('number', $items);
-        $this->assertEquals('<select name="number"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3" selected="selected">three</option><option value="5">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup></select>', $dropDownList);
+        $this->assertEquals('<select name="number" id="number"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3" selected="selected">three</option><option value="5">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup></select>', $dropDownList);
 
         // #10
         $viewContext = $this->setContext(
@@ -501,7 +501,7 @@ final class HtmlTest extends TestCase
         $items[] = new SelectListItem('five', '5', null, null, $group1);
 
         $dropDownList = Html::dropDownList('number', $items);
-        $this->assertEquals('<select name="number"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3">three</option><option value="5" selected="selected">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup></select>', $dropDownList);
+        $this->assertEquals('<select name="number" id="number"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3">three</option><option value="5" selected="selected">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup></select>', $dropDownList);
 
         // #11
         $viewContext = $this->setContext(
@@ -516,7 +516,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $dropDownList = Html::dropDownList('list', array('one', 'two', 'three'));
-        $this->assertEquals('<select name="list"><option>one</option><option selected="selected">two</option><option>three</option></select>', $dropDownList);
+        $this->assertEquals('<select name="list" id="list"><option>one</option><option selected="selected">two</option><option>three</option></select>', $dropDownList);
     }
 
     public function testHidden(): void {
@@ -524,13 +524,13 @@ final class HtmlTest extends TestCase
         $viewContext = $this->setContext();
 
         $hidden = Html::hidden('ghost');
-        $this->assertEquals('<input type="hidden" name="ghost" />', $hidden);
+        $this->assertEquals('<input type="hidden" name="ghost" id="ghost" />', $hidden);
 
         // #2
         $viewContext = $this->setContext();
 
         $hidden = Html::hidden('ghost', 'casper');
-        $this->assertEquals('<input type="hidden" name="ghost" value="casper" />', $hidden);
+        $this->assertEquals('<input type="hidden" name="ghost" id="ghost" value="casper" />', $hidden);
 
         // #3
         $viewContext = $this->setContext(
@@ -545,7 +545,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $hidden = Html::hidden('ghost');
-        $this->assertEquals('<input type="hidden" name="ghost" value="casper" />', $hidden);
+        $this->assertEquals('<input type="hidden" name="ghost" id="ghost" value="casper" />', $hidden);
 
         // #4
         $viewContext = $this->setContext(
@@ -560,7 +560,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $hidden = Html::hidden('ghost', 'stinky');
-        $this->assertEquals('<input type="hidden" name="ghost" value="casper" />', $hidden);
+        $this->assertEquals('<input type="hidden" name="ghost" id="ghost" value="casper" />', $hidden);
 
         // #5
         $viewContext = $this->setContext();
@@ -572,7 +572,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $hidden = Html::hidden('number');
-        $this->assertEquals('<input type="hidden" name="number" value="42" />', $hidden);
+        $this->assertEquals('<input type="hidden" name="number" id="number" value="42" />', $hidden);
 
         // #6
         $viewContext = $this->setContext();
@@ -584,7 +584,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $hidden = Html::hidden('number', '1024');
-        $this->assertEquals('<input type="hidden" name="number" value="42" />', $hidden);
+        $this->assertEquals('<input type="hidden" name="number" id="number" value="42" />', $hidden);
 
         // #7
         $viewContext = $this->setContext();
@@ -595,7 +595,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $hidden = Html::hidden('number', '1024');
-        $this->assertEquals('<input type="hidden" name="number" value="1024" />', $hidden);
+        $this->assertEquals('<input type="hidden" name="number" id="number" value="1024" />', $hidden);
 
         // #8
         $viewContext = $this->setContext(
@@ -613,7 +613,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $hidden = Html::hidden('number', '8');
-        $this->assertEquals('<input type="hidden" name="number" value="42" />', $hidden);
+        $this->assertEquals('<input type="hidden" name="number" id="number" value="42" />', $hidden);
     }
 
     public function testLabel(): void {
@@ -634,25 +634,25 @@ final class HtmlTest extends TestCase
         $viewContext = $this->setContext();
 
         $listBox = Html::listBox('list', array());
-        $this->assertEquals('<select name="list[]" size="1" multiple="multiple"></select>', $listBox);
+        $this->assertEquals('<select name="list[]" id="list" size="1" multiple="multiple"></select>', $listBox);
 
         // #2
         $viewContext = $this->setContext();
 
         $listBox = Html::listBox('list', array(), 10);
-        $this->assertEquals('<select name="list[]" size="10" multiple="multiple"></select>', $listBox);
+        $this->assertEquals('<select name="list[]" id="list" size="10" multiple="multiple"></select>', $listBox);
 
         // #3
         $listBox = Html::listBox('list', array('one', 'two', 'three'));
-        $this->assertEquals('<select name="list[]" size="1" multiple="multiple"><option>one</option><option>two</option><option>three</option></select>', $listBox);
+        $this->assertEquals('<select name="list[]" id="list" size="1" multiple="multiple"><option>one</option><option>two</option><option>three</option></select>', $listBox);
 
         // #4
         $listBox = Html::listBox('list', array('one', 'two', 'three'), 5, 'two');
-        $this->assertEquals('<select name="list[]" size="5" multiple="multiple"><option>one</option><option selected="selected">two</option><option>three</option></select>', $listBox);
+        $this->assertEquals('<select name="list[]" id="list" size="5" multiple="multiple"><option>one</option><option selected="selected">two</option><option>three</option></select>', $listBox);
 
         // #5
         $listBox = Html::listBox('list', array('one', 'two', 'three'), null, null, array('class' => 'dropdown', 'name' => 'renamed'));
-        $this->assertEquals('<select class="dropdown" name="renamed[]" size="1" multiple="multiple"><option>one</option><option>two</option><option>three</option></select>', $listBox);
+        $this->assertEquals('<select class="dropdown" name="renamed[]" id="list" size="1" multiple="multiple"><option>one</option><option>two</option><option>three</option></select>', $listBox);
 
         // #6
         $items = array();
@@ -661,7 +661,7 @@ final class HtmlTest extends TestCase
         $items[] = new SelectListItem('three', '3');
 
         $listBox = Html::listBox('list', $items);
-        $this->assertEquals('<select name="list[]" size="1" multiple="multiple"><option value="1">one</option><option value="2">two</option><option value="3">three</option></select>', $listBox);
+        $this->assertEquals('<select name="list[]" id="list" size="1" multiple="multiple"><option value="1">one</option><option value="2">two</option><option value="3">three</option></select>', $listBox);
 
         // #7
         $items = array();
@@ -670,7 +670,7 @@ final class HtmlTest extends TestCase
         $items[] = new SelectListItem('three', '3', true);
 
         $listBox = Html::listBox('list', $items);
-        $this->assertEquals('<select name="list[]" size="1" multiple="multiple"><option value="1">one</option><option value="2">two</option><option value="3" selected="selected">three</option></select>', $listBox);
+        $this->assertEquals('<select name="list[]" id="list" size="1" multiple="multiple"><option value="1">one</option><option value="2">two</option><option value="3" selected="selected">three</option></select>', $listBox);
 
         // #8
         $group1 = new SelectListGroup('Odd numbers');
@@ -688,7 +688,7 @@ final class HtmlTest extends TestCase
         $items[] = new SelectListItem('c', null, null, null, $group3);
 
         $listBox = Html::listBox('list', $items, 10);
-        $this->assertEquals('<select name="list[]" size="10" multiple="multiple"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3">three</option><option value="5" selected="selected">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup><optgroup lable="Not numbers"><option value="">a</option><option value="">b</option><option value="">c</option></optgroup></select>', $listBox);
+        $this->assertEquals('<select name="list[]" id="list" size="10" multiple="multiple"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3">three</option><option value="5" selected="selected">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup><optgroup lable="Not numbers"><option value="">a</option><option value="">b</option><option value="">c</option></optgroup></select>', $listBox);
 
         // #9
         $group1 = new SelectListGroup('Odd numbers');
@@ -705,7 +705,7 @@ final class HtmlTest extends TestCase
         $items[] = new SelectListItem('c', null, true);
 
         $listBox = Html::listBox('list', $items, 10);
-        $this->assertEquals('<select name="list[]" size="10" multiple="multiple"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3">three</option><option value="5" selected="selected">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup><option value="">a</option><option value="">b</option><option value="" selected="selected">c</option></select>', $listBox);
+        $this->assertEquals('<select name="list[]" id="list" size="10" multiple="multiple"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3">three</option><option value="5" selected="selected">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup><option value="">a</option><option value="">b</option><option value="" selected="selected">c</option></select>', $listBox);
 
         // #10
         $viewContext = $this->setContext();
@@ -724,7 +724,7 @@ final class HtmlTest extends TestCase
         $items[] = new SelectListItem('five', '5', null, null, $group1);
 
         $listBox = Html::listBox('array', $items);
-        $this->assertEquals('<select name="array[]" size="1" multiple="multiple"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3" selected="selected">three</option><option value="5">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup></select>', $listBox);
+        $this->assertEquals('<select name="array[]" id="array" size="1" multiple="multiple"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3" selected="selected">three</option><option value="5">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup></select>', $listBox);
 
         // #11
         $viewContext = $this->setContext(
@@ -746,7 +746,7 @@ final class HtmlTest extends TestCase
         $items[] = new SelectListItem('five', '5', null, null, $group1);
 
         $listBox = Html::listBox('array', $items);
-        $this->assertEquals('<select name="array[]" size="1" multiple="multiple"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3">three</option><option value="5" selected="selected">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup></select>', $listBox);
+        $this->assertEquals('<select name="array[]" id="array" size="1" multiple="multiple"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3">three</option><option value="5" selected="selected">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup></select>', $listBox);
 
         // #12
         $viewContext = $this->setContext(
@@ -768,7 +768,7 @@ final class HtmlTest extends TestCase
         $items[] = new SelectListItem('five', '5', null, null, $group1);
 
         $listBox = Html::listBox('number', $items);
-        $this->assertEquals('<select name="number[]" size="1" multiple="multiple"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3" selected="selected">three</option><option value="5" selected="selected">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup></select>', $listBox);
+        $this->assertEquals('<select name="number[]" id="number" size="1" multiple="multiple"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3" selected="selected">three</option><option value="5" selected="selected">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup></select>', $listBox);
 
         // #13
         $viewContext = $this->setContext(
@@ -783,7 +783,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $listBox = Html::listBox('list', array('one', 'two', 'three'));
-        $this->assertEquals('<select name="list[]" size="1" multiple="multiple"><option>one</option><option selected="selected">two</option><option>three</option></select>', $listBox);
+        $this->assertEquals('<select name="list[]" id="list" size="1" multiple="multiple"><option>one</option><option selected="selected">two</option><option>three</option></select>', $listBox);
     }
 
     public function testPassword(): void {
@@ -791,13 +791,13 @@ final class HtmlTest extends TestCase
         $viewContext = $this->setContext();
 
         $password = Html::password('password');
-        $this->assertEquals('<input type="password" name="password" />', $password);
+        $this->assertEquals('<input type="password" name="password" id="password" />', $password);
 
         // #2
         $viewContext = $this->setContext();
 
         $password = Html::password('password', '123123');
-        $this->assertEquals('<input type="password" name="password" value="123123" />', $password);
+        $this->assertEquals('<input type="password" name="password" id="password" value="123123" />', $password);
 
         // #3
         $viewContext = $this->setContext(
@@ -812,7 +812,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $password = Html::password('password');
-        $this->assertEquals('<input type="password" name="password" value="123123" />', $password);
+        $this->assertEquals('<input type="password" name="password" id="password" value="123123" />', $password);
 
         // #4
         $viewContext = $this->setContext(
@@ -827,7 +827,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $password = Html::password('password', '321321');
-        $this->assertEquals('<input type="password" name="password" value="123123" />', $password);
+        $this->assertEquals('<input type="password" name="password" id="password" value="123123" />', $password);
 
         // #5
         $viewContext = $this->setContext();
@@ -839,7 +839,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $password = Html::password('text');
-        $this->assertEquals('<input type="password" name="text" value="123123" />', $password);
+        $this->assertEquals('<input type="password" name="text" id="text" value="123123" />', $password);
 
         // #6
         $viewContext = $this->setContext();
@@ -851,7 +851,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $password = Html::password('text', '111111');
-        $this->assertEquals('<input type="password" name="text" value="123123" />', $password);
+        $this->assertEquals('<input type="password" name="text" id="text" value="123123" />', $password);
 
         // #7
         $viewContext = $this->setContext();
@@ -862,7 +862,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $password = Html::password('text', '123123');
-        $this->assertEquals('<input type="password" name="text" value="" />', $password);
+        $this->assertEquals('<input type="password" name="text" id="text" value="" />', $password);
 
         // #8
         $viewContext = $this->setContext(
@@ -880,7 +880,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $password = Html::password('text', '000000');
-        $this->assertEquals('<input type="password" name="text" value="123123" />', $password);
+        $this->assertEquals('<input type="password" name="text" id="text" value="123123" />', $password);
     }
 
     public function testEmail(): void {
@@ -888,13 +888,13 @@ final class HtmlTest extends TestCase
         $viewContext = $this->setContext();
 
         $email = Html::email('email');
-        $this->assertEquals('<input type="email" name="email" />', $email);
+        $this->assertEquals('<input type="email" name="email" id="email" />', $email);
 
         // #2
         $viewContext = $this->setContext();
 
         $email = Html::email('email', 'example@example.org');
-        $this->assertEquals('<input type="email" name="email" value="example@example.org" />', $email);
+        $this->assertEquals('<input type="email" name="email" id="email" value="example@example.org" />', $email);
 
         // #3
         $viewContext = $this->setContext(
@@ -909,7 +909,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $email = Html::email('email');
-        $this->assertEquals('<input type="email" name="email" value="example@example.org" />', $email);
+        $this->assertEquals('<input type="email" name="email" id="email" value="example@example.org" />', $email);
 
         // #4
         $viewContext = $this->setContext(
@@ -924,7 +924,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $email = Html::email('email', '123@example.org', array('class' => 'email-field'));
-        $this->assertEquals('<input class="email-field" type="email" name="email" value="example@example.org" />', $email);
+        $this->assertEquals('<input class="email-field" type="email" name="email" id="email" value="example@example.org" />', $email);
 
         // #5
         $viewContext = $this->setContext();
@@ -936,7 +936,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $email = Html::email('text');
-        $this->assertEquals('<input type="email" name="text" value="example@example.org" />', $email);
+        $this->assertEquals('<input type="email" name="text" id="text" value="example@example.org" />', $email);
 
         // #6
         $viewContext = $this->setContext();
@@ -948,7 +948,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $email = Html::email('text', '111111');
-        $this->assertEquals('<input type="email" name="text" value="example@example.org" />', $email);
+        $this->assertEquals('<input type="email" name="text" id="text" value="example@example.org" />', $email);
 
         // #7
         $viewContext = $this->setContext();
@@ -959,7 +959,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $email = Html::email('text', 'example@example.org');
-        $this->assertEquals('<input type="email" name="text" value="" />', $email);
+        $this->assertEquals('<input type="email" name="text" id="text" value="" />', $email);
 
         // #8
         $viewContext = $this->setContext(
@@ -977,7 +977,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $email = Html::email('text', '000000');
-        $this->assertEquals('<input type="email" name="text" value="example@example.org" />', $email);
+        $this->assertEquals('<input type="email" name="text" id="text" value="example@example.org" />', $email);
     }
 
     public function testRadioButton(): void {
@@ -985,19 +985,19 @@ final class HtmlTest extends TestCase
         $viewContext = $this->setContext();
 
         $radio = Html::radioButton('country', 'Russia');
-        $this->assertEquals('<input type="radio" name="country" value="Russia" />', $radio);
+        $this->assertEquals('<input type="radio" name="country" id="country" value="Russia" />', $radio);
 
         // #2
         $viewContext = $this->setContext();
 
         $radio = Html::radioButton('country', 'Russia') . Html::radioButton('country', 'USA');
-        $this->assertEquals('<input type="radio" name="country" value="Russia" /><input type="radio" name="country" value="USA" />', $radio);
+        $this->assertEquals('<input type="radio" name="country" id="country" value="Russia" /><input type="radio" name="country" id="country" value="USA" />', $radio);
 
         // #3
         $viewContext = $this->setContext();
 
         $radio = Html::radioButton('country', 'Russia', true) . Html::radioButton('country', 'USA');
-        $this->assertEquals('<input checked="checked" type="radio" name="country" value="Russia" /><input type="radio" name="country" value="USA" />', $radio);
+        $this->assertEquals('<input checked="checked" type="radio" name="country" id="country" value="Russia" /><input type="radio" name="country" id="country" value="USA" />', $radio);
 
         // #4
         $viewContext = $this->setContext(
@@ -1012,7 +1012,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $radio = Html::radioButton('country', 'Russia') . Html::radioButton('country', 'USA');
-        $this->assertEquals('<input checked="checked" type="radio" name="country" value="Russia" /><input type="radio" name="country" value="USA" />', $radio);
+        $this->assertEquals('<input checked="checked" type="radio" name="country" id="country" value="Russia" /><input type="radio" name="country" id="country" value="USA" />', $radio);
 
         // #5
         $viewContext = $this->setContext(
@@ -1027,7 +1027,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $radio = Html::radioButton('country', 'Russia') . Html::radioButton('country', 'USA');
-        $this->assertEquals('<input type="radio" name="country" value="Russia" /><input checked="checked" type="radio" name="country" value="USA" />', $radio);
+        $this->assertEquals('<input type="radio" name="country" id="country" value="Russia" /><input checked="checked" type="radio" name="country" id="country" value="USA" />', $radio);
 
         // #6
         $viewContext = $this->setContext(
@@ -1042,7 +1042,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $radio = Html::radioButton('country', 'Russia', true) . Html::radioButton('country', 'USA');
-        $this->assertEquals('<input type="radio" name="country" value="Russia" /><input checked="checked" type="radio" name="country" value="USA" />', $radio);
+        $this->assertEquals('<input type="radio" name="country" id="country" value="Russia" /><input checked="checked" type="radio" name="country" id="country" value="USA" />', $radio);
 
         // #7
         $viewContext = $this->setContext();
@@ -1054,7 +1054,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $radio = Html::radioButton('text', 'Russia') . Html::radioButton('text', 'USA');
-        $this->assertEquals('<input checked="checked" type="radio" name="text" value="Russia" /><input type="radio" name="text" value="USA" />', $radio);
+        $this->assertEquals('<input checked="checked" type="radio" name="text" id="text" value="Russia" /><input type="radio" name="text" id="text" value="USA" />', $radio);
 
         // #8
         $viewContext = $this->setContext();
@@ -1074,31 +1074,31 @@ final class HtmlTest extends TestCase
         $viewContext = $this->setContext();
 
         $textarea = Html::textArea('text');
-        $this->assertEquals('<textarea name="text"></textarea>', $textarea);
+        $this->assertEquals('<textarea name="text" id="text"></textarea>', $textarea);
 
         // #2
         $viewContext = $this->setContext();
 
         $textarea = Html::textArea('text', 'Hello, world!');
-        $this->assertEquals('<textarea name="text">Hello, world!</textarea>', $textarea);
+        $this->assertEquals('<textarea name="text" id="text">Hello, world!</textarea>', $textarea);
 
         // #3
         $viewContext = $this->setContext();
 
         $textarea = Html::textArea('text', 'Hello, world!', 10);
-        $this->assertEquals('<textarea name="text" rows="10">Hello, world!</textarea>', $textarea);
+        $this->assertEquals('<textarea name="text" id="text" rows="10">Hello, world!</textarea>', $textarea);
 
         // #4
         $viewContext = $this->setContext();
 
         $textarea = Html::textArea('text', 'Hello, world!', 10, 56);
-        $this->assertEquals('<textarea name="text" rows="10" cols="56">Hello, world!</textarea>', $textarea);
+        $this->assertEquals('<textarea name="text" id="text" rows="10" cols="56">Hello, world!</textarea>', $textarea);
 
         // #5
         $viewContext = $this->setContext();
 
         $textarea = Html::textArea('text', 'Hello, world!', null, 56);
-        $this->assertEquals('<textarea name="text" cols="56">Hello, world!</textarea>', $textarea);
+        $this->assertEquals('<textarea name="text" id="text" cols="56">Hello, world!</textarea>', $textarea);
 
         // #6
         $viewContext = $this->setContext();
@@ -1110,7 +1110,7 @@ final class HtmlTest extends TestCase
         $viewContext = $this->setContext();
 
         $textarea = Html::textArea('text', '<h1>Hello, world!</h1>');
-        $this->assertEquals('<textarea name="text">&lt;h1&gt;Hello, world!&lt;/h1&gt;</textarea>', $textarea);
+        $this->assertEquals('<textarea name="text" id="text">&lt;h1&gt;Hello, world!&lt;/h1&gt;</textarea>', $textarea);
 
         // #8
         $viewContext = $this->setContext(
@@ -1125,7 +1125,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $textarea = Html::textArea('text');
-        $this->assertEquals('<textarea name="text">Hello, world!</textarea>', $textarea);
+        $this->assertEquals('<textarea name="text" id="text">Hello, world!</textarea>', $textarea);
 
         // #9
         $viewContext = $this->setContext(
@@ -1140,7 +1140,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $textarea = Html::textArea('text', 'Ehlo, world!');
-        $this->assertEquals('<textarea name="text">Hello, world!</textarea>', $textarea);
+        $this->assertEquals('<textarea name="text" id="text">Hello, world!</textarea>', $textarea);
 
         // #10
         $viewContext = $this->setContext();
@@ -1152,7 +1152,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $textarea = Html::textArea('text');
-        $this->assertEquals('<textarea name="text">Hello, world!</textarea>', $textarea);
+        $this->assertEquals('<textarea name="text" id="text">Hello, world!</textarea>', $textarea);
 
         // #11
         $viewContext = $this->setContext();
@@ -1164,7 +1164,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $textarea = Html::textArea('text', 'Ehlo, world!');
-        $this->assertEquals('<textarea name="text">Hello,' . chr(10) . 'world!</textarea>', $textarea);
+        $this->assertEquals('<textarea name="text" id="text">Hello,' . chr(10) . 'world!</textarea>', $textarea);
 
         // #12
         $viewContext = $this->setContext();
@@ -1175,7 +1175,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $textarea = Html::textArea('text', 'Hello, world!');
-        $this->assertEquals('<textarea name="text"></textarea>', $textarea);
+        $this->assertEquals('<textarea name="text" id="text"></textarea>', $textarea);
 
         // #13
         $viewContext = $this->setContext(
@@ -1193,7 +1193,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $textarea = Html::textArea('text', 'The world of hello!');
-        $this->assertEquals('<textarea name="text">Hello, world!</textarea>', $textarea);
+        $this->assertEquals('<textarea name="text" id="text">Hello, world!</textarea>', $textarea);
     }
 
     public function testTextBox(): void {
@@ -1201,13 +1201,13 @@ final class HtmlTest extends TestCase
         $viewContext = $this->setContext();
 
         $textBox = Html::textBox('text');
-        $this->assertEquals('<input type="text" name="text" />', $textBox);
+        $this->assertEquals('<input type="text" name="text" id="text" />', $textBox);
 
         // #2
         $viewContext = $this->setContext();
 
         $textBox = Html::textBox('text', 'Hello, world!');
-        $this->assertEquals('<input type="text" name="text" value="Hello, world!" />', $textBox);
+        $this->assertEquals('<input type="text" name="text" id="text" value="Hello, world!" />', $textBox);
 
         // #3
         $viewContext = $this->setContext(
@@ -1222,7 +1222,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $textBox = Html::textBox('text');
-        $this->assertEquals('<input type="text" name="text" value="Hello, world!" />', $textBox);
+        $this->assertEquals('<input type="text" name="text" id="text" value="Hello, world!" />', $textBox);
 
         // #4
         $viewContext = $this->setContext(
@@ -1237,7 +1237,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $textBox = Html::textBox('text', 'Ehlo, world!', array('class' => 'text-field'));
-        $this->assertEquals('<input class="text-field" type="text" name="text" value="Hello, world!" />', $textBox);
+        $this->assertEquals('<input class="text-field" type="text" name="text" id="text" value="Hello, world!" />', $textBox);
 
         // #5
         $viewContext = $this->setContext();
@@ -1249,7 +1249,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $textBox = Html::textBox('text');
-        $this->assertEquals('<input type="text" name="text" value="Hello, world!" />', $textBox);
+        $this->assertEquals('<input type="text" name="text" id="text" value="Hello, world!" />', $textBox);
 
         // #6
         $viewContext = $this->setContext();
@@ -1261,7 +1261,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $textBox = Html::textBox('text', '123');
-        $this->assertEquals('<input type="text" name="text" value="Hello, world!" />', $textBox);
+        $this->assertEquals('<input type="text" name="text" id="text" value="Hello, world!" />', $textBox);
 
         // #7
         $viewContext = $this->setContext();
@@ -1272,7 +1272,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $textBox = Html::textBox('text', 'Hello, world!');
-        $this->assertEquals('<input type="text" name="text" value="" />', $textBox);
+        $this->assertEquals('<input type="text" name="text" id="text" value="" />', $textBox);
 
         // #8
         $viewContext = $this->setContext(
@@ -1290,7 +1290,7 @@ final class HtmlTest extends TestCase
         $this->annotateAndValidateModel($viewContext->modelState);
 
         $textBox = Html::textBox('text', 'world?');
-        $this->assertEquals('<input type="text" name="text" value="Hello, world!" />', $textBox);
+        $this->assertEquals('<input type="text" name="text" id="text" value="Hello, world!" />', $textBox);
     }
 
     public function testEncode() {

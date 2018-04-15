@@ -235,10 +235,10 @@ class Html {
         $response = self::$viewContext->httpContext->getResponse();
 
         if ($dynamic === true) {
-            return '<script>document.write(\'<input type="hidden" name="__requestVerificationToken" value="' . $token . '" />\');</script>';
+            return '<script>document.write(\'<input type="hidden" name="__requestVerificationToken" id="__requestVerificationToken" value="' . $token . '" />\');</script>';
         }
         else {
-            return '<input type="hidden" name="__requestVerificationToken" value="' . $token . '" />';
+            return '<input type="hidden" name="__requestVerificationToken" id="__requestVerificationToken" value="' . $token . '" />';
         }
     }
 
@@ -333,6 +333,7 @@ class Html {
 
         $htmlAttributes = $htmlAttributes === null ? array() : $htmlAttributes;
         $htmlAttributes['name'] = isset($htmlAttributes['name']) ? $htmlAttributes['name'] : $name;
+        $htmlAttributes['id'] = isset($htmlAttributes['id']) ? $htmlAttributes['id'] : $name;
 
         $result .= '<select ' . self::buildAttributes($htmlAttributes) . '>';
 
@@ -488,7 +489,9 @@ class Html {
             $size = 1;
         }
 
-        $htmlAttributes['name'] = $name = rtrim(isset($htmlAttributes['name']) ? $htmlAttributes['name'] : $name, '[]') . '[]';
+        $htmlAttributes['name'] = rtrim(isset($htmlAttributes['name']) ? $htmlAttributes['name'] : $name, '[]') . '[]';
+        $htmlAttributes['id'] = isset($htmlAttributes['id']) ? $htmlAttributes['id'] :  rtrim($name, '[]');
+        $name = $htmlAttributes['name'];
 
         $htmlAttributes['size']  = $size;
         $htmlAttributes['multiple']  = 'multiple';
@@ -570,6 +573,7 @@ class Html {
         $htmlAttributes = $htmlAttributes === null ? array() : $htmlAttributes;
 
         $htmlAttributes['name'] = isset($htmlAttributes['name']) ? $htmlAttributes['name'] : $name;
+        $htmlAttributes['id'] = isset($htmlAttributes['id']) ? $htmlAttributes['id'] : $name;
 
         if (self::getModelValue($name, $modelValue) === true) {
             $value = $modelValue;
@@ -656,6 +660,7 @@ class Html {
 
         $htmlAttributes['type'] = isset($htmlAttributes['type']) ? $htmlAttributes['type'] : $type;
         $htmlAttributes['name'] = isset($htmlAttributes['name']) ? $htmlAttributes['name'] : $name;
+        $htmlAttributes['id'] = isset($htmlAttributes['id']) ? $htmlAttributes['id'] : $name;
 
         if ($ignoreModelValue !== true && self::getModelValue($name, $modelValue) === true) {
             $value = $modelValue;
