@@ -519,12 +519,792 @@ final class HtmlTest extends TestCase
         $this->assertEquals('<select name="list"><option>one</option><option selected="selected">two</option><option>three</option></select>', $dropDownList);
     }
 
-    private function getModelA($text = '', $number = null, $boolean = null) {
+    public function testHidden(): void {
+        // #1
+        $viewContext = $this->setContext();
+
+        $hidden = Html::hidden('ghost');
+        $this->assertEquals('<input type="hidden" name="ghost" />', $hidden);
+
+        // #2
+        $viewContext = $this->setContext();
+
+        $hidden = Html::hidden('ghost', 'casper');
+        $this->assertEquals('<input type="hidden" name="ghost" value="casper" />', $hidden);
+
+        // #3
+        $viewContext = $this->setContext(
+            'POST', 
+            array(),
+            array(
+                'ghost' => 'casper'
+            )
+        );
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $hidden = Html::hidden('ghost');
+        $this->assertEquals('<input type="hidden" name="ghost" value="casper" />', $hidden);
+
+        // #4
+        $viewContext = $this->setContext(
+            'POST', 
+            array(),
+            array(
+                'ghost' => 'casper'
+            )
+        );
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $hidden = Html::hidden('ghost', 'stinky');
+        $this->assertEquals('<input type="hidden" name="ghost" value="casper" />', $hidden);
+
+        // #5
+        $viewContext = $this->setContext();
+
+        $viewContext->model = $this->getModelA();
+        $viewContext->model->number = 42;
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $hidden = Html::hidden('number');
+        $this->assertEquals('<input type="hidden" name="number" value="42" />', $hidden);
+
+        // #6
+        $viewContext = $this->setContext();
+
+        $viewContext->model = $this->getModelA();
+        $viewContext->model->number = 42;
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $hidden = Html::hidden('number', '1024');
+        $this->assertEquals('<input type="hidden" name="number" value="42" />', $hidden);
+
+        // #7
+        $viewContext = $this->setContext();
+
+        $viewContext->model = $this->getModelA();
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $hidden = Html::hidden('number', '1024');
+        $this->assertEquals('<input type="hidden" name="number" value="1024" />', $hidden);
+
+        // #8
+        $viewContext = $this->setContext(
+            'POST', 
+            array(),
+            array(
+                'number' => '42'
+            )
+        );
+
+        $viewContext->model = $this->getModelA();
+        $viewContext->model->number = 1024;
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $hidden = Html::hidden('number', '8');
+        $this->assertEquals('<input type="hidden" name="number" value="42" />', $hidden);
+    }
+
+    public function testLabel(): void {
+        $viewContext = $this->setContext();
+
+        $label = Html::label('username', 'Username:');
+        $this->assertEquals('<label for="username">Username:</label>', $label);
+
+        $label = Html::label('username', '<strong>Username:</strong>');
+        $this->assertEquals('<label for="username">&lt;strong&gt;Username:&lt;/strong&gt;</label>', $label);
+
+        $label = Html::label('password', 'Password:', array('style' => 'color:red', 'for' => 'rewrited'));
+        $this->assertEquals('<label style="color:red" for="rewrited">Password:</label>', $label);
+    }
+
+    public function testListBox(): void {
+        // #1
+        $viewContext = $this->setContext();
+
+        $listBox = Html::listBox('list', array());
+        $this->assertEquals('<select name="list[]" size="1" multiple="multiple"></select>', $listBox);
+
+        // #2
+        $viewContext = $this->setContext();
+
+        $listBox = Html::listBox('list', array(), 10);
+        $this->assertEquals('<select name="list[]" size="10" multiple="multiple"></select>', $listBox);
+
+        // #3
+        $listBox = Html::listBox('list', array('one', 'two', 'three'));
+        $this->assertEquals('<select name="list[]" size="1" multiple="multiple"><option>one</option><option>two</option><option>three</option></select>', $listBox);
+
+        // #4
+        $listBox = Html::listBox('list', array('one', 'two', 'three'), 5, 'two');
+        $this->assertEquals('<select name="list[]" size="5" multiple="multiple"><option>one</option><option selected="selected">two</option><option>three</option></select>', $listBox);
+
+        // #5
+        $listBox = Html::listBox('list', array('one', 'two', 'three'), null, null, array('class' => 'dropdown', 'name' => 'renamed'));
+        $this->assertEquals('<select class="dropdown" name="renamed[]" size="1" multiple="multiple"><option>one</option><option>two</option><option>three</option></select>', $listBox);
+
+        // #6
+        $items = array();
+        $items[] = new SelectListItem('one', '1');
+        $items[] = new SelectListItem('two', '2');
+        $items[] = new SelectListItem('three', '3');
+
+        $listBox = Html::listBox('list', $items);
+        $this->assertEquals('<select name="list[]" size="1" multiple="multiple"><option value="1">one</option><option value="2">two</option><option value="3">three</option></select>', $listBox);
+
+        // #7
+        $items = array();
+        $items[] = new SelectListItem('one', '1');
+        $items[] = new SelectListItem('two', '2');
+        $items[] = new SelectListItem('three', '3', true);
+
+        $listBox = Html::listBox('list', $items);
+        $this->assertEquals('<select name="list[]" size="1" multiple="multiple"><option value="1">one</option><option value="2">two</option><option value="3" selected="selected">three</option></select>', $listBox);
+
+        // #8
+        $group1 = new SelectListGroup('Odd numbers');
+        $group2 = new SelectListGroup('Even numbers', true);
+        $group3 = new SelectListGroup('Not numbers');
+
+        $items = array();
+        $items[] = new SelectListItem('one', '1', null, null, $group1);
+        $items[] = new SelectListItem('two', '2', null, null, $group2);
+        $items[] = new SelectListItem('three', '3', null, null, $group1);
+        $items[] = new SelectListItem('four', '4', null, null, $group2);
+        $items[] = new SelectListItem('five', '5', true, null, $group1);
+        $items[] = new SelectListItem('a', null, null, null, $group3);
+        $items[] = new SelectListItem('b', null, null, null, $group3);
+        $items[] = new SelectListItem('c', null, null, null, $group3);
+
+        $listBox = Html::listBox('list', $items, 10);
+        $this->assertEquals('<select name="list[]" size="10" multiple="multiple"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3">three</option><option value="5" selected="selected">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup><optgroup lable="Not numbers"><option value="">a</option><option value="">b</option><option value="">c</option></optgroup></select>', $listBox);
+
+        // #9
+        $group1 = new SelectListGroup('Odd numbers');
+        $group2 = new SelectListGroup('Even numbers', true);
+
+        $items = array();
+        $items[] = new SelectListItem('one', '1', null, null, $group1);
+        $items[] = new SelectListItem('two', '2', null, null, $group2);
+        $items[] = new SelectListItem('three', '3', null, null, $group1);
+        $items[] = new SelectListItem('four', '4', null, null, $group2);
+        $items[] = new SelectListItem('five', '5', true, null, $group1);
+        $items[] = new SelectListItem('a');
+        $items[] = new SelectListItem('b');
+        $items[] = new SelectListItem('c', null, true);
+
+        $listBox = Html::listBox('list', $items, 10);
+        $this->assertEquals('<select name="list[]" size="10" multiple="multiple"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3">three</option><option value="5" selected="selected">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup><option value="">a</option><option value="">b</option><option value="" selected="selected">c</option></select>', $listBox);
+
+        // #10
+        $viewContext = $this->setContext();
+
+        $viewContext->model = $this->getModelA();
+        $viewContext->model->array = array(3);
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $items = array();
+        $items[] = new SelectListItem('one', '1', null, null, $group1);
+        $items[] = new SelectListItem('two', '2', null, null, $group2);
+        $items[] = new SelectListItem('three', '3', null, null, $group1);
+        $items[] = new SelectListItem('four', '4', null, null, $group2);
+        $items[] = new SelectListItem('five', '5', null, null, $group1);
+
+        $listBox = Html::listBox('array', $items);
+        $this->assertEquals('<select name="array[]" size="1" multiple="multiple"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3" selected="selected">three</option><option value="5">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup></select>', $listBox);
+
+        // #11
+        $viewContext = $this->setContext(
+            'POST', 
+            array(),
+            array(
+                'array[]' => array('5')
+            )
+        );
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $items = array();
+        $items[] = new SelectListItem('one', '1', null, null, $group1);
+        $items[] = new SelectListItem('two', '2', null, null, $group2);
+        $items[] = new SelectListItem('three', '3', null, null, $group1);
+        $items[] = new SelectListItem('four', '4', null, null, $group2);
+        $items[] = new SelectListItem('five', '5', null, null, $group1);
+
+        $listBox = Html::listBox('array', $items);
+        $this->assertEquals('<select name="array[]" size="1" multiple="multiple"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3">three</option><option value="5" selected="selected">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup></select>', $listBox);
+
+        // #12
+        $viewContext = $this->setContext(
+            'POST', 
+            array(),
+            array(
+                'number[]' => array('3', '5')
+            )
+        );
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $items = array();
+        $items[] = new SelectListItem('one', '1', null, null, $group1);
+        $items[] = new SelectListItem('two', '2', null, null, $group2);
+        $items[] = new SelectListItem('three', '3', null, null, $group1);
+        $items[] = new SelectListItem('four', '4', null, null, $group2);
+        $items[] = new SelectListItem('five', '5', null, null, $group1);
+
+        $listBox = Html::listBox('number', $items);
+        $this->assertEquals('<select name="number[]" size="1" multiple="multiple"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3" selected="selected">three</option><option value="5" selected="selected">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup></select>', $listBox);
+
+        // #13
+        $viewContext = $this->setContext(
+            'POST', 
+            array(),
+            array(
+                'list[]' => array('two')
+            )
+        );
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $listBox = Html::listBox('list', array('one', 'two', 'three'));
+        $this->assertEquals('<select name="list[]" size="1" multiple="multiple"><option>one</option><option selected="selected">two</option><option>three</option></select>', $listBox);
+    }
+
+    public function testPassword(): void {
+        // #1
+        $viewContext = $this->setContext();
+
+        $password = Html::password('password');
+        $this->assertEquals('<input type="password" name="password" />', $password);
+
+        // #2
+        $viewContext = $this->setContext();
+
+        $password = Html::password('password', '123123');
+        $this->assertEquals('<input type="password" name="password" value="123123" />', $password);
+
+        // #3
+        $viewContext = $this->setContext(
+            'POST', 
+            array(),
+            array(
+                'password' => '123123'
+            )
+        );
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $password = Html::password('password');
+        $this->assertEquals('<input type="password" name="password" value="123123" />', $password);
+
+        // #4
+        $viewContext = $this->setContext(
+            'POST', 
+            array(),
+            array(
+                'password' => '123123'
+            )
+        );
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $password = Html::password('password', '321321');
+        $this->assertEquals('<input type="password" name="password" value="123123" />', $password);
+
+        // #5
+        $viewContext = $this->setContext();
+
+        $viewContext->model = $this->getModelA();
+        $viewContext->model->text = '123123';
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $password = Html::password('text');
+        $this->assertEquals('<input type="password" name="text" value="123123" />', $password);
+
+        // #6
+        $viewContext = $this->setContext();
+
+        $viewContext->model = $this->getModelA();
+        $viewContext->model->text = '123123';
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $password = Html::password('text', '111111');
+        $this->assertEquals('<input type="password" name="text" value="123123" />', $password);
+
+        // #7
+        $viewContext = $this->setContext();
+
+        $viewContext->model = $this->getModelA();
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $password = Html::password('text', '123123');
+        $this->assertEquals('<input type="password" name="text" value="" />', $password);
+
+        // #8
+        $viewContext = $this->setContext(
+            'POST', 
+            array(),
+            array(
+                'text' => '123123'
+            )
+        );
+
+        $viewContext->model = $this->getModelA();
+        $viewContext->model->text = 'hello, world!';
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $password = Html::password('text', '000000');
+        $this->assertEquals('<input type="password" name="text" value="123123" />', $password);
+    }
+
+    public function testEmail(): void {
+        // #1
+        $viewContext = $this->setContext();
+
+        $email = Html::email('email');
+        $this->assertEquals('<input type="email" name="email" />', $email);
+
+        // #2
+        $viewContext = $this->setContext();
+
+        $email = Html::email('email', 'example@example.org');
+        $this->assertEquals('<input type="email" name="email" value="example@example.org" />', $email);
+
+        // #3
+        $viewContext = $this->setContext(
+            'POST', 
+            array(),
+            array(
+                'email' => 'example@example.org'
+            )
+        );
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $email = Html::email('email');
+        $this->assertEquals('<input type="email" name="email" value="example@example.org" />', $email);
+
+        // #4
+        $viewContext = $this->setContext(
+            'POST', 
+            array(),
+            array(
+                'email' => 'example@example.org'
+            )
+        );
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $email = Html::email('email', '123@example.org', array('class' => 'email-field'));
+        $this->assertEquals('<input class="email-field" type="email" name="email" value="example@example.org" />', $email);
+
+        // #5
+        $viewContext = $this->setContext();
+
+        $viewContext->model = $this->getModelA();
+        $viewContext->model->text = 'example@example.org';
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $email = Html::email('text');
+        $this->assertEquals('<input type="email" name="text" value="example@example.org" />', $email);
+
+        // #6
+        $viewContext = $this->setContext();
+
+        $viewContext->model = $this->getModelA();
+        $viewContext->model->text = 'example@example.org';
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $email = Html::email('text', '111111');
+        $this->assertEquals('<input type="email" name="text" value="example@example.org" />', $email);
+
+        // #7
+        $viewContext = $this->setContext();
+
+        $viewContext->model = $this->getModelA();
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $email = Html::email('text', 'example@example.org');
+        $this->assertEquals('<input type="email" name="text" value="" />', $email);
+
+        // #8
+        $viewContext = $this->setContext(
+            'POST', 
+            array(),
+            array(
+                'text' => 'example@example.org'
+            )
+        );
+
+        $viewContext->model = $this->getModelA();
+        $viewContext->model->text = 'hello@world.org';
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $email = Html::email('text', '000000');
+        $this->assertEquals('<input type="email" name="text" value="example@example.org" />', $email);
+    }
+
+    public function testRadioButton(): void {
+        // #1
+        $viewContext = $this->setContext();
+
+        $radio = Html::radioButton('country', 'Russia');
+        $this->assertEquals('<input type="radio" name="country" value="Russia" />', $radio);
+
+        // #2
+        $viewContext = $this->setContext();
+
+        $radio = Html::radioButton('country', 'Russia') . Html::radioButton('country', 'USA');
+        $this->assertEquals('<input type="radio" name="country" value="Russia" /><input type="radio" name="country" value="USA" />', $radio);
+
+        // #3
+        $viewContext = $this->setContext();
+
+        $radio = Html::radioButton('country', 'Russia', true) . Html::radioButton('country', 'USA');
+        $this->assertEquals('<input checked="checked" type="radio" name="country" value="Russia" /><input type="radio" name="country" value="USA" />', $radio);
+
+        // #4
+        $viewContext = $this->setContext(
+            'POST', 
+            array(),
+            array(
+                'country' => 'Russia'
+            )
+        );
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $radio = Html::radioButton('country', 'Russia') . Html::radioButton('country', 'USA');
+        $this->assertEquals('<input checked="checked" type="radio" name="country" value="Russia" /><input type="radio" name="country" value="USA" />', $radio);
+
+        // #5
+        $viewContext = $this->setContext(
+            'POST', 
+            array(),
+            array(
+                'country' => 'USA'
+            )
+        );
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $radio = Html::radioButton('country', 'Russia') . Html::radioButton('country', 'USA');
+        $this->assertEquals('<input type="radio" name="country" value="Russia" /><input checked="checked" type="radio" name="country" value="USA" />', $radio);
+
+        // #6
+        $viewContext = $this->setContext(
+            'POST', 
+            array(),
+            array(
+                'country' => 'USA'
+            )
+        );
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $radio = Html::radioButton('country', 'Russia', true) . Html::radioButton('country', 'USA');
+        $this->assertEquals('<input type="radio" name="country" value="Russia" /><input checked="checked" type="radio" name="country" value="USA" />', $radio);
+
+        // #7
+        $viewContext = $this->setContext();
+
+        $viewContext->model = $this->getModelA();
+        $viewContext->model->text = 'Russia';
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $radio = Html::radioButton('text', 'Russia') . Html::radioButton('text', 'USA');
+        $this->assertEquals('<input checked="checked" type="radio" name="text" value="Russia" /><input type="radio" name="text" value="USA" />', $radio);
+
+        // #8
+        $viewContext = $this->setContext();
+
+        $viewContext->model = $this->getModelA();
+        $viewContext->model->text = 'USA';
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $radio = Html::radioButton('text', 'Russia', true, array('class' => 'russia', 'id' => 'russia')) . Html::radioButton('text', 'USA', null, array('id' => 'usa'));
+        $this->assertEquals('<input class="russia" id="russia" type="radio" name="text" value="Russia" /><input id="usa" checked="checked" type="radio" name="text" value="USA" />', $radio);
+    }
+
+    public function testTextArea(): void {
+        // #1
+        $viewContext = $this->setContext();
+
+        $textarea = Html::textArea('text');
+        $this->assertEquals('<textarea name="text"></textarea>', $textarea);
+
+        // #2
+        $viewContext = $this->setContext();
+
+        $textarea = Html::textArea('text', 'Hello, world!');
+        $this->assertEquals('<textarea name="text">Hello, world!</textarea>', $textarea);
+
+        // #3
+        $viewContext = $this->setContext();
+
+        $textarea = Html::textArea('text', 'Hello, world!', 10);
+        $this->assertEquals('<textarea name="text" rows="10">Hello, world!</textarea>', $textarea);
+
+        // #4
+        $viewContext = $this->setContext();
+
+        $textarea = Html::textArea('text', 'Hello, world!', 10, 56);
+        $this->assertEquals('<textarea name="text" rows="10" cols="56">Hello, world!</textarea>', $textarea);
+
+        // #5
+        $viewContext = $this->setContext();
+
+        $textarea = Html::textArea('text', 'Hello, world!', null, 56);
+        $this->assertEquals('<textarea name="text" cols="56">Hello, world!</textarea>', $textarea);
+
+        // #6
+        $viewContext = $this->setContext();
+
+        $textarea = Html::textArea('text', 'Hello, world!', 10, 56, array("id" => "main-text", "class" => "editor"));
+        $this->assertEquals('<textarea id="main-text" class="editor" name="text" rows="10" cols="56">Hello, world!</textarea>', $textarea);
+
+        // #7
+        $viewContext = $this->setContext();
+
+        $textarea = Html::textArea('text', '<h1>Hello, world!</h1>');
+        $this->assertEquals('<textarea name="text">&lt;h1&gt;Hello, world!&lt;/h1&gt;</textarea>', $textarea);
+
+        // #8
+        $viewContext = $this->setContext(
+            'POST', 
+            array(),
+            array(
+                'text' => 'Hello, world!'
+            )
+        );
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $textarea = Html::textArea('text');
+        $this->assertEquals('<textarea name="text">Hello, world!</textarea>', $textarea);
+
+        // #9
+        $viewContext = $this->setContext(
+            'POST', 
+            array(),
+            array(
+                'text' => 'Hello, world!'
+            )
+        );
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $textarea = Html::textArea('text', 'Ehlo, world!');
+        $this->assertEquals('<textarea name="text">Hello, world!</textarea>', $textarea);
+
+        // #10
+        $viewContext = $this->setContext();
+
+        $viewContext->model = $this->getModelA();
+        $viewContext->model->text = 'Hello, world!';
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $textarea = Html::textArea('text');
+        $this->assertEquals('<textarea name="text">Hello, world!</textarea>', $textarea);
+
+        // #11
+        $viewContext = $this->setContext();
+
+        $viewContext->model = $this->getModelA();
+        $viewContext->model->text = 'Hello,' . chr(10) . 'world!';
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $textarea = Html::textArea('text', 'Ehlo, world!');
+        $this->assertEquals('<textarea name="text">Hello,' . chr(10) . 'world!</textarea>', $textarea);
+
+        // #12
+        $viewContext = $this->setContext();
+
+        $viewContext->model = $this->getModelA();
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $textarea = Html::textArea('text', 'Hello, world!');
+        $this->assertEquals('<textarea name="text"></textarea>', $textarea);
+
+        // #13
+        $viewContext = $this->setContext(
+            'POST', 
+            array(),
+            array(
+                'text' => 'Hello, world!'
+            )
+        );
+
+        $viewContext->model = $this->getModelA();
+        $viewContext->model->text = 'Ehlo, world!';
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $textarea = Html::textArea('text', 'The world of hello!');
+        $this->assertEquals('<textarea name="text">Hello, world!</textarea>', $textarea);
+    }
+
+    public function testTextBox(): void {
+        // #1
+        $viewContext = $this->setContext();
+
+        $textBox = Html::textBox('text');
+        $this->assertEquals('<input type="text" name="text" />', $textBox);
+
+        // #2
+        $viewContext = $this->setContext();
+
+        $textBox = Html::textBox('text', 'Hello, world!');
+        $this->assertEquals('<input type="text" name="text" value="Hello, world!" />', $textBox);
+
+        // #3
+        $viewContext = $this->setContext(
+            'POST', 
+            array(),
+            array(
+                'text' => 'Hello, world!'
+            )
+        );
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $textBox = Html::textBox('text');
+        $this->assertEquals('<input type="text" name="text" value="Hello, world!" />', $textBox);
+
+        // #4
+        $viewContext = $this->setContext(
+            'POST', 
+            array(),
+            array(
+                'text' => 'Hello, world!'
+            )
+        );
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $textBox = Html::textBox('text', 'Ehlo, world!', array('class' => 'text-field'));
+        $this->assertEquals('<input class="text-field" type="text" name="text" value="Hello, world!" />', $textBox);
+
+        // #5
+        $viewContext = $this->setContext();
+
+        $viewContext->model = $this->getModelA();
+        $viewContext->model->text = 'Hello, world!';
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $textBox = Html::textBox('text');
+        $this->assertEquals('<input type="text" name="text" value="Hello, world!" />', $textBox);
+
+        // #6
+        $viewContext = $this->setContext();
+
+        $viewContext->model = $this->getModelA();
+        $viewContext->model->text = 'Hello, world!';
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $textBox = Html::textBox('text', '123');
+        $this->assertEquals('<input type="text" name="text" value="Hello, world!" />', $textBox);
+
+        // #7
+        $viewContext = $this->setContext();
+
+        $viewContext->model = $this->getModelA();
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $textBox = Html::textBox('text', 'Hello, world!');
+        $this->assertEquals('<input type="text" name="text" value="" />', $textBox);
+
+        // #8
+        $viewContext = $this->setContext(
+            'POST', 
+            array(),
+            array(
+                'text' => 'Hello, world!'
+            )
+        );
+
+        $viewContext->model = $this->getModelA();
+        $viewContext->model->text = 'EHLO';
+
+        $this->makeActionState($viewContext);
+        $this->annotateAndValidateModel($viewContext->modelState);
+
+        $textBox = Html::textBox('text', 'world?');
+        $this->assertEquals('<input type="text" name="text" value="Hello, world!" />', $textBox);
+    }
+
+    public function testEncode() {
+        $encode = Html::encode('<h1>Hello, world!</h1><br />This is <strong>encoded</strong> "text"!');
+        $this->assertEquals('&lt;h1&gt;Hello, world!&lt;/h1&gt;&lt;br /&gt;This is &lt;strong&gt;encoded&lt;/strong&gt; &quot;text&quot;!', $encode);
+    }
+
+    private function getModelA($text = '', $number = null, $boolean = null, $array = null) {
         $result = new ModelA();
 
         $result->text = $text;
         $result->number = $number;
         $result->boolean = $boolean;
+        $result->array = $array;
 
         return $result;
     }

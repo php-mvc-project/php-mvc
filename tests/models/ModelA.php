@@ -7,4 +7,6 @@ class ModelA {
 
     public $boolean;
 
+    public $array;
+
 }

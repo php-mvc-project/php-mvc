@@ -319,7 +319,7 @@ class Html {
      * 
      * @param string $name The name of the element.
      * @param array|SelectListItem[] $list The list of values.
-     * @param string|null $selectedValue If non-null, this value will be used as the selected value.
+     * @param string|array|null $selectedValue If non-null, this value will be used as the selected value.
      * @param array $htmlAttributes The HTML attributes for the element.
      * 
      * @return string
@@ -393,12 +393,16 @@ class Html {
      * Returns list of <option> for <select>.
      * 
      * @param array|SelectListItem[] $list The list of values.
-     * @param string The selected value.
+     * @param string|array|null The selected value.
      * 
      * @return string
      */
     private static function getSelectOptions($list, $selectedValue) {
         $result = '';
+
+        if ($selectedValue !== null && !is_array($selectedValue)) {
+            $selectedValue = array($selectedValue);
+        }
 
         foreach ($list as $item) {
             $itemAttr = array();
@@ -415,14 +419,14 @@ class Html {
                 if ($selectedValue === null && $item->selected === true) {
                     $itemAttr['selected'] = 'selected';
                 }
-                elseif ($selectedValue !== null && $selectedValue == $item->value) {
+                elseif ($selectedValue !== null && in_array($item->value, $selectedValue) === true) {
                     $itemAttr['selected'] = 'selected';
                 }
             }
             else {
                 $text = $item;
 
-                if ($selectedValue == $item) {
+                if ($selectedValue !== null && in_array($item, $selectedValue)) {
                     $itemAttr['selected'] = 'selected';
                 }
             }
@@ -461,9 +465,9 @@ class Html {
      */
     public static function label($name, $text, $htmlAttributes = array()) {
         $htmlAttributes = $htmlAttributes === null ? array() : $htmlAttributes;
-        $htmlAttributes['for']  = $name;
+        $htmlAttributes['for']  = isset($htmlAttributes['for']) ? $htmlAttributes['for'] : $name;
 
-        return '<label ' . self::buildAttributes($htmlAttributes) . '>' . htmlspecialchars($value) . '</label>';
+        return '<label ' . self::buildAttributes($htmlAttributes) . '>' . htmlspecialchars($text) . '</label>';
     }
 
     /**
@@ -480,9 +484,14 @@ class Html {
     public static function listBox($name, $list, $size = 1, $selectedValue = null, $htmlAttributes = array()) {
         $htmlAttributes = $htmlAttributes === null ? array() : $htmlAttributes;
 
-        if (!empty($size)) {
-            $htmlAttributes['size']  = $size;
+        if (empty($size)) { 
+            $size = 1;
         }
+
+        $htmlAttributes['name'] = $name = rtrim(isset($htmlAttributes['name']) ? $htmlAttributes['name'] : $name, '[]') . '[]';
+
+        $htmlAttributes['size']  = $size;
+        $htmlAttributes['multiple']  = 'multiple';
 
         return self::dropDownList($name, $list, $selectedValue, $htmlAttributes);
     }
@@ -533,15 +542,16 @@ class Html {
         if (self::getModelValue($name, $modelValue) === true) {
             if ($modelValue == $value) {
                 $htmlAttributes['checked'] = 'checked';
-                $checked = null;
             }
+
+            $checked = null;
         }
 
         if ($checked === true) {
             $htmlAttributes['checked'] = 'checked';
         }
 
-        return self::input($name, 'radio', $value, $htmlAttributes);
+        return self::input($name, 'radio', $value, $htmlAttributes, true);
     }
 
     /**
@@ -556,6 +566,7 @@ class Html {
      * @return string
      */
     public static function textArea($name, $value = '', $rows = null, $columns = null, $htmlAttributes = array()) {
+        $result = '';
         $htmlAttributes = $htmlAttributes === null ? array() : $htmlAttributes;
 
         $htmlAttributes['name'] = isset($htmlAttributes['name']) ? $htmlAttributes['name'] : $name;
@@ -569,7 +580,7 @@ class Html {
         }
 
         if ($columns !== null &&  (int)$columns > 0) {
-            $htmlAttributes['columns'] = (int)$columns;
+            $htmlAttributes['cols'] = (int)$columns;
         }
 
         $result .= '<textarea ' . self::buildAttributes($htmlAttributes) . '>';
@@ -730,8 +741,18 @@ class Html {
         }
 
         if (is_object($model)) {
+            if (substr($name, -2) == '[]') {
+                $name = rtrim($name, '[]');
+            }
+
             if (isset($model->$name)) {
-                $value = filter_var($model->$name, $filter);
+                if (is_array($model->$name)) {
+                    $value = $model->$name;
+                }
+                else {
+                    $value = filter_var($model->$name, $filter);
+                }
+
                 return true;
             }
             else {
@@ -741,7 +762,12 @@ class Html {
         }
         elseif (is_array($model)) {
             if (isset($model[$name])) {
-                $value = filter_var($model[$name] instanceof ModelStateEntry ? $model[$name]->value : $model[$name], $filter);
+                $value = ($model[$name] instanceof ModelStateEntry ? $model[$name]->value : $model[$name]);
+
+                if (!is_array($value)) {
+                    $value = filter_var($value, $filter);
+                }
+
                 return true;
             }
             else {
