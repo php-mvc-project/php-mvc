@@ -327,10 +327,10 @@ class Route {
      */
     private function setBounds(&$segments) {
         for ($i = 0, $count = count($segments); $i < $count; ++$i) {
-            if ($segments[$i]->optional && $i - 1 > 0) {
+            if ($segments[$i]->optional && $i - 1 >= 0) {
                 $optional = true;
 
-                for ($j = $i; $j < $count; ++$j) {
+                for ($j = $i + 1; $j < $count; ++$j) {
                     if (!$segments[$j]->optional) {
                         $optional = false;
                         break;
@@ -340,12 +340,26 @@ class Route {
                 if ($optional) {
                     $segments[$i - 1]->preEnd = true;
                 }
+                else {
+                    for (--$j, $jc = $i - 1; $j >= $jc; --$j) {
+                        $segments[$j]->optional = false;
+                    }
+                }
             }
 
             if ($i + 1 == $count) {
                 $segments[$i]->end = true;
             }
         }
+    }
+
+    /**
+     * Returns $template of the current instance.
+     * 
+     * @return string
+     */
+    public function __toString () {
+        return $this->template;
     }
 
 }

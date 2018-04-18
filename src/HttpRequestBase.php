@@ -16,7 +16,7 @@ abstract class HttpRequestBase {
     /**
      * Query string of the current request.
      * 
-     * @var string
+     * @var QueryString
      */
     protected $queryString;
 
@@ -63,6 +63,13 @@ abstract class HttpRequestBase {
     protected $files;
 
     /**
+     * HTTP headers of the current request.
+     * 
+     * @var array
+     */
+    private $headers = null;
+
+    /**
      * Initializes a new instance of the HttpRequestBase with the specified parameters.
      */
     protected function __construct(
@@ -83,16 +90,27 @@ abstract class HttpRequestBase {
 
         $this->requestUri = $serverVariables['REQUEST_URI'];
 
+        $this->queryString = new QueryString();
+        $queryString = array();
+
         if (($qsIndex = strpos($this->requestUri, '?')) !== false) {
-            $this->queryString = substr($this->requestUri, $qsIndex + 1);
+            parse_str(substr($this->requestUri, $qsIndex + 1), $queryString);
         }
         else {
-            $this->queryString = !empty($serverVariables['QUERY_STRING']) ? $serverVariables['QUERY_STRING'] : null;
+            if (!empty($serverVariables['QUERY_STRING'])) {
+                parse_str($serverVariables['QUERY_STRING'], $queryString);
+            }
+        }
+
+        if (!empty($queryString)) {
+            foreach ($queryString as $key => $value) {
+                $this->queryString[$key] = $value;
+            }
         }
     }
 
     /**
-     * Return request URI.
+     * Returns request URI.
      * 
      * @return string
      */
@@ -101,66 +119,80 @@ abstract class HttpRequestBase {
     }
 
     /**
-     * Return query string.
+     * Returns query string.
      * 
-     * @return string
+     * @param string|null $key The key to get. Default: null - QueryString instance.
+     * 
+     * @return QueryString|string
      */
-    public function queryString() {
-        return $this->queryString;
+    public function queryString($key = null) {
+        return $this->getSingleKeyOrAll($this->queryString, $key);
     }
 
     /**
-     * Return server variables.
+     * Returns server variables.
      * 
-     * @return array
+     * @param string|null $key The key to get. Default: null - all variables.
+     * 
+     * @return array|string
      */
-    public function serverVariables() {
-        return $this->serverVariables;
+    public function serverVariables($key = null) {
+        return $this->getSingleKeyOrAll($this->serverVariables, $key);
     }
 
     /**
-     * Return cookies.
+     * Returns cookies.
      * 
-     * @return array
+     * @param string|null $key The cookie name to get. Default: null - all cookies.
+     * 
+     * @return array|string
      */
-    public function cookies() {
-        return $this->cookies;
+    public function cookies($key = null) {
+        return $this->getSingleKeyOrAll($this->cookies, $key);
     }
 
     /**
-     * Return session.
+     * Returns session.
      * 
-     * @return array
+     * @param string|null $key The session key to get. Default: null - all keys.
+     * 
+     * @return array|mixed
      */
-    public function session() {
-        return $this->session;
+    public function session($key = null) {
+        return $this->getSingleKeyOrAll($this->session, $key);
     }
 
     /**
-     * Return GET data.
+     * Returns GET data.
      * 
-     * @return array
+     * @param string|null $key The key to get. Default: null - all keys.
+     * 
+     * @return array|mixed
      */
-    public function get() {
-        return $this->get;
+    public function get($key = null) {
+        return $this->getSingleKeyOrAll($this->get, $key);
     }
 
     /**
-     * Return POST data.
+     * Returns POST data.
      * 
-     * @return array
+     * @param string|null $key The key to get. Default: null - all keys.
+     * 
+     * @return array|mixed
      */
-    public function post() {
-        return $this->post;
+    public function post($key = null) {
+        return $this->getSingleKeyOrAll($this->post, $key);
     }
 
     /**
-     * Return posted files.
+     * Returns posted files.
      * 
-     * @return array
+     * @param string|null $key The key to get. Default: null - all keys.
+     * 
+     * @return array|mixed
      */
-    public function files() {
-        return $this->files;
+    public function files($key = null) {
+        return $this->getSingleKeyOrAll($this->files, $key);
     }
 
     /**
@@ -228,20 +260,39 @@ abstract class HttpRequestBase {
     /**
      * Returns HTTP headers of the request.
      * 
-     * @return array
+     * @param string|null $key The key to get. Default: null - all keys.
+     * 
+     * @return array|string
      */
-    public function headers() {
-        $result = array(); 
+    public function headers($key = null) {
+        if ($this->headers === null) {
+            $result = array(); 
 
-        foreach ($this->serverVariables as $key => $value) 
-        {
-            if (substr($key, 0, 5) == 'HTTP_') 
+            foreach ($this->serverVariables as $k => $v)
             {
-                $result[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($key, 5)))))] = $value; 
+                if (substr($k, 0, 5) == 'HTTP_') 
+                {
+                    $headerName = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($k, 5)))));
+                    $result[$headerName] = $v;
+                }
             }
+
+            $this->headers = $result;
         }
 
-        return $result; 
+        return $this->getSingleKeyOrAll($this->headers, $key);
+    }
+
+    /**
+     * Gets single key from array or all keys, if key is null.
+     */
+    private function getSingleKeyOrAll($array, $key) {
+        if ($key !== null) {
+            return (isset($array[$key])) ? $array[$key] : null;
+        }
+        else {
+            return $array;
+        }
     }
 
 }

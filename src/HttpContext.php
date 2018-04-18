@@ -14,7 +14,7 @@ final class HttpContext extends HttpContextBase {
         $routesProperty->setAccessible(true);
         $routes = $routesProperty->getValue(null);
 
-        parent::__construct(new HttpRequest(), new HttpResponse(), $routes);
+        parent::__construct($routes, new HttpRequest(), new HttpResponse());
     }
     
 }

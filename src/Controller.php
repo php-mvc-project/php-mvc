@@ -11,14 +11,14 @@ class Controller {
      * 
      * @var array
      */
-    protected $viewData = array();
+    private $viewData = array();
 
     /**
      * Instance of ActionContext.
      * 
      * @var ActionContext
      */
-    protected $actionContext;
+    private $actionContext;
 
     /**
      * Sets data to view.
@@ -59,6 +59,24 @@ class Controller {
      */
     protected function getHttpContext() {
         return $this->actionContext->httpContext;
+    }
+
+    /**
+     * Gets the HttpRequestBase object for the current request.
+     * 
+     * @return HttpRequestBase
+     */
+    protected function getRequest() {
+        return $this->actionContext->httpContext->getRequest();
+    }
+
+    /**
+     * Gets the HttpResponseBase object for the current request.
+     * 
+     * @return HttpResponseBase
+     */
+    protected function getResponse() {
+        return $this->actionContext->httpContext->getResponse();
     }
 
     /**

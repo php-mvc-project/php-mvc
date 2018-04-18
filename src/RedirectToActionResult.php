@@ -68,15 +68,19 @@ class RedirectToActionResult extends RedirectResult {
         $this->controllerName = !empty($controllerName) ? $controllerName : PHPMVC_VIEW;
         $this->routeValues = $routeValues;
         $this->fragment = $fragment;
-
-        $this->buildUrl();
     }
 
-    private function buildUrl() {
-        $this->url = '/?controller=' . $this->controllerName . '&action=' . $this->actionName;
-
-        // $this->actionContext->route
-        // header('Location: /' . $controllerName . '/' . $actionName);
+    /**
+     * Executes the action and outputs the result.
+     * 
+     * @param ActionContext $actionContext The context in which the result is executed.
+     * The context information includes information about the action that was executed and request information.
+     * 
+     * @return void
+     */
+    public function execute($actionContext) {
+        $this->url = UrlHelper::action($actionContext, $this->actionName, $this->controllerName, $this->routeValues, $this->fragment);
+        parent::execute($actionContext);
     }
 
 }

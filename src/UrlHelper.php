@@ -38,8 +38,7 @@ final class UrlHelper {
             $result .= $schema . '://';
 
             if (empty($host)) {
-                $server = $httpContext->getRequest()->serverVariables();
-                $result .= $server['HTTP_HOST'] . '/';
+                $result .= $httpContext->getRequest()->serverVariables('HTTP_HOST') . '/';
             }
         }
 

@@ -31,15 +31,17 @@ final class Make {
      * Magic!
      * 
      * @param string $appNamespace Root namespace of the application.
+     * @param HttpContextBase $httpContext The context of HTTP request.
+     * @param string $basePath The base path of application.
      * 
      * @return void
      */
     public static function magic($appNamespace, $httpContext = null, $basePath = null) {
         self::init($appNamespace, $basePath);
+        self::include();
         self::context($httpContext);
         self::headers();
         self::validation();
-        self::include();
         self::render();
     }
 
@@ -124,7 +126,7 @@ final class Make {
             throw new \Exception('The controller type must be derived from "\PhpMvc\Controller".');
         }
 
-        $actionContextProperty = $controllerClass->getProperty('actionContext');
+        $actionContextProperty = $controllerClass->getParentClass()->getProperty('actionContext');
         $actionContextProperty->setAccessible(true);
 
         // set action context to model
@@ -189,7 +191,7 @@ final class Make {
         catch (\Exception $ex) {
             // add the error to the modelState
             $actionContext->modelState->addError('.', $ex);
-            $actionResult = null;
+            $actionResult = new ExceptionResult($ex);
         }
 
         if (isset($actionResult)) {
@@ -206,7 +208,7 @@ final class Make {
             }
 
             // make result
-            if ($actionResult instanceof ViewResult) {
+            if ($actionResult instanceof ViewResult || $actionResult instanceof ExceptionResult) {
                 // create view data
                 $viewData = $actionContext->modelState->getKeyValuePair();
 
@@ -238,7 +240,12 @@ final class Make {
 
                 // get view
                 if ($viewContext->viewFile === false) {
-                    throw new ViewNotFoundException(PHPMVC_CURRENT_VIEW_PATH); // TODO
+                    if ($actionResult instanceof ExceptionResult) {
+                        throw $actionResult->getException();
+                    }
+                    else {
+                        throw new ViewNotFoundException(PHPMVC_CURRENT_VIEW_PATH); // TODO
+                    }
                 }
 
                 $viewContext->content = self::getView($viewContext->viewFile);
