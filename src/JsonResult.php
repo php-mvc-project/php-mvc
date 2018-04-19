@@ -58,7 +58,7 @@ class JsonResult implements ActionResult {
             throw new \ErrorException('JSON encode error #' . json_last_error() . ': ' . json_last_error_msg());
         }
 
-        $response = $actionContext->httpContext->getResponse();
+        $response = $actionContext->getHttpContext()->getResponse();
         $response->addHeader('Content-Type', 'application/json');
         $response->write($result);
         $response->end();

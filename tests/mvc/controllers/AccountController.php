@@ -7,7 +7,7 @@ use \PhpMvc\Controller;
 use \PhpMvcTest\Models\Login;
 
 class AccountController extends Controller {
-   
+
     public function __construct() {
         Model::required('login', 'username', array('password' => 'Password is required.'));
         Model::display('login', 'username', 'Username', 'Username that you used when registering.'); 

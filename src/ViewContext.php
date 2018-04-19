@@ -56,12 +56,12 @@ final class ViewContext extends ActionContext {
     public $viewFile;
 
     public function __construct($actionContext, $actionResult, $viewData) {
-        parent::__construct($actionContext->httpContext, $actionContext->route);
+        parent::__construct($actionContext->getHttpContext(), $actionContext->getRoute());
 
-        $this->controller = $actionContext->controller;
-        $this->modelState = $actionContext->modelState;
-        $this->arguments = $actionContext->arguments;
-        $this->actionName = $actionContext->actionName;
+        $this->controller = $actionContext->getController();
+        $this->modelState = $actionContext->getModelState();
+        $this->arguments = $actionContext->getArguments();
+        $this->actionName = $actionContext->getActionName();
 
         $this->viewData = $viewData;
         $this->actionResult = $actionResult;

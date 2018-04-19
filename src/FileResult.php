@@ -57,7 +57,7 @@ class FileResult implements ActionResult {
             throw new \Exception('File "' . $this->path . '" not found.');
         }
 
-        $response = $actionContext->httpContext->getResponse();
+        $response = $actionContext->getHttpContext()->getResponse();
         $response->addHeader('Content-Type', (!empty($this->contentType) ? $this->contentType : 'application/octet-stream'));
         $response->addHeader('Content-Length', filesize($path));
 

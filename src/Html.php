@@ -131,7 +131,7 @@ class Html {
             $htmlAttributes['class'] .= ' field-validation-error';
         }
 
-        if (!empty($errors = self::$viewContext->modelState->getErrors($propertyName))) {
+        if (!empty($errors = self::$viewContext->getModelState()->getErrors($propertyName))) {
             $result = '<' . $tag . ' ' . self::buildAttributes($htmlAttributes) . '>';
             
             if (!empty($validationMessage)) {
@@ -232,7 +232,7 @@ class Html {
     public static function antiForgeryToken($dynamic = false) {
         $token = bin2hex(random_bytes(64));
 
-        $response = self::$viewContext->httpContext->getResponse();
+        $response = self::$viewContext->getHttpContext()->getResponse();
 
         if ($dynamic === true) {
             return '<script>document.write(\'<input type="hidden" name="__requestVerificationToken" id="__requestVerificationToken" value="' . $token . '" />\');</script>';
@@ -728,12 +728,14 @@ class Html {
      * @return bool
      */
     private static function getModelValue($name, &$value, $filter = \FILTER_DEFAULT) {
-        if (empty(self::$viewContext->modelState->items)) {
+        $modelState = self::$viewContext->getModelState();
+
+        if (empty($modelState->items)) {
             $model = self::$viewContext->model;
         }
         else {
-            if (isset(self::$viewContext->modelState->items[$name])) {
-                $model = self::$viewContext->modelState->items;
+            if (isset($modelState->items[$name])) {
+                $model = $modelState->items;
             }
             else {
                 $model = self::$viewContext->model;

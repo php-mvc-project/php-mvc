@@ -49,7 +49,7 @@ class RedirectResult implements ActionResult {
      * @return void
      */
     public function execute($actionContext) {
-        $response = $actionContext->httpContext->getResponse();
+        $response = $actionContext->getHttpContext()->getResponse();
 
         if ($this->permanent === true && $this->preserveMethod !== true) {
             $response->setStatusCode(301);

@@ -14,6 +14,13 @@ final class Model {
     private static $actionContext;
 
     /**
+     * Gets or sets metadata of Model.
+     * 
+     * @var ModelDataAnnotation[]
+     */
+    private static $annotations = array();
+
+    /**
      * Marks the specified property with the attribute "requred" 
      * and it is expected that the property value must be specified.
      * 
@@ -25,7 +32,7 @@ final class Model {
      * @return void
      */
     public static function required($actionName, ...$propertyName) {
-        if ($actionName != self::$actionContext->actionName) {
+        if (!self::$actionContext->actionNameEquals($actionName)) {
             return;
         }
 
@@ -49,7 +56,7 @@ final class Model {
 
             self::makeDataAnnotation($key);
 
-            self::$actionContext->modelState->annotations[$key]->required = array($errorMessage);
+            self::$annotations[$key]->required = array($errorMessage);
         }
     }
 
@@ -64,7 +71,7 @@ final class Model {
      * @return void
      */
     public static function compare($actionName, $propertyName, $compareWith, $errorMessage = null) {
-        if ($actionName != self::$actionContext->actionName) {
+        if (!self::$actionContext->actionNameEquals($actionName)) {
             return;
         }
 
@@ -86,7 +93,7 @@ final class Model {
 
         self::makeDataAnnotation($propertyName);
 
-        self::$actionContext->modelState->annotations[$propertyName]->compareWith = array($compareWith, $errorMessage);
+        self::$annotations[$propertyName]->compareWith = array($compareWith, $errorMessage);
     }
 
     /**
@@ -101,7 +108,7 @@ final class Model {
      * @return void
      */
     public static function stringLength($actionName, $propertyName, $maxLength, $minLength = null, $errorMessage = null) {
-        if ($actionName != self::$actionContext->actionName) {
+        if (!self::$actionContext->actionNameEquals($actionName)) {
             return;
         }
 
@@ -115,7 +122,7 @@ final class Model {
 
         self::makeDataAnnotation($propertyName);
 
-        self::$actionContext->modelState->annotations[$propertyName]->stringLength = array($maxLength, $minLength, $errorMessage);
+        self::$annotations[$propertyName]->stringLength = array($maxLength, $minLength, $errorMessage);
     }
 
     /**
@@ -130,7 +137,7 @@ final class Model {
      * @return void
      */
     public static function range($actionName, $propertyName, $min, $max, $errorMessage = null) {
-        if ($actionName != self::$actionContext->actionName) {
+        if (!self::$actionContext->actionNameEquals($actionName)) {
             return;
         }
 
@@ -148,7 +155,7 @@ final class Model {
 
         self::makeDataAnnotation($propertyName);
 
-        self::$actionContext->modelState->annotations[$propertyName]->range = array($min, $max, $errorMessage);
+        self::$annotations[$propertyName]->range = array($min, $max, $errorMessage);
     }
 
     /**
@@ -164,7 +171,7 @@ final class Model {
      * @return void
      */
     public static function validation($actionName, $propertyName, $callback, $errorMessage = null) {
-        if ($actionName != self::$actionContext->actionName) {
+        if (!self::$actionContext->actionNameEquals($actionName)) {
             return;
         }
 
@@ -182,7 +189,7 @@ final class Model {
 
         self::makeDataAnnotation($propertyName);
 
-        self::$actionContext->modelState->annotations[$propertyName]->customValidation = array($callback, $errorMessage);
+        self::$annotations[$propertyName]->customValidation = array($callback, $errorMessage);
     }
 
     /**
@@ -196,7 +203,7 @@ final class Model {
      * @return void
      */
     public static function display($actionName, $propertyName, $name, $text = null) {
-        if ($actionName != self::$actionContext->actionName) {
+        if (!self::$actionContext->actionNameEquals($actionName)) {
             return;
         }
 
@@ -210,13 +217,13 @@ final class Model {
 
         self::makeDataAnnotation($propertyName);
 
-        self::$actionContext->modelState->annotations[$propertyName]->displayName = $name;
-        self::$actionContext->modelState->annotations[$propertyName]->displayText = $text;
+        self::$annotations[$propertyName]->displayName = $name;
+        self::$annotations[$propertyName]->displayText = $text;
     }
 
     private static function makeDataAnnotation($propertyName) {
-        if (!isset(self::$actionContext->modelState->annotations[$propertyName])) {
-            self::$actionContext->modelState->annotations[$propertyName] = new ModelDataAnnotation();
+        if (!isset(self::$annotations[$propertyName])) {
+            self::$annotations[$propertyName] = new ModelDataAnnotation();
         }
     }
 

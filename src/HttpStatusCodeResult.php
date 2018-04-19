@@ -40,7 +40,7 @@ class HttpStatusCodeResult implements ActionResult {
      * @return void
      */
     public function execute($actionContext) {
-        $response = $actionContext->httpContext->getResponse();
+        $response = $actionContext->getHttpContext()->getResponse();
         $response->setStatusCode($this->statusCode);
         $response->setStatusDescription($this->statusDescription);
         $response->write($result);

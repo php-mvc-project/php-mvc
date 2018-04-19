@@ -46,6 +46,29 @@ final class Make {
     }
 
     /**
+     * Gets the view.
+     * 
+     * @param string $path File name or path to the view file.
+     * 
+     * @return string
+     */
+    public static function getView($path) {
+        if ($path === false) {
+            throw new \Exception('The view file is not specified. Probably the correct path to the file was not found. Make sure that all paths are specified correctly, the files exists and is available.');
+        }
+
+        ob_start();
+
+        require($path);
+
+        $result = ob_get_contents();
+
+        ob_end_clean();
+
+        return $result;
+    }
+
+    /**
      * Adds headers.
      * 
      * @return void
@@ -71,6 +94,7 @@ final class Make {
         define('PHPMVC_ROOT_PATH', $basePath . PHPMVC_DS);
         define('PHPMVC_CORE_PATH', __DIR__ .PHPMVC_DS);
         define('PHPMVC_CONFIG_PATH', PHPMVC_ROOT_PATH . 'config' . PHPMVC_DS);
+        define('PHPMVC_FILTER_PATH', PHPMVC_ROOT_PATH . 'filters' . PHPMVC_DS);
         define('PHPMVC_CONTROLLER_PATH', PHPMVC_ROOT_PATH . 'controllers' . PHPMVC_DS);
         define('PHPMVC_MODEL_PATH', PHPMVC_ROOT_PATH . 'models' . PHPMVC_DS);
         define('PHPMVC_VIEW_PATH', PHPMVC_ROOT_PATH . 'views' . PHPMVC_DS);
@@ -117,22 +141,21 @@ final class Make {
 
         // create action context
         self::$actionContext = $actionContext = new ActionContext($httpContext);
-        $actionContext->actionName = PHPMVC_ACTION;
+        InternalHelper::setPropertyValue($actionContext, 'actionName', PHPMVC_ACTION);
 
         // preparing to create an instance of the controller class 
         $controllerClass = new \ReflectionClass('\\' . PHPMVC_APP_NAMESPACE . '\\Controllers\\' . PHPMVC_CONTROLLER . 'Controller');
-        
+
         if (!$controllerClass->isSubclassOf('\\PhpMvc\\Controller')) {
-            throw new \Exception('The controller type must be derived from "\PhpMvc\Controller".');
+            throw new \Exception('The controller type must be derived from "\\PhpMvc\\Controller".');
         }
 
         $actionContextProperty = $controllerClass->getParentClass()->getProperty('actionContext');
         $actionContextProperty->setAccessible(true);
 
-        // set action context to model
-        $modelActionContextProperty = new \ReflectionProperty('\PhpMvc\Model', 'actionContext');
-        $modelActionContextProperty->setAccessible(true);
-        $modelActionContextProperty->setValue(null, $actionContext);
+        // set action context
+        InternalHelper::setStaticPropertyValue('\\PhpMvc\\Model', 'actionContext', $actionContext);
+        InternalHelper::setStaticPropertyValue('\\PhpMvc\\Filter', 'actionContext', $actionContext);
 
         // create instance of controller
         if ($controllerClass->getConstructor() != null) {
@@ -144,7 +167,47 @@ final class Make {
 
         $actionContextProperty->setValue($controllerInstance, $actionContext);
 
-        $actionContext->controller = $controllerInstance;
+        InternalHelper::setPropertyValue($actionContext, 'controller', $controllerInstance);
+
+        // get and set model annotations
+        $annotations = InternalHelper::getStaticPropertyValue('\\PhpMvc\\Model', 'annotations');
+        $modelState = $actionContext->getModelState();
+        $modelState->annotations = $annotations;
+        // InternalHelper::setPropertyValue($modelState, 'annotations', $annotations);
+
+        // filters
+        $allFilters = InternalHelper::getStaticPropertyValue('\\PhpMvc\\Filter', 'filters');
+        $allFiltersInstance = array();
+        foreach ($allFilters as $actionName => $filters) {
+            foreach ($filters as $filterName) {
+                $className = $filterName;
+
+                if (!class_exists($className)) {
+                    $className = '\\' . PHPMVC_APP_NAMESPACE . '\\Filters\\' . $className;
+    
+                    if (!class_exists($className)) {
+                        throw new \Exception('Filter "' . $filterName . '" not found.');
+                    }
+                }
+    
+                $filterClass = new \ReflectionClass($className);
+    
+                if (!$filterClass->isSubclassOf('\\PhpMvc\\ActionFilter')) {
+                    throw new \Exception('The filter type must be derived from "\PhpMvc\ActionFilter".');
+                }
+    
+                if ($filterClass->getConstructor() != null) {
+                    $filterInstance = $filterClass->newInstance();
+                }
+                else {
+                    $filterInstance = $filterClass->newInstanceWithoutConstructor();
+                }
+    
+                $allFiltersInstance[] = $filterInstance;
+            }
+        }
+
+        InternalHelper::setPropertyValue($actionContext, 'filters', $allFiltersInstance);
     }
 
     /**
@@ -177,21 +240,45 @@ final class Make {
         $result = null;
 
         $actionContext = self::$actionContext;
+        $controller = $actionContext->getController();
 
         // arguments and model state
         self::makeActionState($actionContext);
 
         // annotation and validation
-        self::annotateAndValidateModel($actionContext->modelState);
+        $modelState = $actionContext->getModelState();
+        self::annotateAndValidateModel($modelState);
 
-        // execute action
-        try {
-            $actionResult = self::executeAction($actionContext);
-        }
-        catch (\Exception $ex) {
-            // add the error to the modelState
-            $actionContext->modelState->addError('.', $ex);
-            $actionResult = new ExceptionResult($ex);
+        // filters
+        $actionExecutingContext = self::actionExecutingFilters($actionContext);
+
+        if (($actionResult = $actionExecutingContext->getResult()) === null) {
+            try {
+                // execute action
+                $actionResult = self::executeAction($actionContext);
+                // filters
+                $actionExecutedContext = self::actionExecutedFilters($actionContext, $actionResult);
+                // set result
+                $actionResult = $actionExecutedContext->getResult();
+            }
+            catch (\Exception $ex) {
+                // add the error to the modelState
+                $modelState->addError('.', $ex);
+                // filters
+                $exceptionContext = self::exceptionFilters($actionContext, $ex);
+
+                if (($actionResult = $exceptionContext->getResult()) === null) {
+                    if ($exceptionContext->getExceptionHandled()) {
+                        // executed filters
+                        $actionExecutedContext = self::actionExecutedFilters($actionContext, $actionResult, $exceptionContext);
+                        // set result
+                        $actionResult = $actionExecutedContext->getResult();
+                    }
+                    else {
+                        $actionResult = new ExceptionResult($ex);
+                    }
+                }
+            }
         }
 
         if (isset($actionResult)) {
@@ -210,11 +297,8 @@ final class Make {
             // make result
             if ($actionResult instanceof ViewResult || $actionResult instanceof ExceptionResult) {
                 // create view data
-                $viewData = $actionContext->modelState->getKeyValuePair();
-
-                $viewDataProperty = new \ReflectionProperty('\PhpMvc\Controller', 'viewData');
-                $viewDataProperty->setAccessible(true);
-                $controllerViewData = $viewDataProperty->getValue($actionContext->controller);
+                $viewData = $modelState->getKeyValuePair();
+                $controllerViewData = InternalHelper::getPropertyValueOfParentClass($controller, 'viewData');
 
                 if (!empty($controllerViewData)) {
                     $viewData = array_unique(array_merge($viewData, $controllerViewData), \SORT_STRING);
@@ -227,13 +311,8 @@ final class Make {
                 $viewContext->viewFile = PathUtility::getViewFilePath(PHPMVC_CURRENT_VIEW_PATH);
     
                 // set view context
-                $viewContextProperty = new \ReflectionProperty('\PhpMvc\View', 'viewContext');
-                $viewContextProperty->setAccessible(true);
-                $viewContextProperty->setValue(null, $viewContext);
-    
-                $viewContextProperty = new \ReflectionProperty('\PhpMvc\Html', 'viewContext');
-                $viewContextProperty->setAccessible(true);
-                $viewContextProperty->setValue(null, $viewContext);
+                InternalHelper::setStaticPropertyValue('\\PhpMvc\\View', 'viewContext', $viewContext);
+                InternalHelper::setStaticPropertyValue('\\PhpMvc\\Html', 'viewContext', $viewContext);
 
                 // execute result with view context
                 $actionResult->execute($viewContext);
@@ -281,7 +360,7 @@ final class Make {
     private static function makeActionState($actionContext) {
         $arguments = array();
         $modelState = new ModelState();
-        $modelState->annotations = $actionContext->modelState->annotations;
+        $modelState->annotations = $actionContext->getModelState()->annotations;
         $hasModel = false;
 
         // get http params
@@ -314,7 +393,7 @@ final class Make {
         }
 
         // get params of action method
-        $r = new \ReflectionMethod(get_class($actionContext->controller), $actionContext->actionName);
+        $r = new \ReflectionMethod(get_class($actionContext->getController()), $actionContext->getActionName());
 
         $methodParams = $r->getParameters();
 
@@ -361,8 +440,8 @@ final class Make {
             }
         }
 
-        $actionContext->arguments = $arguments;
-        $actionContext->modelState = $modelState;
+        InternalHelper::setPropertyValue($actionContext, 'arguments', $arguments);
+        InternalHelper::setPropertyValue($actionContext, 'modelState', $modelState);
     }
 
     /**
@@ -522,36 +601,75 @@ final class Make {
      * @return mixed
      */
     private static function executeAction($actionContext) {
-        $action = new \ReflectionMethod($actionContext->controller, $actionContext->actionName);
+        $controller = $actionContext->getController();
+        $actionName = $actionContext->getActionName();
+        $action = new \ReflectionMethod($controller, $actionName);
 
         if (!$action->isPublic()) {
-            throw new \Exception('Action methods must have a public modifier. The action call "' . $actionContext->actionName . '" is denied.');
+            throw new \Exception('Action methods must have a public modifier. The action call "' . $actionName . '" is denied.');
         }
 
-        return $action->invokeArgs($actionContext->controller, $actionContext->arguments);
+        return $action->invokeArgs($controller, $actionContext->getArguments());
     }
 
     /**
-     * Gets the view.
+     * Calls the actionExecuting methods.
      * 
-     * @param string $path File name or path to the view file.
+     * @param ActionContext $actionContext The context of the action.
      * 
-     * @return string
+     * @return ActionExecutingContext
      */
-    public static function getView($path) {
-        if ($path === false) {
-            throw new \Exception('The view file is not specified. Probably the correct path to the file was not found. Make sure that all paths are specified correctly, the files exists and is available.');
+    private static function actionExecutingFilters($actionContext) {
+        $context = new ActionExecutingContext($actionContext->getController());
+
+        $filters = $actionContext->getFilters();
+
+        foreach ($filters as $filter) {
+            $filter->actionExecuting($context);
         }
 
-        ob_start();
+        return $context;
+    }
 
-        require($path);
+    /**
+     * Calls the actionExecuted methods.
+     * 
+     * @param ActionContext $actionContext The context of the action.
+     * @param ActionResult $actionResult The result of action.
+     * @param ExceptionContext $exceptionContext The context of exception.
+     * 
+     * @return ActionExecutedContext
+     */
+    private static function actionExecutedFilters($actionContext, $actionResult, $exceptionContext = null) {
+        $context = new ActionExecutedContext($actionContext->getController(), $actionResult, $exceptionContext);
 
-        $result = ob_get_contents();
+        $filters = $actionContext->getFilters();
 
-        ob_end_clean();
+        foreach ($filters as $filter) {
+            $filter->actionExecuted($context);
+        }
 
-        return $result;
+        return $context;
+    }
+
+    /**
+     * Calls the exception methods.
+     * 
+     * @param ActionContext $actionContext The context of the action.
+     * @param \Exception $exception The exception.
+     * 
+     * @return ExceptionContext
+     */
+    private static function exceptionFilters($actionContext, $exception) {
+        $context = new ExceptionContext($actionContext->getController(), $exception);
+        
+        $filters = $actionContext->getFilters();
+
+        foreach ($filters as $filter) {
+            $filter->exception($context);
+        }
+
+        return $context;
     }
 
 }

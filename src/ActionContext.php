@@ -11,42 +11,49 @@ class ActionContext {
      * 
      * @var HttpContextBase
      */
-    public $httpContext;
+    protected $httpContext;
 
     /**
      * Gets or sets the Route for the current request.
      * 
      * @var Route
      */
-    public $route;
+    protected $route;
 
     /**
      * Gets or sets the controller.
      * 
      * @var Controller
      */
-    public $controller;
+    protected $controller;
 
     /**
      * Gets or sets the state of model.
      * 
      * @var ModelState
      */
-    public $modelState;
+    protected $modelState;
 
     /**
      * Gets or sets action arguments.
      * 
      * @var array
      */
-    public $arguments;
+    protected $arguments;
 
     /** 
      * Gets of sets name of action.
      * 
      * @var string
      */
-    public $actionName;
+    protected $actionName;
+
+    /**
+     * Gets or sets filters.
+     * 
+     * @var array
+     */
+    protected $filters;
 
     /**
      * Initializes a new instance of the ActionContext for the current request.
@@ -57,6 +64,80 @@ class ActionContext {
         $this->httpContext = $httpContext;
         $this->route = $httpContext->getRoute();
         $this->modelState = new ModelState();
+        $this->filters = array();
     }
 
+    /**
+     * Returns context of the current request.
+     * 
+     * @return HttpContextBase
+     */
+    public function getHttpContext() {
+        return $this->httpContext;
+    }
+
+    /**
+     * Returns current Route.
+     * 
+     * @return Route
+     */
+    public function getRoute() {
+        return $this->route;
+    }
+
+    /**
+     * Returns an instance of the controller.
+     * 
+     * @return Controller
+     */
+    public function getController() {
+        return $this->controller;
+    }
+
+    /**
+     * Returns ModelState.
+     * 
+     * @return ModelState
+     */
+    public function getModelState() {
+        return $this->modelState;
+    }
+
+    /**
+     * Returns arguments of the action.
+     * 
+     * @return array
+     */
+    public function getArguments() {
+        return $this->arguments;
+    }
+
+    /**
+     * Returns name of the action.
+     * 
+     * @return string
+     */
+    public function getActionName() {
+        return $this->actionName;
+    }
+
+    /**
+     * Returns list of filters.
+     * 
+     * @return ActionFilter[]
+     */
+    public function getFilters() {
+        return $this->filters;
+    }
+
+    /**
+     * Checks the equivalence of the specified string with the name of the action.
+     * 
+     * @param string $name The string to compare.
+     * 
+     * @return bool
+     */
+    public function actionNameEquals($name) {
+        return $this->actionName == strtolower($name);
+    }
 }

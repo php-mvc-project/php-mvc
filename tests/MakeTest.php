@@ -43,7 +43,7 @@ final class MakeTest extends TestCase
         echo 'Request: ' . $httpContext->getRequest()->requestUri();
 
         ob_start();
-        
+
         Make::magic('PhpMvcTest', $httpContext, $this->basePath);
 
         $result = ob_get_clean();

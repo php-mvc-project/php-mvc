@@ -30,7 +30,7 @@ final class UrlHelper {
             $modelState->addError($key, '$actionName is required. Value must not be empty.');
         }
 
-        $httpContext = $actionContext->httpContext;
+        $httpContext = $actionContext->getHttpContext();
         $options = $httpContext->getRouteOptions();
         $result = '';
 
@@ -65,7 +65,7 @@ final class UrlHelper {
 
         if (empty($controllerName)) {
             // use current route
-            $route = $actionContext->route;
+            $route = $actionContext->getRoute();
         }
         else {
             // search route

@@ -49,7 +49,7 @@ class Controller {
      * @return Route
      */
     protected function getRoute() {
-        return $this->actionContext->route;
+        return $this->actionContext->getRoute();
     }
 
     /**
@@ -58,7 +58,7 @@ class Controller {
      * @return HttpContextBase
      */
     protected function getHttpContext() {
-        return $this->actionContext->httpContext;
+        return $this->actionContext->getHttpContext();
     }
 
     /**
@@ -67,7 +67,7 @@ class Controller {
      * @return HttpRequestBase
      */
     protected function getRequest() {
-        return $this->actionContext->httpContext->getRequest();
+        return $this->actionContext->getHttpContext()->getRequest();
     }
 
     /**
@@ -76,7 +76,7 @@ class Controller {
      * @return HttpResponseBase
      */
     protected function getResponse() {
-        return $this->actionContext->httpContext->getResponse();
+        return $this->actionContext->getHttpContext()->getResponse();
     }
 
     /**
@@ -85,7 +85,7 @@ class Controller {
      * @return ModelState
      */
     protected function getModelState() {
-        return $this->actionContext->modelState;
+        return $this->actionContext->getModelState();
     }
 
     /**
@@ -183,7 +183,7 @@ class Controller {
      * @return bool
      */
     protected function isPost() {
-        return $this->actionContext->httpContext->getRequest()->isPost();
+        return $this->actionContext->getHttpContext()->getRequest()->isPost();
     }
 
     /**

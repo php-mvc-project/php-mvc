@@ -40,7 +40,7 @@ class ContentResult implements ActionResult {
      * @return void
      */
     public function execute($actionContext) {
-        $response = $actionContext->httpContext->getResponse();
+        $response = $actionContext->getHttpContext()->getResponse();
         $response->addHeader('Content-Type', (!empty($this->contentType) ? $this->contentType : 'text/plain'));
         $response->write($this->content);
         $response->end();

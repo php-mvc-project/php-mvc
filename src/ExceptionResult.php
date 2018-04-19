@@ -19,6 +19,7 @@ class ExceptionResult implements ActionResult {
      * @param \Exception $exception The exception instance.
      */
     public function __construct($exception) {
+        $this->exception = $exception;
     }
 
     /**

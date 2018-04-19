@@ -95,7 +95,7 @@ final class View {
      * @return ModelState
      */
     public static function getModelState() {
-        return self::$viewContext->modelState;
+        return self::$viewContext->getModelState();
     }
 
 }
