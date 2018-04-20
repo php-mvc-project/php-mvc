@@ -140,7 +140,13 @@ abstract class HttpResponseBase {
         $this->header = array();
         $this->cookies = array();
         $this->files = array();
+        $this->statusCode = null;
+        $this->statusDescription = null;
         $this->output = '';
+
+        if (ob_get_length() > 0) { 
+            ob_clean(); 
+        }
     }
 
     /**

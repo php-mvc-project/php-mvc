@@ -35,9 +35,26 @@ abstract class HttpContextBase {
     protected $route;
 
     /**
-     * Initializes a new instance of the HttpContextBase.
+     * Indicates that the request should be ignored.
      */
-    public function __construct($routes, $request, $response) {
+    protected $ignore;
+
+    /**
+     * The initial timestamp of the current HTTP request.
+     * 
+     * @var int
+     */
+    protected $timestamp;
+
+    /**
+     * Initializes a new instance of the HttpContextBase.
+     * 
+     * @param RouteCollection $routes The routes list.
+     * @param RouteCollection $ignoreRoutes List of routes to ignore.
+     * @param HttpRequestBase $request The reqiest.
+     * @param HttpResponseBase $response The response.
+     */
+    public function __construct($routes, $ignoreRoutes, $request, $response) {
         if (!isset($routes) || !$routes instanceof RouteCollection) {
             throw new \Exception('The $routes is requred and type must be derived from "\PhpMvc\RouteCollection".');
         }
@@ -50,11 +67,16 @@ abstract class HttpContextBase {
             throw new \Exception('The $response is requred and type must be derived from "\PhpMvc\HttpResponseBase".');
         }
 
+        $date = new \DateTime();
+        $this->timestamp = $date->getTimestamp();
+
         $this->routes = $routes;
         $this->request = $request;
         $this->response = $response;
 
-        $this->route = $routes->getRoute($this);
+        if (!($this->ignore = (isset($ignoreRoutes) && $ignoreRoutes instanceof RouteCollection && ($this->route = $ignoreRoutes->getRoute($this)) !== null))) {
+            $this->route = $routes->getRoute($this);
+        }
     }
 
     /**
@@ -100,6 +122,24 @@ abstract class HttpContextBase {
      */
     public function getRoute() {
         return $this->route;
+    }
+
+    /**
+     * Returns TRUE if the current route is to be ignored.
+     * 
+     * @return bool
+     */
+    public function isIgnoredRoute() {
+        return $this->ignore;
+    }
+
+    /**
+     * Gets the initial timestamp of the current HTTP request.
+     * 
+     * @return int
+     */
+    public function getTimestamp() {
+        return $this->timestamp;
     }
 
 }

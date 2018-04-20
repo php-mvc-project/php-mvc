@@ -46,6 +46,7 @@ final class UrlHelperTest extends TestCase
 
         $httpContext = new HttpContext(
             $routes,
+            null,
             array(
                 'REQUEST_URI' => 'test/abc/aaa/aaaaa/ffff',
                 'REQUEST_METHOD' => 'GET'
@@ -63,6 +64,7 @@ final class UrlHelperTest extends TestCase
 
         $httpContext = new HttpContext(
             $routes,
+            null,
             array(
                 'REQUEST_URI' => '/abc/test',
                 'REQUEST_METHOD' => 'GET',

@@ -50,6 +50,13 @@ class Route {
     public $values;
 
     /**
+     * Indicates that this ignore rule.
+     * 
+     * @var bool
+     */
+    public $ignore;
+
+    /**
      * Gets or sets segments of the route.
      * 
      * @var RouteSegment[]
@@ -309,7 +316,7 @@ class Route {
 
         $this->setBounds($segments);
 
-        if ((empty($namedSegments['controller']) && empty($this->defaults['controller'])) || (empty($namedSegments['action']) && empty($this->defaults['action']))) {
+        if ($this->ignore !== true && ((empty($namedSegments['controller']) && empty($this->defaults['controller'])) || (empty($namedSegments['action']) && empty($this->defaults['action'])))) {
             throw new RouteSegmentsRequiredException($this);
         }
 

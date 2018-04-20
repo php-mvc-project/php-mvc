@@ -7,18 +7,25 @@ namespace PhpMvc;
 abstract class HttpRequestBase {
 
     /**
+     * Gets or sets information about the URL of the current request.
+     * 
+     * @var array
+     */
+    protected $url = null;
+
+    /**
      * URI of the current request.
      * 
      * @var string
      */
-    protected $requestUri;
+    protected $rawUrl = null;
 
     /**
      * Query string of the current request.
      * 
      * @var QueryString
      */
-    protected $queryString;
+    protected $queryString = null;
 
     /**
      * Server variables.
@@ -88,34 +95,56 @@ abstract class HttpRequestBase {
         $this->post = $post;
         $this->files = $files;
 
-        $this->requestUri = $serverVariables['REQUEST_URI'];
-
-        $this->queryString = new QueryString();
-        $queryString = array();
-
-        if (($qsIndex = strpos($this->requestUri, '?')) !== false) {
-            parse_str(substr($this->requestUri, $qsIndex + 1), $queryString);
-        }
-        else {
-            if (!empty($serverVariables['QUERY_STRING'])) {
-                parse_str($serverVariables['QUERY_STRING'], $queryString);
-            }
-        }
-
-        if (!empty($queryString)) {
-            foreach ($queryString as $key => $value) {
-                $this->queryString[$key] = $value;
-            }
-        }
+        $this->rawUrl = $this->serverVariables['REQUEST_URI'];
     }
 
     /**
-     * Returns request URI.
+     * Returns URL components.
+     * 
+     * Potential keys within this array are:
+     * - scheme - e.g. http
+     * - host
+     * - port
+     * - user
+     * - pass
+     * - path
+     * - query - after the question mark ?
+     * - fragment - after the hashmark #
+     * 
+     * @return array
+     */
+    public function url() {
+        // TODO: class for url
+        if ($this->url === null) {
+            $this->url = parse_url(
+                'http' .
+                (isset($serverVariables['HTTPS']) ? 's' : '') .
+                '://' .
+                $serverVariables['HTTP_HOST'] .
+                $serverVariables['REQUEST_URI']
+            );
+        }
+
+        return $this->url;
+    }
+
+    /**
+     * Gets the raw URL of the current request.
+     * For example: /home/example
      * 
      * @return string
      */
-    public function requestUri() {
-        return $this->requestUri;
+    public function rawUrl () {
+        return $this->rawUrl;
+    }
+
+    /**
+     * Gets information about the URL of the client's previous request that linked to the current URL.
+     * 
+     * @return string
+     */
+    public function urlReferrer() {
+        return $this->serverVariables['HTTP_REFERER'];
     }
 
     /**
@@ -126,7 +155,36 @@ abstract class HttpRequestBase {
      * @return QueryString|string
      */
     public function queryString($key = null) {
+        if ($this->queryString === null) {
+            $this->queryString = new QueryString();
+            $queryString = array();
+    
+            if (($qsIndex = strpos($this->rawUrl, '?')) !== false) {
+                parse_str(substr($this->rawUrl, $qsIndex + 1), $queryString);
+            }
+            else {
+                if (!empty($serverVariables['QUERY_STRING'])) {
+                    parse_str($serverVariables['QUERY_STRING'], $queryString);
+                }
+            }
+    
+            if (!empty($queryString)) {
+                foreach ($queryString as $key => $value) {
+                    $this->queryString[$key] = $value;
+                }
+            }
+        }
+
         return $this->getSingleKeyOrAll($this->queryString, $key);
+    }
+
+    /**
+     * Gets the document root directory under which the current script is executing, as defined in the server's configuration file.
+     * 
+     * @return string
+     */
+    public function documentRoot() {
+        return $this->serverVariables['DOCUMENT_ROOT'];
     }
 
     /**
@@ -238,6 +296,37 @@ abstract class HttpRequestBase {
      */
     public function userHostAddress() {
         return $this->serverVariables['REMOTE_ADDR'];
+    }
+
+    /**
+     * Gets a sorted string array of client language preferences.
+     * 
+     * @return array
+     */
+    public function userLanguages() {
+        if (isset($this->serverVariables['HTTP_ACCEPT_LANGUAGE'])) {
+            preg_match_all(
+                '/([a-z]{1,8}(-[a-z]{1,8})?)\s*(;\s*q\s*=\s*(1|0\.[0-9]+))?/i',
+                $this->serverVariables['HTTP_ACCEPT_LANGUAGE'],
+                $matches
+            );
+
+            if (count($matches[1])) {
+                $result = array_combine($matches[1], $matches[4]);
+
+                array_walk($result, function($lang, $amount) {
+                    if ($amount === '') {
+                        $langs[$lang] = 1;
+                    }
+                });
+
+                arsort($result, \SORT_NUMERIC);
+
+                return $result;
+            }
+        }
+
+        return array();
     }
 
     /**

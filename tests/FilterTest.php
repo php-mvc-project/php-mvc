@@ -29,9 +29,10 @@ final class FilterTest extends TestCase
     public function testEmpty(): void
     {
         RouteTable::clear();
-        RouteTable::addRoute('default', '{controller=Home}/{action=index}/{id?}');
+        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
 
         $httpContext = new HttpContext(
+            null,
             null,
             array(
                 'REQUEST_URI' => '/filter',
@@ -40,7 +41,7 @@ final class FilterTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->requestUri();
+        echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
         
@@ -56,9 +57,10 @@ final class FilterTest extends TestCase
     public function testExecuting(): void
     {
         RouteTable::clear();
-        RouteTable::addRoute('default', '{controller=Home}/{action=index}/{id?}');
+        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
 
         $httpContext = new HttpContext(
+            null,
             null,
             array(
                 'REQUEST_URI' => '/filter/executingWorld',
@@ -67,7 +69,7 @@ final class FilterTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->requestUri();
+        echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
         
@@ -83,9 +85,10 @@ final class FilterTest extends TestCase
     public function testExecuted(): void
     {
         RouteTable::clear();
-        RouteTable::addRoute('default', '{controller=Home}/{action=index}/{id?}');
+        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
 
         $httpContext = new HttpContext(
+            null,
             null,
             array(
                 'REQUEST_URI' => '/filter/executedWorld',
@@ -94,7 +97,7 @@ final class FilterTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->requestUri();
+        echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
         
@@ -110,9 +113,10 @@ final class FilterTest extends TestCase
     public function testExecute(): void
     {
         RouteTable::clear();
-        RouteTable::addRoute('default', '{controller=Home}/{action=index}/{id?}');
+        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
 
         $httpContext = new HttpContext(
+            null,
             null,
             array(
                 'REQUEST_URI' => '/filter/executeWorld',
@@ -121,7 +125,7 @@ final class FilterTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->requestUri();
+        echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
         
@@ -137,9 +141,10 @@ final class FilterTest extends TestCase
     public function testExecute2(): void
     {
         RouteTable::clear();
-        RouteTable::addRoute('default', '{controller=Home}/{action=index}/{id?}');
+        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
 
         $httpContext = new HttpContext(
+            null,
             null,
             array(
                 'REQUEST_URI' => '/filter/executeWorld2',
@@ -148,7 +153,7 @@ final class FilterTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->requestUri();
+        echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
         
@@ -164,9 +169,10 @@ final class FilterTest extends TestCase
     public function testError(): void
     {
         RouteTable::clear();
-        RouteTable::addRoute('default', '{controller=Home}/{action=index}/{id?}');
+        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
 
         $httpContext = new HttpContext(
+            null,
             null,
             array(
                 'REQUEST_URI' => '/filter/error',
@@ -175,7 +181,7 @@ final class FilterTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->requestUri();
+        echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
         
@@ -191,9 +197,10 @@ final class FilterTest extends TestCase
     public function testErrorNoResult(): void
     {
         RouteTable::clear();
-        RouteTable::addRoute('default', '{controller=Home}/{action=index}/{id?}');
+        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
 
         $httpContext = new HttpContext(
+            null,
             null,
             array(
                 'REQUEST_URI' => '/filter/errorNoResult',
@@ -202,7 +209,7 @@ final class FilterTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->requestUri();
+        echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
         
@@ -218,9 +225,10 @@ final class FilterTest extends TestCase
     public function testErrorRewrited(): void
     {
         RouteTable::clear();
-        RouteTable::addRoute('default', '{controller=Home}/{action=index}/{id?}');
+        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
 
         $httpContext = new HttpContext(
+            null,
             null,
             array(
                 'REQUEST_URI' => '/filter/errorRewrited',
@@ -229,7 +237,7 @@ final class FilterTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->requestUri();
+        echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
         

@@ -4,6 +4,20 @@ use PhpMvc\HttpResponseBase;
 final class HttpResponse extends HttpResponseBase {
 
     /**
+     * Clears all headers and content output from the current response.
+     * 
+     * @return void
+     */
+    public function clear() {
+        $this->header = array();
+        $this->cookies = array();
+        $this->files = array();
+        $this->statusCode = null;
+        $this->statusDescription = null;
+        $this->output = '';
+    }
+
+    /**
      * Sends all currently buffered output to the client and stops execution of the requested process.
      * 
      * @return void

@@ -260,6 +260,7 @@ final class RouteCollectionTest extends TestCase
 
             $httpContext = new HttpContext(
                 $routes,
+                null,
                 array(
                     'REQUEST_URI' => $request['uri']
                 )
@@ -283,4 +284,5 @@ final class RouteCollectionTest extends TestCase
             echo ' - OK' . chr(10);
         }
     }
+
 }

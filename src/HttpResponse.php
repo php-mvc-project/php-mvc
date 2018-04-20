@@ -37,7 +37,7 @@ final class HttpResponse extends HttpResponseBase {
 
         // files
         foreach ($this->files as $file) {
-            $fp = fopen($this->path, 'rb');
+            $fp = fopen($file, 'rb');
             fpassthru($fp);
             fclose($fp);
         }

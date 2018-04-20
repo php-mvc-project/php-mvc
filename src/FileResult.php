@@ -34,7 +34,7 @@ class FileResult implements ActionResult {
      * @param string $contentType The content type.
      * @param string|bool $downloadName the content-disposition header so that a file-download dialog box is displayed in the browser with the specified file name.
      */
-    public function __construct($path, $contentType = 'application/octet-stream', $downloadName = null) {
+    public function __construct($path, $contentType = null, $downloadName = null) {
         $this->path = $path;
         $this->contentType = $contentType;
         $this->downloadName = $downloadName;
@@ -55,6 +55,10 @@ class FileResult implements ActionResult {
     public function execute($actionContext) {
         if (($path = PathUtility::getFilePath($this->path)) === false) {
             throw new \Exception('File "' . $this->path . '" not found.');
+        }
+
+        if (empty($this->contentType) && function_exists('finfo_open') && ($fi = finfo_file(finfo_open(\FILEINFO_MIME_TYPE), $path) !== false)) {
+            $this->contentType = $fi;
         }
 
         $response = $actionContext->getHttpContext()->getResponse();

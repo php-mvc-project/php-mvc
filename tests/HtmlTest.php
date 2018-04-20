@@ -1346,6 +1346,7 @@ final class HtmlTest extends TestCase
 
         $httpContext = new HttpContext(
             $routes,
+            null,
             array(
                 'REQUEST_URI' => '/',
                 'REQUEST_METHOD' => $method,

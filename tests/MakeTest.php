@@ -29,9 +29,10 @@ final class MakeTest extends TestCase
     public function testMagic(): void
     {
         RouteTable::clear();
-        RouteTable::addRoute('default', '{controller=Home}/{action=index}/{id?}');
+        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
 
         $httpContext = new HttpContext(
+            null,
             null,
             array(
                 'REQUEST_URI' => '/',
@@ -40,7 +41,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->requestUri();
+        echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
 
@@ -84,9 +85,10 @@ final class MakeTest extends TestCase
     public function testSpecifiedView(): void
     {
         RouteTable::clear();
-        RouteTable::addRoute('default', '{controller=Home}/{action=index}/{id?}');
+        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
 
         $httpContext = new HttpContext(
+            null,
             null,
             array(
                 'REQUEST_URI' => '/home/specifiedView',
@@ -95,7 +97,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->requestUri();
+        echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
         
@@ -113,9 +115,10 @@ final class MakeTest extends TestCase
 
     public function testMakeView() {
         RouteTable::clear();
-        RouteTable::addRoute('default', '{controller=Home}/{action=index}/{id?}');
+        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
 
         $httpContext = new HttpContext(
+            null,
             null,
             array(
                 'REQUEST_URI' => '/home/makeview',
@@ -124,7 +127,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->requestUri();
+        echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
         
@@ -182,9 +185,10 @@ final class MakeTest extends TestCase
 
     public function testSetGetViewData() {
         RouteTable::clear();
-        RouteTable::addRoute('default', '{controller=Home}/{action=index}/{id?}');
+        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
 
         $httpContext = new HttpContext(
+            null,
             null,
             array(
                 'REQUEST_URI' => '/home/setGetViewData',
@@ -193,7 +197,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->requestUri();
+        echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
         
@@ -221,9 +225,10 @@ final class MakeTest extends TestCase
 
     public function testDifferentWaysViewData() {
         RouteTable::clear();
-        RouteTable::addRoute('default', '{controller=Home}/{action=index}/{id?}');
+        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
 
         $httpContext = new HttpContext(
+            null,
             null,
             array(
                 'REQUEST_URI' => '/home/differentWaysViewData',
@@ -232,7 +237,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->requestUri();
+        echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
         
@@ -276,9 +281,10 @@ final class MakeTest extends TestCase
 
     public function testNoViewFile() {
         RouteTable::clear();
-        RouteTable::addRoute('default', '{controller=Home}/{action=index}/{id?}');
+        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
 
         $httpContext = new HttpContext(
+            null,
             null,
             array(
                 'REQUEST_URI' => '/home/noViewFile',
@@ -287,7 +293,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->requestUri();
+        echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         $this->expectExceptionMessageRegExp('/The view file could not be found/');
 
@@ -298,9 +304,10 @@ final class MakeTest extends TestCase
 
     public function testJsonData() {
         RouteTable::clear();
-        RouteTable::addRoute('default', '{controller=Home}/{action=index}/{id?}');
+        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
 
         $httpContext = new HttpContext(
+            null,
             null,
             array(
                 'REQUEST_URI' => '/home/jsonData',
@@ -309,7 +316,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->requestUri();
+        echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
         
@@ -324,9 +331,10 @@ final class MakeTest extends TestCase
 
     public function testGetContent() {
         RouteTable::clear();
-        RouteTable::addRoute('default', '{controller=Home}/{action=index}/{id?}');
+        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
 
         $httpContext = new HttpContext(
+            null,
             null,
             array(
                 'REQUEST_URI' => '/home/getContent',
@@ -335,7 +343,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->requestUri();
+        echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
         
@@ -350,9 +358,10 @@ final class MakeTest extends TestCase
 
     public function testString() {
         RouteTable::clear();
-        RouteTable::addRoute('default', '{controller=Home}/{action=index}/{id?}');
+        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
 
         $httpContext = new HttpContext(
+            null,
             null,
             array(
                 'REQUEST_URI' => '/home/string',
@@ -361,7 +370,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->requestUri();
+        echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
         
@@ -376,9 +385,10 @@ final class MakeTest extends TestCase
 
     public function testArr() {
         RouteTable::clear();
-        RouteTable::addRoute('default', '{controller=Home}/{action=index}/{id?}');
+        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
 
         $httpContext = new HttpContext(
+            null,
             null,
             array(
                 'REQUEST_URI' => '/home/arr',
@@ -387,7 +397,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->requestUri();
+        echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
         
@@ -402,9 +412,10 @@ final class MakeTest extends TestCase
 
     public function testObj() {
         RouteTable::clear();
-        RouteTable::addRoute('default', '{controller=Home}/{action=index}/{id?}');
+        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
 
         $httpContext = new HttpContext(
+            null,
             null,
             array(
                 'REQUEST_URI' => '/home/obj',
@@ -413,7 +424,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->requestUri();
+        echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
         
@@ -428,9 +439,10 @@ final class MakeTest extends TestCase
 
     public function testGetImage() {
         RouteTable::clear();
-        RouteTable::addRoute('default', '{controller=Home}/{action=index}/{id?}');
+        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
 
         $httpContext = new HttpContext(
+            null,
             null,
             array(
                 'REQUEST_URI' => '/home/getImage',
@@ -439,7 +451,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->requestUri();
+        echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
         
@@ -454,9 +466,10 @@ final class MakeTest extends TestCase
 
     public function testLoginGet() {
         RouteTable::clear();
-        RouteTable::addRoute('default', '{controller=Home}/{action=index}/{id?}');
+        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
 
         $httpContext = new HttpContext(
+            null,
             null,
             array(
                 'REQUEST_URI' => '/account/login',
@@ -465,7 +478,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->requestUri();
+        echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
         
@@ -523,9 +536,10 @@ final class MakeTest extends TestCase
 
     public function testLoginPostOnlyRootCanLogin() {
         RouteTable::clear();
-        RouteTable::addRoute('default', '{controller=Home}/{action=index}/{id?}');
+        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
 
         $httpContext = new HttpContext(
+            null,
             null,
             array(
                 'REQUEST_URI' => '/account/login',
@@ -539,7 +553,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->requestUri();
+        echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
         
@@ -607,9 +621,10 @@ final class MakeTest extends TestCase
 
     public function testLoginPostOnlyFieldRequired() {
         RouteTable::clear();
-        RouteTable::addRoute('default', '{controller=Home}/{action=index}/{id?}');
+        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
 
         $httpContext = new HttpContext(
+            null,
             null,
             array(
                 'REQUEST_URI' => '/account/login',
@@ -623,7 +638,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->requestUri();
+        echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
         
@@ -686,9 +701,10 @@ final class MakeTest extends TestCase
 
     public function testLoginPostSuccess() {
         RouteTable::clear();
-        RouteTable::addRoute('default', '{controller=Home}/{action=index}/{id?}');
+        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
 
         $httpContext = new HttpContext(
+            null,
             null,
             array(
                 'REQUEST_URI' => '/account/login',
@@ -702,7 +718,7 @@ final class MakeTest extends TestCase
         );
 
         echo chr(10);
-        echo 'Request: ' . $httpContext->getRequest()->requestUri();
+        echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
         
@@ -744,6 +760,34 @@ final class MakeTest extends TestCase
             '<footer>',
             $result
         );
+
+        echo ' - OK' . chr(10);
+    }
+
+    public function testStaticFile() {
+        RouteTable::clear();
+        RouteTable::ignore('content/{files}', array('files' => '.+'));
+        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
+
+        $httpContext = new HttpContext(
+            null,
+            null,
+            array(
+                'REQUEST_URI' => '/content/images/php.png',
+                'REQUEST_METHOD' => 'GET'
+            )
+        );
+
+        echo chr(10);
+        echo 'Request: ' . $httpContext->getRequest()->rawUrl();
+
+        ob_start();
+        
+        Make::magic('PhpMvcTest', $httpContext, $this->basePath);
+
+        $result = ob_get_clean();
+
+        $this->assertEquals('89504e470d0a1a0a0000', bin2hex(substr($result, 0, 10)));
 
         echo ' - OK' . chr(10);
     }

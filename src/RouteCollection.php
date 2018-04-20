@@ -79,7 +79,7 @@ class RouteCollection implements \ArrayAccess, \Iterator {
      */
     public function getRoute($httpContext) {
         $csm = false ? '' : 'i';
-        $path = trim($httpContext->getRequest()->requestUri(), '/');
+        $path = trim($httpContext->getRequest()->rawUrl(), '/');
         
         if (($qsIndex = strpos($path, '?')) !== false) {
             $path = substr($path, 0, $qsIndex);
@@ -171,11 +171,11 @@ class RouteCollection implements \ArrayAccess, \Iterator {
             throw new \Exception('A type of Route or a derivative is expected.');
         }
         
-        if (empty($route->name)) {
+        if ($route->ignore !== true && empty($route->name)) {
             throw new \Exception('The name of the route is expected. The value must not be empty.');
         }
 
-        if (!$this->isUniqueRouteName($route->name)) {
+        if ($route->ignore !== true && !$this->isUniqueRouteName($route->name)) {
             throw new \Exception('The name "' . $route->name . '" is already used for another route. Specify a unique name.');
         }
 

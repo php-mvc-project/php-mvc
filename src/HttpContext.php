@@ -11,7 +11,9 @@ final class HttpContext extends HttpContextBase {
      */
     public function __construct() {
         $routes = InternalHelper::getStaticPropertyValue('\PhpMvc\RouteTable', 'routes');
-        parent::__construct($routes, new HttpRequest(), new HttpResponse());
+        $ignored = InternalHelper::getStaticPropertyValue('\PhpMvc\RouteTable', 'ignored');
+
+        parent::__construct($routes, $ignored, new HttpRequest(), new HttpResponse());
     }
     
 }

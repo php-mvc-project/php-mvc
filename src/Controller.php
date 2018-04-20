@@ -127,7 +127,7 @@ class Controller {
      * 
      * @return FileResult
      */
-    protected function file($path, $contentType = 'application/octet-stream', $downloadName = null) {
+    protected function file($path, $contentType = null, $downloadName = null) {
         return new FileResult($path, $contentType, $downloadName);
     }
 

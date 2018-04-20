@@ -39,10 +39,12 @@ final class Make {
     public static function magic($appNamespace, $httpContext = null, $basePath = null) {
         self::init($appNamespace, $basePath);
         self::include();
-        self::context($httpContext);
-        self::headers();
-        self::validation();
-        self::render();
+
+        if (self::context($httpContext)) {
+            self::headers();
+            self::validation();
+            self::render();
+        }
     }
 
     /**
@@ -125,12 +127,20 @@ final class Make {
         self::$request = $httpContext->getRequest();
         self::$response = $httpContext->getResponse();
 
-        // check route
+        // get route
+        if ($httpContext->isIgnoredRoute()) {
+            self::$response->clear();
+            require(PHPMVC_ROOT_PATH . self::$request->rawUrl());
+            self::$response->end();
+            return false;
+        }
+
         $route = $httpContext->getRoute();
 
         if ($route == null) {
             self::$response->setStatusCode(404);
             self::$response->end();
+            return false;
         }
 
         define('PHPMVC_CONTROLLER', ucfirst($route->getValueOrDefault('controller', 'Home')));
@@ -208,6 +218,8 @@ final class Make {
         }
 
         InternalHelper::setPropertyValue($actionContext, 'filters', $allFiltersInstance);
+
+        return true;
     }
 
     /**

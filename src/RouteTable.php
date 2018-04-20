@@ -14,18 +14,19 @@ class RouteTable {
     private static $routes;
 
     /**
+     * Gets or sets a collection of ignored routes.
+     * 
+     * @var RouteCollection
+     */
+    private static $ignored;
+
+    /**
      * Indicates whether the case of characters should be case-sensitive in determining the URL or not.
      * Default: false (case insensitive).
      * 
      * @var bool
      */
     private static $caseSensitive = false;
-
-    private static function ensureRoutes() {
-        if (self::$routes == null) {
-            self::$routes = new RouteCollection();
-        }
-    }
 
     /**
      * Sets the case sensitivity mode when searching for URL.
@@ -36,18 +37,6 @@ class RouteTable {
      */
     public static function setCaseSensitive($value) {
         RouteTable::$caseSensitive = $value;
-    }
-
-    /**
-     * Adds a rule.
-     * 
-     * @param Route $route The rule to add. 
-     * 
-     * @return void
-     */
-    public static function add($route) {
-        self::ensureRoutes();
-        self::$routes->add($route);
     }
 
     /**
@@ -67,9 +56,9 @@ class RouteTable {
      * 
      * @return void
      */
-    public static function addRoute($name, $template, $defaults = null, $constraints = null) {
+    public static function add($name, $template, $defaults = null, $constraints = null) {
         self::ensureRoutes();
-        
+
         $route = new Route();
 
         $route->name = $name;
@@ -80,19 +69,51 @@ class RouteTable {
         self::$routes->add($route);
     }
 
-    public static function ignoreRoute() {
+    /**
+     * Adds an URL pattern that should not be checked for matches against routes if a request URL meets the specified constraints.
+     * 
+     * @param string $template The URL pattern to be ignored.
+     * @param array $constraints An associative array containing regular expressions for checking the elements of the route.
+     * 
+     * @return void
+     */
+    public static function ignore($template, $constraints = null) {
         self::ensureRoutes();
-        // TODO: ignore routes
+
+        $route = new Route();
+
+        // $route->name = '__' . $template . '_' . rand(1, 1000);
+        $route->template = $template;
+        $route->constraints = $constraints;
+        $route->ignore = true;
+        
+        self::$ignored->add($route);
     }
 
     /**
-     * Remove all routes.
+     * Removes all routes.
      * 
      * @return void
      */
     public static function clear() {
         self::ensureRoutes();
         self::$routes->clear();
+        self::$ignored->clear();
+    }
+
+    /**
+     * Initializes the required variables.
+     * 
+     * @return void
+     */
+    private static function ensureRoutes() {
+        if (self::$routes == null) {
+            self::$routes = new RouteCollection();
+        }
+
+        if (self::$ignored == null) {
+            self::$ignored = new RouteCollection();
+        }
     }
 
 }
