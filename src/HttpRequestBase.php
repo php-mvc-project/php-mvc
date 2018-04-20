@@ -74,7 +74,14 @@ abstract class HttpRequestBase {
      * 
      * @var array
      */
-    private $headers = null;
+    protected $headers = null;
+
+    /**
+     * Document root path.
+     * 
+     * @var string
+     */
+    protected $documentRoot = null;
 
     /**
      * Initializes a new instance of the HttpRequestBase with the specified parameters.
@@ -184,7 +191,11 @@ abstract class HttpRequestBase {
      * @return string
      */
     public function documentRoot() {
-        return $this->serverVariables['DOCUMENT_ROOT'];
+        if ($this->documentRoot == null) {
+            $this->documentRoot = isset($this->serverVariables['DOCUMENT_ROOT']) ? $this->serverVariables['DOCUMENT_ROOT'] : substr(PHPMVC_ROOT_PATH, 0, -1);
+        }
+
+        return $this->documentRoot;
     }
 
     /**

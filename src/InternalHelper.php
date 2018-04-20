@@ -105,4 +105,59 @@ final class InternalHelper {
         return $property->invoke($class);
     }
 
+    /**
+     * Gets the view.
+     * 
+     * @param string $path File name or path to the view file.
+     * 
+     * @return string
+     */
+    public static function getView($path) {
+        if ($path === false) {
+            throw new \Exception('The view file is not specified. Probably the correct path to the file was not found. Make sure that all paths are specified correctly, the files exists and is available.');
+        }
+
+        ob_start();
+
+        require($path);
+
+        $result = ob_get_contents();
+
+        ob_end_clean();
+
+        return $result;
+    }
+
+    /**
+     * Converts array to object,
+     * 
+     * @param array $array The array to convert.
+     * @param \stdClass $parent The parent object.
+     * 
+     * @return \stdClass
+     */
+    public static function arrayToObject($array, $parent = null) {
+        $result = isset($parent) ? $parent : new \stdClass();
+        
+        ksort($array);
+
+        foreach ($array as $key => $value)
+        {
+            if (strpos($key, '_') === false) {
+                $result->$key = $value;
+            } else {
+                $name = explode('_', $key);
+                $newKey = array_shift($name);
+
+                if (!isset($result->$newKey)) {
+                    $result->$newKey = new \stdClass();
+                }
+                
+                self::arrayToObject(array($name[0] => $value), $result->$newKey);
+            }
+        }
+
+        return $result;
+    }
+
 }

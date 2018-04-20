@@ -1370,14 +1370,6 @@ final class HtmlTest extends TestCase
         $modelActionContextProperty->setAccessible(true);
         $modelActionContextProperty->setValue(null, $actionContext);
 
-        $requestProperty = new \ReflectionProperty('\PhpMvc\Make', 'request');
-        $requestProperty->setAccessible(true);
-        $requestProperty->setValue(null, $httpContext->getRequest());
-
-        $responseProperty = new \ReflectionProperty('\PhpMvc\Make', 'response');
-        $responseProperty->setAccessible(true);
-        $responseProperty->setValue(null, $httpContext->getResponse());
-
         return $viewContext;
     }
 

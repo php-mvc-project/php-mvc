@@ -7,27 +7,6 @@ namespace PhpMvc;
 final class Make {
 
     /**
-     * Defines the ActionContext.
-     * 
-     * @var ActionContext
-     */
-    private static $actionContext;
-
-    /**
-     * Gets or sets request of the HTTP context.
-     * 
-     * @var HttpRequestBase
-     */
-    private static $request;
-
-    /**
-     * Gets or sets response of the HTTP context.
-     * 
-     * @var HttpResponseBase
-     */
-    private static $response;
-
-    /**
      * Magic!
      * 
      * @param string $appNamespace Root namespace of the application.
@@ -40,43 +19,28 @@ final class Make {
         self::init($appNamespace, $basePath);
         self::include();
 
-        if (self::context($httpContext)) {
-            self::headers();
-            self::validation();
-            self::render();
+        $httpContext = self::httpContext($httpContext);
+        $route = self::canRoute($httpContext);
+
+        if ($route !== false) {
+            $actionContext = self::actionContext($httpContext, $route);
+
+            self::headers($httpContext);
+            self::validation($httpContext);
+            self::render($actionContext);
         }
-    }
-
-    /**
-     * Gets the view.
-     * 
-     * @param string $path File name or path to the view file.
-     * 
-     * @return string
-     */
-    public static function getView($path) {
-        if ($path === false) {
-            throw new \Exception('The view file is not specified. Probably the correct path to the file was not found. Make sure that all paths are specified correctly, the files exists and is available.');
-        }
-
-        ob_start();
-
-        require($path);
-
-        $result = ob_get_contents();
-
-        ob_end_clean();
-
-        return $result;
     }
 
     /**
      * Adds headers.
      * 
+     * @param HttpContextBase $httpContext The context of the request.
+     * 
      * @return void
      */
-    private static function headers() {
-        self::$response->addHeader('X-Powered-By', Info::XPOWEREDBY);
+    private static function headers($httpContext) {
+        $response = $httpContext->getResponse();
+        $response->addHeader('X-Powered-By', Info::XPOWEREDBY);
     }
 
     /**
@@ -107,13 +71,13 @@ final class Make {
     }
 
     /**
-     * Initializes the contexts associated with the current request.
+     * Initializes the HttpContext associated with the current request.
      * 
-     * @param HttpContextBase $httpContext Context of the request.
+     * @param HttpContextBase $httpContext The context of the request.
      * 
-     * @return void
+     * @return HttpContextBase
      */
-    private static function context($httpContext = null) {
+    private static function httpContext($httpContext = null) {
         // check request context
         if (isset($httpContext)) {
             if (!$httpContext instanceof HttpContextBase) {
@@ -124,25 +88,47 @@ final class Make {
             $httpContext = new HttpContext();
         }
 
-        self::$request = $httpContext->getRequest();
-        self::$response = $httpContext->getResponse();
+        return $httpContext;
+    }
 
-        // get route
+    /**
+     * Looks for a suitable route and checks whether the request can be executed.
+     * 
+     * @param HttpContextBase $httpContext The context of the request.
+     * 
+     * @return Route|bool
+     */
+    private static function canRoute($httpContext) {
         if ($httpContext->isIgnoredRoute()) {
-            self::$response->clear();
-            require(PHPMVC_ROOT_PATH . self::$request->rawUrl());
-            self::$response->end();
+            $request = $httpContext->getRequest();
+            $response = $httpContext->getResponse();
+            $response->clear();
+            require($request->documentRoot() . $request->rawUrl());
+            $response->end();
             return false;
         }
 
         $route = $httpContext->getRoute();
 
         if ($route == null) {
-            self::$response->setStatusCode(404);
-            self::$response->end();
+            $response = $httpContext->getResponse();
+            $response->setStatusCode(404);
+            $response->end();
             return false;
         }
 
+        return $route;
+    }
+
+    /**
+     * Initializes the ActionContext associated with the current request and route.
+     * 
+     * @param HttpContextBase $httpContext The context of the request.
+     * @param Route $route The route of the request.
+     * 
+     * @return ActionContext
+     */
+    private static function actionContext($httpContext, $route) {
         define('PHPMVC_CONTROLLER', ucfirst($route->getValueOrDefault('controller', 'Home')));
         define('PHPMVC_ACTION', $route->getValueOrDefault('action', 'index'));
         define('PHPMVC_VIEW', strtolower(PHPMVC_CONTROLLER));
@@ -150,7 +136,7 @@ final class Make {
         define('PHPMVC_CURRENT_VIEW_PATH', PHPMVC_VIEW_PATH . PHPMVC_VIEW . PHPMVC_DS . PHPMVC_ACTION . '.php');
 
         // create action context
-        self::$actionContext = $actionContext = new ActionContext($httpContext);
+        $actionContext = new ActionContext($httpContext);
         InternalHelper::setPropertyValue($actionContext, 'actionName', PHPMVC_ACTION);
 
         // preparing to create an instance of the controller class 
@@ -188,6 +174,7 @@ final class Make {
         // filters
         $allFilters = InternalHelper::getStaticPropertyValue('\\PhpMvc\\Filter', 'filters');
         $allFiltersInstance = array();
+
         foreach ($allFilters as $actionName => $filters) {
             foreach ($filters as $filterName) {
                 $className = $filterName;
@@ -219,15 +206,17 @@ final class Make {
 
         InternalHelper::setPropertyValue($actionContext, 'filters', $allFiltersInstance);
 
-        return true;
+        return $actionContext;
     }
 
     /**
      * Checks the request and throws an exception if the request contains dangerous data.
      * 
+     * @param HttpContextBase $httpContext The context of the request.
+     * 
      * @return void
      */
-    private static function validation() {
+    private static function validation($httpContext) {
         if (substr(PHPMVC_ACTION, 0, 2) == '__') {
             throw new \Exception('Action names can not begin with a "_".');
         }
@@ -246,12 +235,13 @@ final class Make {
     /**
      * Generates and renders the final result.
      * 
+     * @param ActionContext $actionContext The action context.
+     * 
      * @return void
      */
-    private static function render() {
+    private static function render($actionContext) {
         $result = null;
 
-        $actionContext = self::$actionContext;
         $controller = $actionContext->getController();
 
         // arguments and model state
@@ -339,12 +329,12 @@ final class Make {
                     }
                 }
 
-                $viewContext->content = self::getView($viewContext->viewFile);
+                $viewContext->content = InternalHelper::getView($viewContext->viewFile);
 
                 // get layout
                 if (!empty($viewContext->layout)) {
                     if (($layoutFile = PathUtility::getViewFilePath($viewContext->layout)) !== false) {
-                        $result = self::getView($layoutFile);
+                        $result = InternalHelper::getView($layoutFile);
                     }
                     else {
                         throw new ViewNotFoundException($viewContext->layout);
@@ -358,8 +348,9 @@ final class Make {
         }
 
         // render
-        self::$response->write($result);
-        self::$response->end();
+        $response = $actionContext->getHttpContext()->getResponse();
+        $response->write($result);
+        $response->end();
     }
 
     /**
@@ -374,25 +365,26 @@ final class Make {
         $modelState = new ModelState();
         $modelState->annotations = $actionContext->getModelState()->annotations;
         $hasModel = false;
+        $request = $actionContext->getHttpContext()->getRequest();
 
         // get http params
         // TODO: подумать о возможности управлять этим
-        $get = self::$request->get();
+        $get = $request->get();
 
         // change case of keys
         $get = array_change_key_case($get, CASE_LOWER);
 
         // post params
-        $isPost = self::$request->isPost();
-        $postData = $isPost ? self::$request->post() : null;
+        $isPost = $request->isPost();
+        $postData = $isPost ? $request->post() : null;
         $post =  null;
 
         if (!empty($postData)) {
-            $post = self::arrayToObject($postData);
+            $post = InternalHelper::arrayToObject($postData);
         }
         
         if (empty($post) && $isPost) {
-            $contentType = self::$request->contentType();
+            $contentType = $request->contentType();
 
             if (strrpos($contentType, '/json') !== false) {
                 $requestBody = file_get_contents('php://input');
@@ -573,38 +565,6 @@ final class Make {
                 }
             }
         }
-    }
-
-    /**
-     * Converts array to object,
-     * 
-     * @param array $array The array to convert.
-     * @param \stdClass $parent The parent object.
-     * 
-     * @return \stdClass
-     */
-    private static function arrayToObject($array, $parent = null) {
-        $result = isset($parent) ? $parent : new \stdClass();
-        
-        ksort($array);
-
-        foreach ($array as $key => $value)
-        {
-            if (strpos($key, '_') === false) {
-                $result->$key = $value;
-            } else {
-                $name = explode('_', $key);
-                $newKey = array_shift($name);
-
-                if (!isset($result->$newKey)) {
-                    $result->$newKey = new \stdClass();
-                }
-                
-                self::arrayToObject(array($name[0] => $value), $result->$newKey);
-            }
-        }
-
-        return $result;
     }
 
     /**

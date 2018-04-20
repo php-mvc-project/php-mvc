@@ -177,7 +177,7 @@ class Html {
      */
     public static function view($path, $model = null) {
         if (($viewPath = PathUtility::getViewFilePath($path)) !== false) {
-            return Make::getView($viewPath, $model);
+            return InternalHelper::getView($viewPath, $model);
         }
         else {
             throw new ViewNotFoundException($path);
