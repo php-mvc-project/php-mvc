@@ -88,6 +88,8 @@ final class Make {
             $httpContext = new HttpContext();
         }
 
+        InternalHelper::setStaticPropertyValue('\\PhpMvc\\HttpContext', 'current', $httpContext);
+
         return $httpContext;
     }
 

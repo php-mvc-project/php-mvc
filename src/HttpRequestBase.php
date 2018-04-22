@@ -205,7 +205,7 @@ abstract class HttpRequestBase {
      * 
      * @return array|string
      */
-    public function serverVariables($key = null) {
+    public function server($key = null) {
         return $this->getSingleKeyOrAll($this->serverVariables, $key);
     }
 
