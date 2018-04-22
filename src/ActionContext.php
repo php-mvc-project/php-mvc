@@ -58,13 +58,24 @@ class ActionContext {
     /**
      * Initializes a new instance of the ActionContext for the current request.
      * 
-     * @param HttpContextBase $httpContext Context of the request.
+     * @param HttpContextBase|ActionContext $httpContext Context of the request.
      */
     public function __construct($httpContext) {
-        $this->httpContext = $httpContext;
-        $this->route = $httpContext->getRoute();
-        $this->modelState = new ModelState();
-        $this->filters = array();
+        if ($httpContext instanceof ActionContext) {
+            $this->httpContext = $httpContext->getHttpContext();
+            $this->route = $httpContext->getRoute();
+            $this->modelState = $httpContext->getModelState();
+            $this->filters = $httpContext->getFilters();
+            $this->actionName = $httpContext->getActionName();
+            $this->arguments = $httpContext->getArguments();
+            $this->controller = $httpContext->getController();
+        }
+        else {
+            $this->httpContext = $httpContext;
+            $this->route = $httpContext->getRoute();
+            $this->modelState = new ModelState();
+            $this->filters = array();
+        }
     }
 
     /**

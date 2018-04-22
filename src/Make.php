@@ -592,7 +592,7 @@ final class Make {
      * @return ActionExecutingContext
      */
     private static function actionExecutingFilters($actionContext) {
-        $context = new ActionExecutingContext($actionContext->getController());
+        $context = new ActionExecutingContext($actionContext);
 
         $filters = $actionContext->getFilters();
 
@@ -613,7 +613,7 @@ final class Make {
      * @return ActionExecutedContext
      */
     private static function actionExecutedFilters($actionContext, $actionResult, $exceptionContext = null) {
-        $context = new ActionExecutedContext($actionContext->getController(), $actionResult, $exceptionContext);
+        $context = new ActionExecutedContext($actionContext, $actionResult, $exceptionContext);
 
         $filters = $actionContext->getFilters();
 
@@ -633,7 +633,7 @@ final class Make {
      * @return ExceptionContext
      */
     private static function exceptionFilters($actionContext, $exception) {
-        $context = new ExceptionContext($actionContext->getController(), $exception);
+        $context = new ExceptionContext($actionContext, $exception);
         
         $filters = $actionContext->getFilters();
 

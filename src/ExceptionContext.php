@@ -4,7 +4,7 @@ namespace PhpMvc;
 /**
  * Provides the context for the exception() method of the ActionFilter class.
  */
-final class ExceptionContext extends ControllerContext {
+final class ExceptionContext extends ActionContext {
 
     /**
      * Gets or sets the result that is returned by the action method.

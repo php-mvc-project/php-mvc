@@ -25,14 +25,14 @@ final class HttpResponse extends HttpResponseBase {
             $GLOBALS['http_response_code'] = $statusCode;
         }
 
-        // headers
-        foreach ($this->headers as $name => $value) {
-            header($name . ': ' . $value);
-        }
-
         // cookies
         foreach ($this->cookies as $cookie) {
             call_user_func_array('setcookie', $cookie);
+        }
+
+        // headers
+        foreach ($this->headers as $name => $value) {
+            header($name . ': ' . $value);
         }
 
         // files

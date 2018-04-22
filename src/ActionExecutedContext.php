@@ -4,7 +4,7 @@ namespace PhpMvc;
 /**
  * Provides the context for the actionExecuted method of the ActionFilter class.
  */
-final class ActionExecutedContext extends ControllerContext {
+final class ActionExecutedContext extends ActionContext {
 
     /**
      * Gets or sets the result that is returned by the action method.
@@ -30,12 +30,12 @@ final class ActionExecutedContext extends ControllerContext {
     /**
      * Initializes a new instance of the ActionExecutedContext.
      * 
-     * @param Controller $controller An instance of the controller.
+     * @param ActionContext $actionContext The context of the action.
      * @param ActionResult $result The action result.
      * @param exceptionContext $exceptionContext The context of exception, if there was an exception.
      */
-    public function __construct($controller, $result, $exceptionContext) {
-        parent::__construct($controller);
+    public function __construct($actionContext, $result, $exceptionContext) {
+        parent::__construct($actionContext);
 
         $this->result = $result;
 
