@@ -156,7 +156,7 @@ final class FilterTest extends TestCase
         echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
-        
+
         Make::magic('PhpMvcTest', $httpContext, $this->basePath);
 
         $result = ob_get_clean();

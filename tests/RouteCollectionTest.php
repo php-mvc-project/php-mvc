@@ -55,8 +55,24 @@ final class RouteCollectionTest extends TestCase
     }
 
     public function testGetRoute(): void {
-        // routes
         $routes = new RouteCollection();
+        $ignoreRoutes = new RouteCollection();
+
+        $ignoreRoutes->add(new Route('ignore-favicon', 'favicon.ico', null, null, true));
+
+        $ignoreRoutes->add(new Route(
+            'ignore-preview', 
+            'preview{extension}',
+            array(),
+            array('extension' => '\.(png|jpg)'),
+            true
+        ));
+
+        $ignoreRoutes->add(new Route(
+            'ignore-content', 
+            'content/{*file}',
+            null, null, true
+        ));
 
         $routes->add(new Route(
             'defaultControllerAndAction', 
@@ -108,6 +124,45 @@ final class RouteCollectionTest extends TestCase
 
         // test requests
         $requests = array(
+            array(
+                'uri' => '/content/images/preview.png',
+                'expectRoute' => 'ignore-content',
+                'expectSegments' => array(
+                    'file' => 'images/preview.png'
+                ),
+            ),
+            array(
+                'uri' => '/content/styles/home.css',
+                'expectRoute' => 'ignore-content',
+                'expectSegments' => array(
+                    'file' => 'styles/home.css'
+                ),
+            ),
+            array(
+                'uri' => '/content/scripts.js',
+                'expectRoute' => 'ignore-content',
+                'expectSegments' => array(
+                    'file' => 'scripts.js'
+                ),
+            ),
+            array(
+                'uri' => '/favicon.ico',
+                'expectRoute' => 'ignore-favicon',
+                'expectSegments' => array(),
+            ),
+            array(
+                'uri' => '/preview.png',
+                'expectRoute' => 'ignore-preview',
+                'expectSegments' => array('extension' => '.png'),
+            ),
+            array(
+                'uri' => '/preview.bmp',
+                'expectRoute' => 'default',
+                'expectSegments' => array(
+                    'controller' => 'preview.bmp',
+                    'action' => 'index',
+                ),
+            ),
             array(
                 'uri' => '/',
                 'expectRoute' => 'default',
@@ -260,13 +315,13 @@ final class RouteCollectionTest extends TestCase
 
             $httpContext = new HttpContext(
                 $routes,
-                null,
+                $ignoreRoutes,
                 array(
                     'REQUEST_URI' => $request['uri']
                 )
             );
 
-            $route = $routes->getRoute($httpContext);
+            $route = $httpContext->getRoute();
 
             if ($request['expectRoute'] !== null) {
                 $this->assertNotNull($route);

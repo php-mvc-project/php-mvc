@@ -84,12 +84,14 @@ class Route {
      * @param array $constraints An associative array containing regular expressions for checking the elements of the route.
      * For example, $template is {controller}/{action}/{id}
      * $constraints = array('id' => '\w+')
+     * @param bool $ignore Indicates that this ignore rule. Default: false.
      */
-    public function __construct($name = null, $template = null, $defaults = null, $constraints = null) {
+    public function __construct($name = null, $template = null, $defaults = null, $constraints = null, $ignore = false) {
         $this->name = $name;
         $this->template = $template;
         $this->defaults = $defaults;
         $this->constraints = $constraints;
+        $this->ignore = ($ignore === true);
     }
 
     /**
@@ -181,6 +183,7 @@ class Route {
                 $prevGlued = false;
                 $segmentPattern = '';
                 $optional = false;
+                $catchAll = false;
                 $default = null;
                 
                 // parse name
@@ -201,9 +204,32 @@ class Route {
                     $name = $name[0];
                 }
 
+                // is catch-all
+                if (count($name = explode('*', $name)) > 1) {
+                    $catchAll = true;
+                    $name = $name[1];
+                }
+                else {
+                    $name = $name[0];
+                }
+
+                if ($catchAll && $i != $count - 1) {
+                    throw new RouteParsingException(
+                        $this, 
+                        'A catch-all parameter can only appear as the last segment of the route template. ' .
+                        'Please check the route parameter "' . $name . '" in the route "' . $this->name . '".'
+                    );
+                }
+
                 // default value is allowed or not
                 if (!empty($default) && !empty($route->defaults[$name])) {
-                    throw new \Exception('The route parameter "' . $name . '" has both an inline default value and an explicit default value specified. A route parameter must not contain an inline default value when a default value is specified explicitly. Consider removing one of them.');
+                    throw new RouteParsingException(
+                        $this,
+                        'The route parameter "' . $name . '" in the route "' . $this->name . '" ' .
+                        'has both an inline default value and an explicit default value specified. ' .
+                        'A route parameter must not contain an inline default value when a default value is specified explicitly. ' . 
+                        'Consider removing one of them.'
+                    );
                 }
                 elseif (empty($default) && !empty($route->defaults[$name])) {
                     $default = $route->defaults[$name];
@@ -265,12 +291,18 @@ class Route {
                     }
                 }
                 else {
-                    if (!empty($default)) {
-                        $segmentPattern = '(?<' . $name . '>[^\/]*)';
+                    if ($catchAll === true) {
+                        $segmentPattern = '(?<' . $name . '>.*)';
                         $optional = true;
                     }
                     else {
-                        $segmentPattern = '(?<' . $name . '>[^\/]+)';
+                        if (!empty($default)) {
+                            $segmentPattern = '(?<' . $name . '>[^\/]*)';
+                            $optional = true;
+                        }
+                        else {
+                            $segmentPattern = '(?<' . $name . '>[^\/]+)';
+                        }
                     }
                 }
 
@@ -317,7 +349,11 @@ class Route {
         $this->setBounds($segments);
 
         if ($this->ignore !== true && ((empty($namedSegments['controller']) && empty($this->defaults['controller'])) || (empty($namedSegments['action']) && empty($this->defaults['action'])))) {
-            throw new RouteSegmentsRequiredException($this);
+            throw new RouteParsingException(
+                $this,
+                'The route "' . $this->name . '" must contain {controller} and {action}. ' .
+                'If these elements are not present in the route template, then the default values for them must be defined in the route.'
+            );
         }
 
         $this->segmentsNamed = $namedSegments;
