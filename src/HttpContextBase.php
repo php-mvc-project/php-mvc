@@ -7,6 +7,13 @@ namespace PhpMvc;
 abstract class HttpContextBase {
 
     /**
+     * When overridden in a derived class, gets the Cache object for the current request.
+     * 
+     * @var Cache
+     */
+    protected $cache;
+
+    /**
      * When overridden in a derived class, gets the HttpRequest object for the current HTTP request.
      * 
      * @var HttpRequestBase
@@ -70,6 +77,7 @@ abstract class HttpContextBase {
         $date = new \DateTime();
         $this->timestamp = $date->getTimestamp();
 
+        $this->cache = new Cache(new CacheFileProvider()); // array('hash' => 'sha1')
         $this->routes = $routes;
         $this->request = $request;
         $this->response = $response;
@@ -77,6 +85,15 @@ abstract class HttpContextBase {
         if (!($this->ignore = (isset($ignoreRoutes) && $ignoreRoutes instanceof RouteCollection && ($this->route = $ignoreRoutes->getRoute($this)) !== null))) {
             $this->route = $routes->getRoute($this);
         }
+    }
+
+    /**
+     * Gets cache provider.
+     * 
+     * @return Cache
+     */
+    public function getCache() {
+        return $this->cache;
     }
 
     /**

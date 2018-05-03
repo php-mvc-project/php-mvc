@@ -1341,7 +1341,7 @@ final class HtmlTest extends TestCase
     }
 
     private function setContext($method = 'GET', $get = array(), $post = array(), $actionResult = null, $viewData = null) {
-        $routes = new RouteCollection();
+        $routes = new RouteCollection('test');
         $routes->add(new Route('default', '{controller=home}/{action=index}/{id?}'));
 
         $httpContext = new HttpContext(
@@ -1360,7 +1360,7 @@ final class HtmlTest extends TestCase
         InternalHelper::setPropertyValue($actionContext, 'controller', new \PhpMvcTest\Controllers\HomeController());
         InternalHelper::setPropertyValue($actionContext, 'actionName', 'index');
 
-        $viewContext = new ViewContext($actionContext, $actionResult, $viewData);
+        $viewContext = new ViewContext('fake.php', $actionContext, $actionResult, null, $viewData);
 
         $viewContextProperty = new \ReflectionProperty('\PhpMvc\Html', 'viewContext');
         $viewContextProperty->setAccessible(true);

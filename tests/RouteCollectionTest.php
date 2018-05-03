@@ -16,7 +16,7 @@ final class RouteCollectionTest extends TestCase
     {
         $this->expectExceptionMessageRegExp('/must not be empty/');
 
-        $routes = new RouteCollection();
+        $routes = new RouteCollection('test');
 
         $route = new Route();
 
@@ -27,7 +27,7 @@ final class RouteCollectionTest extends TestCase
     {
         $this->expectExceptionMessageRegExp('/template/');
 
-        $routes = new RouteCollection();
+        $routes = new RouteCollection('test');
 
         $route = new Route();
         $route->name = 'default';
@@ -39,7 +39,7 @@ final class RouteCollectionTest extends TestCase
     {
         $this->expectExceptionMessageRegExp('/unique name/');
 
-        $routes = new RouteCollection();
+        $routes = new RouteCollection('test');
 
         $route = new Route();
         $route->name = 'default';
@@ -55,8 +55,8 @@ final class RouteCollectionTest extends TestCase
     }
 
     public function testGetRoute(): void {
-        $routes = new RouteCollection();
-        $ignoreRoutes = new RouteCollection();
+        $routes = new RouteCollection('test');
+        $ignoreRoutes = new RouteCollection('test_ignored');
 
         $ignoreRoutes->add(new Route('ignore-favicon', 'favicon.ico', null, null, true));
 

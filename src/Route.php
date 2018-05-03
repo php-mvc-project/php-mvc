@@ -241,7 +241,7 @@ class Route {
                         'The route "' . $route->name . '" contains more than one parameter named "' . 
                         $name . '". Route parsing may not work correctly. ' .
                         'Please, try not to use elements with the same name.', 
-                        E_USER_WARNING
+                        \E_USER_WARNING
                     );
 
                     continue;
@@ -401,7 +401,7 @@ class Route {
      * 
      * @return string
      */
-    public function __toString () {
+    public function __toString() {
         return $this->template;
     }
 

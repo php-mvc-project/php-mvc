@@ -55,7 +55,40 @@ final class ViewContext extends ActionContext {
      */
     public $viewFile;
 
-    public function __construct($actionContext, $actionResult, $viewData) {
+    /**
+     * Gets an object that contains the view context information for the parent action method.
+     * 
+     * @var ViewContext
+     */
+    public $parentActionViewContext;
+
+    /**
+     * Gets or sets parent view context.
+     * 
+     * @var ViewContext
+     */
+    public $parent;
+
+    /**
+     * Gets or sets body view context.
+     * 
+     * @var ViewContext
+     */
+    public $body;
+
+    /**
+     * Initializes a new instance of ViewContext.
+     * 
+     * @param string $viewFile The view file path.
+     * @param ActionContext $actionContext The action context of the current request.
+     * @param ActionResult $actionResult The result of the action.
+     * @param mixed $model The view model.
+     * @param array $viewData The view data.
+     * @param ViewContext $parentActionViewContext The context of the main view.
+     * @param ViewContext $parent The context of the parent.
+     * @param ViewContext $body The context of the main child.
+     */
+    public function __construct($viewFile, $actionContext, $actionResult, $model, $viewData, $parentActionViewContext = null, $parent = null, $body = null) {
         parent::__construct($actionContext->getHttpContext(), $actionContext->getRoute());
 
         $this->controller = $actionContext->getController();
@@ -63,8 +96,13 @@ final class ViewContext extends ActionContext {
         $this->arguments = $actionContext->getArguments();
         $this->actionName = $actionContext->getActionName();
 
+        $this->viewFile = $viewFile;
+        $this->model = $model;
         $this->viewData = $viewData;
         $this->actionResult = $actionResult;
+        $this->parentActionViewContext = $parentActionViewContext;
+        $this->parent = $parent;
+        $this->body = $body;
     }
 
     /**

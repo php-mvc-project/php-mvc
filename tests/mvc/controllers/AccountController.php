@@ -3,6 +3,7 @@ namespace PhpMvcTest\Controllers;
 
 use \PhpMvc\Model;
 use \PhpMvc\Controller;
+use \PhpMvc\OutputCache;
 
 use \PhpMvcTest\Models\Login;
 

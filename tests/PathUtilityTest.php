@@ -16,7 +16,8 @@ final class PathUtilityTest extends TestCase
 
     protected $runTestInSeparateProcess = TRUE;
 
-    public function __construct($name = null, array $data = [], $dataName = '') {
+    public function __construct($name = null, array $data = [], $dataName = '')
+    {
         parent::__construct($name, $data, $dataName);
 
         if (!defined('PHPMVC_ROOT_PATH')) {

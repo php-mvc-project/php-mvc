@@ -24,6 +24,14 @@ final class MakeTest extends TestCase
         parent::__construct($name, $data, $dataName);
 
         $this->basePath = getcwd() . DIRECTORY_SEPARATOR . 'tests' . DIRECTORY_SEPARATOR . 'mvc';
+
+        if (!defined('PHPMVC_DS')) {
+            define('PHPMVC_DS', DIRECTORY_SEPARATOR);
+        }
+
+        if (!defined('PHPMVC_ROOT_PATH')) {
+            define('PHPMVC_ROOT_PATH', $this->basePath . PHPMVC_DS);
+        }
     }
 
     public function testMagic(): void
@@ -312,7 +320,10 @@ final class MakeTest extends TestCase
             array(
                 'REQUEST_URI' => '/home/jsonData',
                 'REQUEST_METHOD' => 'GET'
-            )
+            ),
+            array(),
+            array(),
+            true
         );
 
         echo chr(10);
@@ -339,7 +350,10 @@ final class MakeTest extends TestCase
             array(
                 'REQUEST_URI' => '/home/getContent',
                 'REQUEST_METHOD' => 'GET'
-            )
+            ),
+            array(),
+            array(),
+            true
         );
 
         echo chr(10);
@@ -366,7 +380,10 @@ final class MakeTest extends TestCase
             array(
                 'REQUEST_URI' => '/home/string',
                 'REQUEST_METHOD' => 'GET'
-            )
+            ),
+            array(),
+            array(),
+            true
         );
 
         echo chr(10);
@@ -393,7 +410,10 @@ final class MakeTest extends TestCase
             array(
                 'REQUEST_URI' => '/home/arr',
                 'REQUEST_METHOD' => 'GET'
-            )
+            ),
+            array(),
+            array(),
+            true
         );
 
         echo chr(10);
@@ -420,7 +440,10 @@ final class MakeTest extends TestCase
             array(
                 'REQUEST_URI' => '/home/obj',
                 'REQUEST_METHOD' => 'GET'
-            )
+            ),
+            array(),
+            array(),
+            true
         );
 
         echo chr(10);
@@ -447,7 +470,10 @@ final class MakeTest extends TestCase
             array(
                 'REQUEST_URI' => '/home/getImage',
                 'REQUEST_METHOD' => 'GET'
-            )
+            ),
+            array(),
+            array(),
+            true
         );
 
         echo chr(10);
@@ -775,7 +801,10 @@ final class MakeTest extends TestCase
             array(
                 'REQUEST_URI' => '/content/images/php.png',
                 'REQUEST_METHOD' => 'GET'
-            )
+            ),
+            array(),
+            array(),
+            true
         );
 
         echo chr(10);
@@ -788,6 +817,97 @@ final class MakeTest extends TestCase
         $result = ob_get_clean();
 
         $this->assertEquals('89504e470d0a1a0a0000', bin2hex(substr($result, 0, 10)));
+
+        echo ' - OK' . chr(10);
+    }
+
+    public function testViewContext(): void
+    {
+        RouteTable::clear();
+        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
+
+        $httpContext = new HttpContext(
+            null,
+            null,
+            array(
+                'REQUEST_URI' => '/home/layoutWithParent',
+                'REQUEST_METHOD' => 'GET'
+            )
+        );
+
+        echo chr(10);
+        echo 'Request: ' . $httpContext->getRequest()->rawUrl();
+
+        ob_start();
+        
+        Make::magic('PhpMvcTest', $httpContext, $this->basePath);
+
+        $result = ob_get_clean();
+
+        $this->assertContains(
+            '<header>',
+            $result
+        );
+
+        $this->assertContains(
+            'The view is created programmatically - PHP MVC Test project',
+            $result
+        );
+
+        $this->assertContains(
+            'Default layout with empty parent',
+            $result
+        );
+
+        $this->assertContains(
+            'This is another page of the most wonderful site in the world!',
+            $result
+        );
+
+        $this->assertContains(
+            'The view is created programmatically',
+            $result
+        );
+
+        $this->assertContains(
+            'Hello work!',
+            $result
+        );
+
+        $this->assertContains(
+            '<footer>',
+            $result
+        );
+
+        $this->assertContains(
+            'View file:',
+            $result
+        );
+
+        $this->assertContains(
+            '_empty.php',
+            $result
+        );
+
+        $this->assertContains(
+            '_parent.php',
+            $result
+        );
+
+        $this->assertContains(
+            'prog.php',
+            $result
+        );
+
+        $this->assertContains(
+            'header.php',
+            $result
+        );
+
+        $this->assertContains(
+            'footer.php',
+            $result
+        );
 
         echo ' - OK' . chr(10);
     }

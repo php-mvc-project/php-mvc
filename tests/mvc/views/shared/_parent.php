@@ -1,17 +1,18 @@
 <?php
 use PhpMvc\Html;
 use PhpMvc\View;
+View::setLayout('_empty');
 ?>
 <!--View file: <?=View::getViewFile()?>-->
 <html>
     <head>
-        <title><?=Html::getTitle('Default layout')?> - PHP MVC Test project</title>
+        <title><?=Html::getTitle('Default layout with empty parent')?> - PHP MVC Test project</title>
     </head>
     <body>
         <?php Html::render('header', 'PHP MVC'); ?>
 
         <div class="container">
-            <h1>Default layout</h1>
+            <h1>Default layout with empty parent</h1>
 
             <?=Html::validationSummary()?>
 

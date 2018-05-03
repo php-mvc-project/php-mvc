@@ -7,6 +7,13 @@ namespace PhpMvc;
 class RouteCollection implements \ArrayAccess, \Iterator {
 
     /**
+     * Unique collection name.
+     * 
+     * @var string
+     */
+    protected $name;
+
+    /**
      * Index of the current item.
      * 
      * @var int
@@ -27,7 +34,8 @@ class RouteCollection implements \ArrayAccess, \Iterator {
      */
     private $options;
 
-    public function __construct() {
+    public function __construct($name) {
+        $this->name = $name;
         $this->options = new RouteOptions();
     }
 
@@ -89,8 +97,19 @@ class RouteCollection implements \ArrayAccess, \Iterator {
             $path = '';
         }
 
+        $cache = $httpContext->getCache();
+        $cacheKey = '__route_' . $this->name . '_' . $path;
+
+        if ($cache->get($cacheKey) !== null) {
+            return $cache->get($cacheKey);
+        }
+
         foreach($this->routes as $route) {
-            $segments = $route->getSegments();
+            $segments = $cache->getOrAdd(
+                '__route_segments_' . $route->template,
+                $route->getSegments(),
+                1200
+            );
 
             // make final pattern
             $pattern = '';
@@ -152,9 +171,13 @@ class RouteCollection implements \ArrayAccess, \Iterator {
 
                 $result->values = $values;
 
+                $cache->add($cacheKey, $result, 1200);
+
                 return $result;
             }
         }
+
+        $cache->add($cacheKey, null, 1200);
 
         return null;
     }

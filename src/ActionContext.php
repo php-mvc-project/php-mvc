@@ -56,6 +56,20 @@ class ActionContext {
     protected $filters;
 
     /**
+     * Gets or sets output cache settings.
+     * 
+     * @var array;
+     */
+    protected $outputCache;
+
+    /**
+     * Gets or sets cache entry key.
+     * 
+     * @var string
+     */
+    protected $cacheKey;
+
+    /**
      * Initializes a new instance of the ActionContext for the current request.
      * 
      * @param HttpContextBase|ActionContext $httpContext Context of the request.
@@ -69,12 +83,15 @@ class ActionContext {
             $this->actionName = $httpContext->getActionName();
             $this->arguments = $httpContext->getArguments();
             $this->controller = $httpContext->getController();
+            $this->outputCache = $httpContext->getOutputCacheSettings();
         }
         else {
             $this->httpContext = $httpContext;
             $this->route = $httpContext->getRoute();
             $this->modelState = new ModelState();
             $this->filters = array();
+            $this->outputCache = array();
+            $this->arguments = array();
         }
     }
 
@@ -133,15 +150,6 @@ class ActionContext {
     }
 
     /**
-     * Returns list of filters.
-     * 
-     * @return ActionFilter[]
-     */
-    public function getFilters() {
-        return $this->filters;
-    }
-
-    /**
      * Checks the equivalence of the specified string with the name of the action.
      * 
      * @param string $name The string to compare.
@@ -151,4 +159,23 @@ class ActionContext {
     public function actionNameEquals($name) {
         return $this->actionName == strtolower($name);
     }
+
+    /**
+     * Returns list of filters.
+     * 
+     * @return ActionFilter[]
+     */
+    public function getFilters() {
+        return $this->filters;
+    }
+
+    /**
+     * Returns output cache settings.
+     * 
+     * @return array
+     */
+    public function getOutputCacheSettings() {
+        return $this->outputCache;
+    }
+
 }

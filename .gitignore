@@ -2,3 +2,5 @@
 /composer.lock
 /docs
 /output
+/cache
+/tests/mvc/cache

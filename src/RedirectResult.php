@@ -54,10 +54,10 @@ class RedirectResult implements ActionResult {
         if ($this->permanent === true && $this->preserveMethod !== true) {
             $response->setStatusCode(301);
         }
-        else if ($this->permanent !== true && $this->preserveMethod === true) {
+        elseif ($this->permanent !== true && $this->preserveMethod === true) {
             $response->setStatusCode(307);
         }
-        else if ($this->permanent === true && $this->preserveMethod === true) {
+        elseif ($this->permanent === true && $this->preserveMethod === true) {
             $response->setStatusCode(308);
         }
 

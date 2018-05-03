@@ -1,3 +1,11 @@
+<?php 
+use PhpMvc\View;
+
+$model = '';
+
+View::injectModel($model);
+?>
+<!--View file: <?=View::getViewFile()?>-->
 <header>
   <nav class="navbar navbar-default">
     <div class="container">
@@ -10,7 +18,7 @@
         </button>
         <a class="navbar-brand" href="/">
           <i class="glyphicon glyphicon-tasks"></i>
-          PHP MVC
+          <?=$model?>
         </a>
       </div>
     </div>

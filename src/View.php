@@ -14,6 +14,15 @@ final class View {
     private static $viewContext;
 
     /**
+     * Gets the context of the current view.
+     * 
+     * @return ViewContext
+     */
+    public static function getViewContext() {
+        return self::$viewContext;
+    }
+
+    /**
      * Sets layout.
      * 
      * @param string $path The layout file name in the shared folder or full path to layout file.
@@ -96,6 +105,15 @@ final class View {
      */
     public static function getModelState() {
         return self::$viewContext->getModelState();
+    }
+
+    /**
+     * Gets view file name.
+     * 
+     * @return string
+     */
+    public static function getViewFile() {
+        return self::$viewContext->viewFile;
     }
 
 }

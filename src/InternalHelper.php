@@ -106,13 +106,13 @@ final class InternalHelper {
     }
 
     /**
-     * Gets the view.
+     * Gets the content of the view.
      * 
      * @param string $path File name or path to the view file.
      * 
      * @return string
      */
-    public static function getView($path) {
+    public static function getViewContent($path) {
         if ($path === false) {
             throw new \Exception('The view file is not specified. Probably the correct path to the file was not found. Make sure that all paths are specified correctly, the files exists and is available.');
         }
@@ -124,6 +124,84 @@ final class InternalHelper {
         $result = ob_get_contents();
 
         ob_end_clean();
+
+        return $result;
+    }
+
+    /**
+     * 
+     * @return ViewContext
+     */
+    public static function makeViewContext($viewFile, $actionContext, $actionResult, $model, $viewData, $parentActionViewContext, $parent, $body) {
+        // create context for view
+        $viewContext = new ViewContext($viewFile, $actionContext, $actionResult, $model, $viewData, $parentActionViewContext, $parent, $body);
+
+        if ($parentActionViewContext === null) {
+            $parentActionViewContext = $body = $viewContext;
+        }
+
+        // set view context
+        self::setViewContext($parentActionViewContext, $viewContext);
+
+        if ($viewContext->actionResult !== null) {
+            // execute result with view context
+            $viewContext->actionResult->execute($viewContext);
+        }
+
+        // get view file path
+        $viewFile = PathUtility::getViewFilePath($viewContext->viewFile);
+
+        // check view file path
+        if ($viewFile === false) {
+            if ($actionResult instanceof ExceptionResult) {
+                throw $actionResult->getException();
+            }
+            else {
+                throw new ViewNotFoundException($viewContext->viewFile);
+            }
+        }
+
+        // get view content
+        $viewContext->content = self::getViewContent($viewContext->viewFile);
+
+        // get layout
+        if (!empty($viewContext->layout)) {
+            if (($layoutFile = PathUtility::getViewFilePath($viewContext->layout)) !== false) {
+                // create layout context and set the context as the parent to the view context
+                $layoutResult = new ViewResult($layoutFile);
+                $viewContext->parent = self::makeViewContext(
+                    $layoutFile,
+                    $actionContext,
+                    $layoutResult,
+                    $parentActionViewContext->model,
+                    $parentActionViewContext->viewData,
+                    $parentActionViewContext,
+                    null,
+                    $viewContext
+                );
+                // restore view context
+                self::setViewContext($parentActionViewContext, $viewContext->parent !== null ? $viewContext->parent : $viewContext);
+            }
+            else {
+                throw new ViewNotFoundException($viewContext->layout);
+            }
+        }
+        else {
+            // restore context to back
+            if ($viewContext->parent !== null) {
+                self::setViewContext($parentActionViewContext, $viewContext->parent);
+            }
+        }
+
+        return $viewContext;
+    }
+
+    public static function getTopLevelViewContext($viewContext) {
+        $result = $viewContext;
+
+        while (isset($result->parent)) {
+            $result = self::getTopLevelViewContext($result->parent);
+        }
 
         return $result;
     }
@@ -158,6 +236,18 @@ final class InternalHelper {
         }
 
         return $result;
+    }
+
+    /**
+     * Sets view context to static classes.
+     * 
+     * @param ViewContext $parentActionViewContext The ViewContext instance of the action.
+     * @param ViewContext $viewContext The ViewContext instance to set.
+     */
+    private static function setViewContext($parentActionViewContext, $viewContext) {
+        InternalHelper::setStaticPropertyValue('\\PhpMvc\\View', 'viewContext', $viewContext);
+        InternalHelper::setStaticPropertyValue('\\PhpMvc\\Html', 'viewContext', $viewContext);
+        InternalHelper::setStaticPropertyValue('\\PhpMvc\\Html', 'parentActionViewContext', $parentActionViewContext);
     }
 
 }

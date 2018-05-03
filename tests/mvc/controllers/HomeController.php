@@ -114,4 +114,22 @@ class HomeController extends Controller {
         }
     }
 
+    public function layoutWithParent() {
+        $view = new ViewResult();
+
+        $view->viewFile = 'prog';
+        $view->title = 'The view is created programmatically';
+        $view->layout = '_parent';
+
+        $model = new HomePage();
+
+        $model->title = 'Hello work!';
+        $model->text = 'The model contains text.';
+        $model->number = 42;
+
+        $view->model = $model;
+
+        return $view;
+    }
+
 }

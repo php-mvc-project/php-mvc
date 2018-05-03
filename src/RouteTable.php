@@ -82,11 +82,10 @@ class RouteTable {
 
         $route = new Route();
 
-        // $route->name = '__' . $template . '_' . rand(1, 1000);
         $route->template = $template;
         $route->constraints = $constraints;
         $route->ignore = true;
-        
+
         self::$ignored->add($route);
     }
 
@@ -108,11 +107,11 @@ class RouteTable {
      */
     private static function ensureRoutes() {
         if (self::$routes == null) {
-            self::$routes = new RouteCollection();
+            self::$routes = new RouteCollection('rules');
         }
 
         if (self::$ignored == null) {
-            self::$ignored = new RouteCollection();
+            self::$ignored = new RouteCollection('ignored');
         }
     }
 

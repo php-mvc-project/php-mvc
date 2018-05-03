@@ -14,6 +14,13 @@ class Html {
     private static $viewContext;
 
     /**
+     * Defines parent action ViewContext.
+     * 
+     * @var ViewContext
+     */
+    private static $parentActionViewContext;
+
+    /**
      * Gets the page title.
      * 
      * @param string $default Default value.
@@ -22,7 +29,12 @@ class Html {
      */
     public static function getTitle($default) {
         if (empty(self::$viewContext->title)) {
-            return htmlspecialchars($default);
+            if (isset(self::$viewContext->body) && !empty(self::$viewContext->body->title)) {
+                return htmlspecialchars(self::$viewContext->body->title);
+            }
+            else {
+                return htmlspecialchars($default);
+            }
         }
         else
         {
@@ -152,7 +164,7 @@ class Html {
      * @return void
      */
     public static function renderBody() {
-        echo self::$viewContext->content;
+        echo self::$viewContext->body->content;
     }
 
     /**
@@ -164,7 +176,7 @@ class Html {
      * @return void
      */
     public static function render($path, $model = null) {
-        echo self::view($path);
+        echo self::view($path, $model);
     }
 
     /**
@@ -177,7 +189,19 @@ class Html {
      */
     public static function view($path, $model = null) {
         if (($viewPath = PathUtility::getViewFilePath($path)) !== false) {
-            return InternalHelper::getView($viewPath, $model);
+            $viewResult = new ViewResult($viewPath, $model);
+            $viewContext = InternalHelper::makeViewContext(
+                $viewPath, 
+                self::$viewContext,
+                $viewResult,
+                $model,
+                null,
+                self::$parentActionViewContext,
+                self::$viewContext,
+                null
+            );
+
+            return $viewContext->content; //InternalHelper::getViewContent($viewPath, self::$viewContext, $model);
         }
         else {
             throw new ViewNotFoundException($path);

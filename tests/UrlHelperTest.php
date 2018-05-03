@@ -20,7 +20,7 @@ final class UrlHelperTest extends TestCase
     {
         echo chr(10);
 
-        $routes = new RouteCollection();
+        $routes = new RouteCollection('test');
 
         $routes->add(new Route('strange', 'test/abc/aaa/{action=1123}/ffff', array('controller' => 'home')));
         $routes->add(new Route('test', 'testovich/{action=index}/{id?}', array('controller' => 'abc')));

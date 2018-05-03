@@ -25,9 +25,12 @@ final class Make {
         if ($route !== false) {
             $actionContext = self::actionContext($httpContext, $route);
 
-            self::headers($httpContext);
-            self::validation($httpContext);
-            self::render($actionContext);
+            if (!self::cached($actionContext)) {
+                self::filters($actionContext);
+                self::headers($httpContext);
+                self::validation($httpContext);
+                self::render($actionContext);
+            }
         }
     }
 
@@ -56,18 +59,25 @@ final class Make {
             $basePath = getcwd();
         }
 
-        define('PHPMVC_DS', DIRECTORY_SEPARATOR);
-        define('PHPMVC_ROOT_PATH', $basePath . PHPMVC_DS);
-        define('PHPMVC_CORE_PATH', __DIR__ .PHPMVC_DS);
-        define('PHPMVC_CONFIG_PATH', PHPMVC_ROOT_PATH . 'config' . PHPMVC_DS);
-        define('PHPMVC_FILTER_PATH', PHPMVC_ROOT_PATH . 'filters' . PHPMVC_DS);
-        define('PHPMVC_CONTROLLER_PATH', PHPMVC_ROOT_PATH . 'controllers' . PHPMVC_DS);
-        define('PHPMVC_MODEL_PATH', PHPMVC_ROOT_PATH . 'models' . PHPMVC_DS);
-        define('PHPMVC_VIEW_PATH', PHPMVC_ROOT_PATH . 'views' . PHPMVC_DS);
-        define('PHPMVC_SHARED_PATH', PHPMVC_VIEW_PATH . 'shared' . PHPMVC_DS);
-        define('PHPMVC_UPLOAD_PATH', PHPMVC_ROOT_PATH . 'upload' . PHPMVC_DS);
+        if (!defined('PHPMVC_DS')) { define('PHPMVC_DS', DIRECTORY_SEPARATOR); }
+        if (!defined('PHPMVC_ROOT_PATH')) { define('PHPMVC_ROOT_PATH', $basePath . PHPMVC_DS); }
+        if (!defined('PHPMVC_CORE_PATH')) { define('PHPMVC_CORE_PATH', __DIR__ .PHPMVC_DS); }
+        if (!defined('PHPMVC_CONFIG_PATH')) { define('PHPMVC_CONFIG_PATH', PHPMVC_ROOT_PATH . 'config' . PHPMVC_DS); }
+        if (!defined('PHPMVC_FILTER_PATH')) { define('PHPMVC_FILTER_PATH', PHPMVC_ROOT_PATH . 'filters' . PHPMVC_DS); }
+        if (!defined('PHPMVC_CONTROLLER_PATH')) { define('PHPMVC_CONTROLLER_PATH', PHPMVC_ROOT_PATH . 'controllers' . PHPMVC_DS); }
+        if (!defined('PHPMVC_MODEL_PATH')) { define('PHPMVC_MODEL_PATH', PHPMVC_ROOT_PATH . 'models' . PHPMVC_DS); }
+        if (!defined('PHPMVC_VIEW_PATH')) { define('PHPMVC_VIEW_PATH', PHPMVC_ROOT_PATH . 'views' . PHPMVC_DS); }
+        if (!defined('PHPMVC_SHARED_PATH')) { define('PHPMVC_SHARED_PATH', PHPMVC_VIEW_PATH . 'shared' . PHPMVC_DS); }
+        if (!defined('PHPMVC_UPLOAD_PATH')) { define('PHPMVC_UPLOAD_PATH', PHPMVC_ROOT_PATH . 'upload' . PHPMVC_DS); }
 
-        define('PHPMVC_APP_NAMESPACE', $appNamespace);
+        // define('PHPMVC_APP_NAMESPACE', $appNamespace);
+
+        if (!defined('PHPMVC_APP_NAMESPACE')) {
+            define('PHPMVC_APP_NAMESPACE', $appNamespace);
+        }
+        elseif (PHPMVC_APP_NAMESPACE !== $appNamespace) {
+            throw new \Exception('Constant PHPMVC_CONTROLLER already defined. Re-define with other value is not possible.');
+        }
     }
 
     /**
@@ -105,7 +115,14 @@ final class Make {
             $request = $httpContext->getRequest();
             $response = $httpContext->getResponse();
             $response->clear();
-            require($request->documentRoot() . $request->rawUrl());
+
+            if (!file_exists($request->documentRoot() . $request->path())) {
+                $response->setStatusCode(404);
+            }
+            else {
+                require($request->documentRoot() . $request->path());
+            }
+
             $response->end();
             return false;
         }
@@ -131,11 +148,12 @@ final class Make {
      * @return ActionContext
      */
     private static function actionContext($httpContext, $route) {
-        define('PHPMVC_CONTROLLER', ucfirst($route->getValueOrDefault('controller', 'Home')));
-        define('PHPMVC_ACTION', $route->getValueOrDefault('action', 'index'));
-        define('PHPMVC_VIEW', strtolower(PHPMVC_CONTROLLER));
-        define('PHPMVC_CURRENT_CONTROLLER_PATH', PHPMVC_CONTROLLER_PATH . PHPMVC_VIEW . PHPMVC_DS);
-        define('PHPMVC_CURRENT_VIEW_PATH', PHPMVC_VIEW_PATH . PHPMVC_VIEW . PHPMVC_DS . PHPMVC_ACTION . '.php');
+        // TODO: kill constants
+        if (!defined('PHPMVC_CONTROLLER')) { define('PHPMVC_CONTROLLER', ucfirst($route->getValueOrDefault('controller', 'Home'))); }
+        if (!defined('PHPMVC_ACTION')) { define('PHPMVC_ACTION', $route->getValueOrDefault('action', 'index')); }
+        if (!defined('PHPMVC_VIEW')) { define('PHPMVC_VIEW', strtolower(PHPMVC_CONTROLLER)); }
+        if (!defined('PHPMVC_CURRENT_CONTROLLER_PATH')) { define('PHPMVC_CURRENT_CONTROLLER_PATH', PHPMVC_CONTROLLER_PATH . PHPMVC_VIEW . PHPMVC_DS); }
+        if (!defined('PHPMVC_CURRENT_VIEW_PATH')) { define('PHPMVC_CURRENT_VIEW_PATH', PHPMVC_VIEW_PATH . PHPMVC_VIEW . PHPMVC_DS . PHPMVC_ACTION . '.php'); }
 
         // create action context
         $actionContext = new ActionContext($httpContext);
@@ -154,6 +172,7 @@ final class Make {
         // set action context
         InternalHelper::setStaticPropertyValue('\\PhpMvc\\Model', 'actionContext', $actionContext);
         InternalHelper::setStaticPropertyValue('\\PhpMvc\\Filter', 'actionContext', $actionContext);
+        InternalHelper::setStaticPropertyValue('\\PhpMvc\\OutputCache', 'actionContext', $actionContext);
 
         // create instance of controller
         if ($controllerClass->getConstructor() != null) {
@@ -173,7 +192,336 @@ final class Make {
         $modelState->annotations = $annotations;
         // InternalHelper::setPropertyValue($modelState, 'annotations', $annotations);
 
-        // filters
+        // response handling
+        $httpContext->getResponse()->setFlushHandler(function($eventArgs) use ($actionContext) {
+            self::cachingPartial($actionContext, $eventArgs);
+        });
+
+        $httpContext->getResponse()->setEndHandler(function() use ($actionContext) {
+            self::caching($actionContext);
+        });
+
+        $httpContext->getResponse()->setPreSendHandler(function() use ($actionContext) {
+            self::cachingClient($actionContext);
+        });
+
+        // arguments and model state
+        self::makeActionState($actionContext);
+
+        return $actionContext;
+    }
+
+    /**
+     * Checks the cache and outputs the result if there is data in the cache for the current request.
+     * 
+     * @param ActionContext $actionContext The action context.
+     * 
+     * @return bool
+     */
+    private static function cached($actionContext) {
+        $httpContext = $actionContext->getHttpContext();
+        $request = $httpContext->getRequest();
+
+        // TODO: support POST
+        if ($request->isPost()) {
+            return false;
+        }
+
+        $cacheSettings = InternalHelper::getStaticPropertyValue('\\PhpMvc\\OutputCache', 'settings');
+        $actionName = $actionContext->getActionName();
+
+        if (!isset($cacheSettings[$actionName])) {
+            $cacheSettings[$actionName] = array();
+        }
+
+        if (!isset($cacheSettings['.'])) {
+            $cacheSettings['.'] = array();
+        }
+
+        if (empty($cacheSettings[$actionName]) && empty($cacheSettings['.'])) {
+            return false;
+        }
+
+        // location
+        if (!empty($cacheSettings[$actionName]['location'])) {
+            $location = intval($cacheSettings[$actionName]['location']);
+        }
+        elseif (!empty($cacheSettings['.']['location'])) {
+            $location = intval($cacheSettings['.']['location']);
+        }
+        else {
+            $location = OutputCacheLocation::ANY;
+        }
+
+        if (array_search($location, array(OutputCacheLocation::ANY, OutputCacheLocation::SERVER, OutputCacheLocation::SERVER_AND_CLIENT)) === false) {
+            return false;
+        }
+
+        // vary by parameters
+        $params = self::getCacheParams($actionContext, $cacheSettings, 'varyByParam', array_merge($request->get(), $actionContext->getArguments()));
+
+        // vary by headers
+        $headers = self::getCacheParams($actionContext, $cacheSettings, 'varyByHeader', $request->headers());
+
+        // vary by custom handlers
+        $custom = self::getCacheParams($actionContext, $cacheSettings, 'varyByCustom');
+
+        // check cache
+        $response = $httpContext->getResponse();
+        $cache = $httpContext->getCache();
+
+        $cacheKey = 'output_' . $request->path() . '_params=' . implode('&', $params) . '_http=' . implode('&', $headers) . '_custom=' . implode('&', $custom);
+
+        if (($cachedResponse = $cache->get($cacheKey)) !== null) {
+            $response->setHeaders($cachedResponse['headers']);
+            $response->setCookies($cachedResponse['cookies']);
+            $response->setStatusCode($cachedResponse['statusCode']);
+            $response->setStatusDescription($cachedResponse['statusDescription']);
+            $response->writeFile($cachedResponse['files']);
+            $response->write($cachedResponse['output']);
+            $response->end();
+            return true;
+        }
+
+        InternalHelper::setPropertyValue($actionContext, 'cacheKey', $cacheKey);
+
+        return false;
+    }
+
+    /**
+     * Caches the response, if possible.
+     * 
+     * @return void
+     */
+    private static function caching($actionContext) {
+        $cacheKey = InternalHelper::getPropertyValue($actionContext, 'cacheKey');
+
+        // no key, no cache
+        if (empty($cacheKey)) {
+            return;
+        }
+
+        $cacheSettings = InternalHelper::getStaticPropertyValue('\\PhpMvc\\OutputCache', 'settings');
+        $actionName = $actionContext->getActionName();
+        $httpContext = $actionContext->getHttpContext();
+        $response = $httpContext->getResponse();
+        $cache = $httpContext->getCache();
+
+        // cache duration
+        if (!empty($cacheSettings[$actionName]['duration'])) {
+            $duration = intval($cacheSettings[$actionName]['duration']);
+        }
+        elseif (!empty($cacheSettings['.']['duration'])) {
+            $duration = intval($cacheSettings['.']['duration']);
+        }
+        else {
+            $duration = 0;
+        }
+
+        // TODO: regionName
+        $regionName = null;
+
+        $dataToCache = array();
+
+        // add response to cache
+        if (($cachePartSeq = $cache->get($cacheKey . '_part_seq')) === null) {
+            $dataToCache['statusCode'] = $response->getStatusCode();
+            $dataToCache['statusDescription'] = $response->getStatusDescription();
+            $dataToCache['headers'] = $response->getHeaders();
+            $dataToCache['cookies'] = $response->getCookies();
+            $dataToCache['files'] = InternalHelper::getPropertyValue($response, 'files');
+            $dataToCache['output'] = InternalHelper::getPropertyValue($response, 'output');
+        }
+        else {
+            $dataToCache['statusCode'] = $response->getStatusCode();
+            $dataToCache['statusDescription'] = $response->getStatusDescription();
+            $dataToCache['headers'] = $response->getHeaders();
+            $dataToCache['cookies'] = $response->getCookies();
+            $dataToCache['files'] = array();
+            $dataToCache['output'] = '';
+
+            for ($i = 0; $i < $cachePartSeq; ++$i) {
+                $part = $cache->get($cacheKey . '_part_' . $i);
+
+                if ($part !== null) {
+                    $dataToCache['output'] .= $part['output'];
+                    $dataToCache['files'] = array_merge($dataToCache['files'], $part['files']);
+                    $cache->remove($cacheKey . '_part_' . $i);
+                }
+            }
+
+            $cache->remove($cacheKey . '_part_seq');
+        }
+
+        $cache->add($cacheKey, $dataToCache, $duration, $regionName);
+    }
+
+    /**
+     * Caches the output in parts.
+     * 
+     * @return void
+     */
+    private static function cachingPartial($actionContext, $eventArgs) {
+        $cacheKey = InternalHelper::getPropertyValue($actionContext, 'cacheKey');
+
+        // no key, no cache
+        if (empty($cacheKey)) {
+            return;
+        }
+
+        $cache = $httpContext->getCache();
+        $cachePartSeq = $cache->get($cacheKey . '_part_seq');
+
+        if (!isset($cachePartSeq)) {
+            $cachePartSeq = -1;
+        }
+
+        $dataToCache = array();
+        $dataToCache['output'] .= $eventArgs['output'];
+        $dataToCache['files'] = array_merge($dataToCache['files'], $eventArgs['files']);
+
+        $cache->add($cacheKey . '_part_' . $cachePartSeq, $dataToCache, 30);
+        $cache->add($cacheKey . '_part_seq', (int)$cachePartSeq + 1, 30);
+    }
+
+    /**
+     * Sends the cache headers.
+     * 
+     * @return void
+     */
+    private static function cachingClient($actionContext) {
+        $cacheSettings = InternalHelper::getStaticPropertyValue('\\PhpMvc\\OutputCache', 'settings');
+        $actionName = $actionContext->getActionName();
+
+        // location
+        if (!empty($cacheSettings[$actionName]['location'])) {
+            $location = intval($cacheSettings[$actionName]['location']);
+        }
+        elseif (!empty($cacheSettings['.']['location'])) {
+            $location = intval($cacheSettings['.']['location']);
+        }
+        else {
+            $location = OutputCacheLocation::ANY;
+        }
+
+        // duration
+        if (!empty($cacheSettings[$actionName]['duration'])) {
+            $duration = intval($cacheSettings[$actionName]['duration']);
+        }
+        elseif (!empty($cacheSettings['.']['duration'])) {
+            $duration = intval($cacheSettings['.']['duration']);
+        }
+        else {
+            $duration = 0;
+        }
+
+        // send headers
+        $httpContext = $actionContext->getHttpContext();
+        $response = $httpContext->getResponse();
+        $cacheControl = array();
+
+        switch ($location) {
+            case OutputCacheLocation::ANY:
+            case OutputCacheLocation::DOWNSTREAM:
+                $cacheControl[] = 'public';
+                break;
+
+            case OutputCacheLocation::NONE:
+                $cacheControl[] = 'no-cache';
+                $cacheControl[] = 'must-revalidate';
+                $pragma = 'no-cache';
+                break;
+
+            case OutputCacheLocation::SERVER:
+                $cacheControl[] = 'no-cache';
+                $pragma = 'no-cache';
+                break;
+
+            case OutputCacheLocation::CLIENT:
+            case OutputCacheLocation::SERVER_AND_CLIENT:
+                $cacheControl[] = 'private';
+                break;
+        }
+
+        if ($duration > 0) {
+            $cacheControl[] = 'max-age=' . $duration;
+        }
+
+        $response->addHeader('Cache-Control', implode(', ', $cacheControl));
+
+        if (isset($pragma)) {
+            $response->addHeader('Pragma', $pragma);
+        }
+    }
+
+    /**
+     * Builds an array of parameters for the cache entry key.
+     * 
+     * @return array
+     */
+    private static function getCacheParams($actionContext, $cacheSettings, $parameterName, $value = null) {
+        $actionName = $actionContext->getActionName();
+        $params = array();
+
+        if ($parameterName != 'varyByCustom') {
+            ksort($value);
+
+            // action level
+            if (!empty($cacheSettings[$actionName][$parameterName])) {
+                if ($cacheSettings[$actionName][$parameterName] == '*') {
+                    // all parameters
+                    $params = $value;
+                    $allParameters = true;
+                }
+                else {
+                    // specified parameters
+                    $varyByParam = array_map('trim', explode(';', $cacheSettings[$actionName][$parameterName]));
+                    sort($varyByParam);
+    
+                    foreach ($varyByParam as $param) {
+                        $params[$param] = $param . '=' . (isset($value[$param]) ? $value[$param] : '');
+                    }
+                }
+            }
+    
+            // controller level
+            if (!isset($allParameters) && !empty($cacheSettings['.'][$parameterName])) {
+                if ($cacheSettings['.'][$parameterName] == '*') {
+                    // all parameters
+                    $params = $value;
+                }
+                else {
+                    // specified parameters
+                    $varyByParam = array_map('trim', explode(';', $cacheSettings['.'][$parameterName]));
+                    sort($varyByParam);
+    
+                    foreach ($varyByParam as $param) {
+                        if (empty($params[$param])) {
+                            $params[$param] = $param . '=' . (isset($value[$param]) ? $value[$param] : '');
+                        }
+                    }
+                }
+            }
+        }
+        else {
+            if (!empty($cacheSettings[$actionName][$parameterName]) && is_callable($cacheSettings[$actionName][$parameterName])) {
+                $params[] = '0=' . $cacheSettings[$actionName][$parameterName]($actionContext);
+            }
+
+            if (empty($params[0]) && !empty($cacheSettings['.'][$parameterName]) && is_callable($cacheSettings['.'][$parameterName])) {
+                $params[] = '0=' . $cacheSettings['.'][$parameterName]($actionContext);
+            }
+        }
+
+        return $params;
+    }
+
+    /**
+     * Initializes the filters.
+     * 
+     * @return void
+     */
+    private static function filters($actionContext) {
         $allFilters = InternalHelper::getStaticPropertyValue('\\PhpMvc\\Filter', 'filters');
         $allFiltersInstance = array();
 
@@ -183,32 +531,30 @@ final class Make {
 
                 if (!class_exists($className)) {
                     $className = '\\' . PHPMVC_APP_NAMESPACE . '\\Filters\\' . $className;
-    
+
                     if (!class_exists($className)) {
                         throw new \Exception('Filter "' . $filterName . '" not found.');
                     }
                 }
-    
+
                 $filterClass = new \ReflectionClass($className);
-    
+
                 if (!$filterClass->isSubclassOf('\\PhpMvc\\ActionFilter')) {
                     throw new \Exception('The filter type must be derived from "\PhpMvc\ActionFilter".');
                 }
-    
+
                 if ($filterClass->getConstructor() != null) {
                     $filterInstance = $filterClass->newInstance();
                 }
                 else {
                     $filterInstance = $filterClass->newInstanceWithoutConstructor();
                 }
-    
+
                 $allFiltersInstance[] = $filterInstance;
             }
         }
 
         InternalHelper::setPropertyValue($actionContext, 'filters', $allFiltersInstance);
-
-        return $actionContext;
     }
 
     /**
@@ -242,12 +588,7 @@ final class Make {
      * @return void
      */
     private static function render($actionContext) {
-        $result = null;
-
         $controller = $actionContext->getController();
-
-        // arguments and model state
-        self::makeActionState($actionContext);
 
         // annotation and validation
         $modelState = $actionContext->getModelState();
@@ -270,7 +611,6 @@ final class Make {
                 $modelState->addError('.', $ex);
                 // filters
                 $exceptionContext = self::exceptionFilters($actionContext, $ex);
-
                 if (($actionResult = $exceptionContext->getResult()) === null) {
                     if ($exceptionContext->getExceptionHandled()) {
                         // executed filters
@@ -308,51 +648,31 @@ final class Make {
                     $viewData = array_unique(array_merge($viewData, $controllerViewData), \SORT_STRING);
                 }
 
-                // create instance of view context
-                $viewContext = new ViewContext($actionContext, $actionResult, $viewData);
+                // create view
+                $viewContext = InternalHelper::makeViewContext(
+                    PHPMVC_CURRENT_VIEW_PATH,
+                    $actionContext,
+                    $actionResult,
+                    null,
+                    $viewData,
+                    null,
+                    null,
+                    null
+                );
 
-                // get path of view file
-                $viewContext->viewFile = PathUtility::getViewFilePath(PHPMVC_CURRENT_VIEW_PATH);
-    
-                // set view context
-                InternalHelper::setStaticPropertyValue('\\PhpMvc\\View', 'viewContext', $viewContext);
-                InternalHelper::setStaticPropertyValue('\\PhpMvc\\Html', 'viewContext', $viewContext);
+                // get content
+                $result = InternalHelper::getTopLevelViewContext($viewContext)->content;
 
-                // execute result with view context
-                $actionResult->execute($viewContext);
-
-                // get view
-                if ($viewContext->viewFile === false) {
-                    if ($actionResult instanceof ExceptionResult) {
-                        throw $actionResult->getException();
-                    }
-                    else {
-                        throw new ViewNotFoundException(PHPMVC_CURRENT_VIEW_PATH); // TODO
-                    }
-                }
-
-                $viewContext->content = InternalHelper::getView($viewContext->viewFile);
-
-                // get layout
-                if (!empty($viewContext->layout)) {
-                    if (($layoutFile = PathUtility::getViewFilePath($viewContext->layout)) !== false) {
-                        $result = InternalHelper::getView($layoutFile);
-                    }
-                    else {
-                        throw new ViewNotFoundException($viewContext->layout);
-                    }
-                }
+                // render
+                $response = $actionContext->getHttpContext()->getResponse();
+                $response->write($result);
+                $response->end();
             }
             elseif ($actionResult instanceof ActionResult) {
                 // execute result with action context
                 $actionResult->execute($actionContext);
             }
         }
-
-        // render
-        $response = $actionContext->getHttpContext()->getResponse();
-        $response->write($result);
-        $response->end();
     }
 
     /**
@@ -369,14 +689,17 @@ final class Make {
         $hasModel = false;
         $request = $actionContext->getHttpContext()->getRequest();
 
-        // get http params
+        // route values
+        $route = $actionContext->getRoute();
+
+        // params of get http
         // TODO: подумать о возможности управлять этим
         $get = $request->get();
 
         // change case of keys
         $get = array_change_key_case($get, CASE_LOWER);
 
-        // post params
+        // params of post
         $isPost = $request->isPost();
         $postData = $isPost ? $request->post() : null;
         $post =  null;
@@ -407,8 +730,13 @@ final class Make {
         foreach ($methodParams as $param) {
             $name = strtolower($param->getName());
 
-            if (!isset($get[$name]))
-            {
+            if (isset($route->values[$name])) {
+                $modelState[$name] = new ModelStateEntry($name, $arguments[$name] = $route->values[$name]);
+            }
+            elseif (isset($get[$name])) {
+                $modelState[$name] = new ModelStateEntry($name, $arguments[$name] = $get[$name]);
+            }
+            else {
                 // parameter not found
                 if ($isPost && !$hasModel && !isset($get[$name])) {
                     // post method and model not yet received
@@ -427,8 +755,7 @@ final class Make {
                     continue;
                 }
 
-                if ($param->isOptional())
-                {
+                if ($param->isOptional()) {
                     // is optional parameter, skip it
                     $arguments[$name] = $param->getDefaultValue();
                     continue;  
@@ -440,9 +767,6 @@ final class Make {
                 // at the moment, just add null to args
                 // and skip for model state
                 $arguments[$name] = null;
-            }
-            else {
-                $modelState[$name] = new ModelStateEntry($name, $arguments[$name] = $get[$name]);    
             }
         }
 

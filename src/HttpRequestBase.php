@@ -21,6 +21,13 @@ abstract class HttpRequestBase {
     protected $rawUrl = null;
 
     /**
+     * Path of the current request.
+     * 
+     * @var string
+     */
+    protected $path = null;
+
+    /**
      * Query string of the current request.
      * 
      * @var QueryString
@@ -101,8 +108,6 @@ abstract class HttpRequestBase {
         $this->get = $get;
         $this->post = $post;
         $this->files = $files;
-
-        $this->rawUrl = $this->serverVariables['REQUEST_URI'];
     }
 
     /**
@@ -137,12 +142,39 @@ abstract class HttpRequestBase {
 
     /**
      * Gets the raw URL of the current request.
-     * For example: /home/example
+     * For example, for the URL https://example.org/home/example the rawUrl is /home/example.
+     * For the URL https://example.org/home/example?search=123 the rawUrl is /home/example?search=123.
      * 
      * @return string
      */
     public function rawUrl () {
+        if ($this->rawUrl === null) {
+            $this->rawUrl = (isset($this->serverVariables['REQUEST_URI']) ? $this->serverVariables['REQUEST_URI'] : '');
+        }
+
         return $this->rawUrl;
+    }
+
+    /**
+     * Gets the virtual path of the current request.
+     * For example, for the URL https://example.org/home/example the path is /home/example.
+     * For the URL https://example.org/home/example?search=123 the path is /home/example (without query string).
+     * 
+     * @return string
+     */
+    public function path() {
+        if ($this->path === null) {
+            $rawUrl = $this->rawUrl();
+
+            if (($qsIndex = strpos($rawUrl, '?')) !== false) {
+                $this->path = substr($rawUrl, 0, $qsIndex);
+            }
+            else {
+                $this->path = $rawUrl;
+            }
+        }
+
+        return $this->path;
     }
 
     /**
@@ -157,32 +189,10 @@ abstract class HttpRequestBase {
     /**
      * Returns query string.
      * 
-     * @param string|null $key The key to get. Default: null - QueryString instance.
-     * 
-     * @return QueryString|string
+     * @return string
      */
-    public function queryString($key = null) {
-        if ($this->queryString === null) {
-            $this->queryString = new QueryString();
-            $queryString = array();
-    
-            if (($qsIndex = strpos($this->rawUrl, '?')) !== false) {
-                parse_str(substr($this->rawUrl, $qsIndex + 1), $queryString);
-            }
-            else {
-                if (!empty($serverVariables['QUERY_STRING'])) {
-                    parse_str($serverVariables['QUERY_STRING'], $queryString);
-                }
-            }
-    
-            if (!empty($queryString)) {
-                foreach ($queryString as $key => $value) {
-                    $this->queryString[$key] = $value;
-                }
-            }
-        }
-
-        return $this->getSingleKeyOrAll($this->queryString, $key);
+    public function queryString() {
+        return $this->serverVariables['QUERY_STRING'];
     }
 
     /**

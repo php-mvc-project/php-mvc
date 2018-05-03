@@ -24,6 +24,14 @@ final class FilterTest extends TestCase
         parent::__construct($name, $data, $dataName);
 
         $this->basePath = getcwd() . DIRECTORY_SEPARATOR . 'tests' . DIRECTORY_SEPARATOR . 'mvc';
+
+        if (!defined('PHPMVC_DS')) {
+            define('PHPMVC_DS', DIRECTORY_SEPARATOR);
+        }
+
+        if (!defined('PHPMVC_ROOT_PATH')) {
+            define('PHPMVC_ROOT_PATH', $this->basePath . PHPMVC_DS);
+        }
     }
 
     public function testEmpty(): void
@@ -37,7 +45,10 @@ final class FilterTest extends TestCase
             array(
                 'REQUEST_URI' => '/filter',
                 'REQUEST_METHOD' => 'GET'
-            )
+            ),
+            array(),
+            array(),
+            true
         );
 
         echo chr(10);
@@ -65,7 +76,10 @@ final class FilterTest extends TestCase
             array(
                 'REQUEST_URI' => '/filter/executingWorld',
                 'REQUEST_METHOD' => 'GET'
-            )
+            ),
+            array(),
+            array(),
+            true
         );
 
         echo chr(10);
@@ -93,7 +107,10 @@ final class FilterTest extends TestCase
             array(
                 'REQUEST_URI' => '/filter/executedWorld',
                 'REQUEST_METHOD' => 'GET'
-            )
+            ),
+            array(),
+            array(),
+            true
         );
 
         echo chr(10);
@@ -121,7 +138,10 @@ final class FilterTest extends TestCase
             array(
                 'REQUEST_URI' => '/filter/executeWorld',
                 'REQUEST_METHOD' => 'GET'
-            )
+            ),
+            array(),
+            array(),
+            true
         );
 
         echo chr(10);
@@ -149,7 +169,10 @@ final class FilterTest extends TestCase
             array(
                 'REQUEST_URI' => '/filter/executeWorld2',
                 'REQUEST_METHOD' => 'GET'
-            )
+            ),
+            array(),
+            array(),
+            true
         );
 
         echo chr(10);
@@ -177,7 +200,10 @@ final class FilterTest extends TestCase
             array(
                 'REQUEST_URI' => '/filter/error',
                 'REQUEST_METHOD' => 'GET'
-            )
+            ),
+            array(),
+            array(),
+            true
         );
 
         echo chr(10);
@@ -205,7 +231,10 @@ final class FilterTest extends TestCase
             array(
                 'REQUEST_URI' => '/filter/errorNoResult',
                 'REQUEST_METHOD' => 'GET'
-            )
+            ),
+            array(),
+            array(),
+            true
         );
 
         echo chr(10);
@@ -233,7 +262,10 @@ final class FilterTest extends TestCase
             array(
                 'REQUEST_URI' => '/filter/errorRewrited',
                 'REQUEST_METHOD' => 'GET'
-            )
+            ),
+            array(),
+            array(),
+            true
         );
 
         echo chr(10);
