@@ -9,6 +9,10 @@ final class HttpResponse extends HttpResponseBase {
         $this->noOutputHeaders = $noOutputHeaders;
     }
 
+    public function setNoOutputHeaders($value) {
+        $this->noOutputHeaders = $value;
+    }
+
     /**
      * Clears all headers and content output from the current response.
      * 

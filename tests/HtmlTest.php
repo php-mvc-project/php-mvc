@@ -7,6 +7,7 @@ require_once 'mvc/controllers/HomeController.php';
 
 use PHPUnit\Framework\TestCase;
 
+use PhpMvc\DefaultRouteProvider;
 use PhpMvc\RouteCollection;
 use PhpMvc\SelectListGroup;
 use PhpMvc\SelectListItem;
@@ -14,7 +15,6 @@ use PhpMvc\InternalHelper;
 use PhpMvc\ActionContext;
 use PhpMvc\UrlParameter;
 use PhpMvc\ViewContext;
-use PhpMvc\RouteTable;
 use PhpMvc\UrlHelper;
 use PhpMvc\Route;
 use PhpMvc\Model;
@@ -58,14 +58,7 @@ final class HtmlTest extends TestCase
         // #1
         $this->resetModel();
 
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'text' => '',
-                'number' => 123
-            )
-        );
+        $viewContext = $this->setContext('POST', array('text' => '', 'number' => 123));
 
         $viewContext->model = $this->getModelA();
 
@@ -100,14 +93,7 @@ final class HtmlTest extends TestCase
         // #2
         $this->resetModel();
 
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'text' => '',
-                'number' => 555
-            )
-        );
+        $viewContext = $this->setContext('POST', array('text' => '', 'number' => 555));
 
         Model::required('index', 'text');
         Model::validation('index', 'number', function($value, &$errorMessage) {
@@ -130,14 +116,7 @@ final class HtmlTest extends TestCase
         // #3
         $this->resetModel();
 
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'text' => 'Hello, world!',
-                'number' => 555
-            )
-        );
+        $viewContext = $this->setContext('POST', array('text' => 'Hello, world!', 'number' => 555));
 
         Model::required('index', 'text');
         Model::required('index', 'number');
@@ -153,14 +132,7 @@ final class HtmlTest extends TestCase
         // #1
         $this->resetModel();
 
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'text' => '',
-                'number' => 123
-            )
-        );
+        $viewContext = $this->setContext('POST', array('text' => '', 'number' => 123));
 
         $viewContext->model = $this->getModelA();
 
@@ -321,13 +293,7 @@ final class HtmlTest extends TestCase
 
         // #2
         $this->resetModel();
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'remember' => 'true'
-            )
-        );
+        $viewContext = $this->setContext('POST', array('remember' => 'true'));
 
         $this->makeActionState($viewContext);
         $this->annotateAndValidateModel($viewContext->getModelState());
@@ -337,13 +303,7 @@ final class HtmlTest extends TestCase
 
         // #3
         $this->resetModel();
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'remember' => 'false'
-            )
-        );
+        $viewContext = $this->setContext('POST', array('remember' => 'false'));
 
         $this->makeActionState($viewContext);
         $this->annotateAndValidateModel($viewContext->getModelState());
@@ -353,13 +313,7 @@ final class HtmlTest extends TestCase
 
         // #4
         $this->resetModel();
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'remember' => ''
-            )
-        );
+        $viewContext = $this->setContext('POST', array('remember' => ''));
 
         $this->makeActionState($viewContext);
         $this->annotateAndValidateModel($viewContext->getModelState());
@@ -395,13 +349,7 @@ final class HtmlTest extends TestCase
 
         // #7
         $this->resetModel();
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'boolean' => 'TRUE'
-            )
-        );
+        $viewContext = $this->setContext('POST', array('boolean' => 'TRUE'));
 
         $viewContext->model = $this->getModelA();
 
@@ -505,13 +453,7 @@ final class HtmlTest extends TestCase
         $this->assertEquals('<select name="number" id="number"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3" selected="selected">three</option><option value="5">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup></select>', $dropDownList);
 
         // #10
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'number' => '5'
-            )
-        );
+        $viewContext = $this->setContext('POST', array('number' => '5'));
 
         $this->makeActionState($viewContext);
         $this->annotateAndValidateModel($viewContext->getModelState());
@@ -527,13 +469,7 @@ final class HtmlTest extends TestCase
         $this->assertEquals('<select name="number" id="number"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3">three</option><option value="5" selected="selected">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup></select>', $dropDownList);
 
         // #11
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'list' => 'two'
-            )
-        );
+        $viewContext = $this->setContext('POST', array('list' => 'two'));
 
         $this->makeActionState($viewContext);
         $this->annotateAndValidateModel($viewContext->getModelState());
@@ -557,13 +493,7 @@ final class HtmlTest extends TestCase
         $this->assertEquals('<input type="hidden" name="ghost" id="ghost" value="casper" />', $hidden);
 
         // #3
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'ghost' => 'casper'
-            )
-        );
+        $viewContext = $this->setContext('POST', array('ghost' => 'casper'));
 
         $this->makeActionState($viewContext);
         $this->annotateAndValidateModel($viewContext->getModelState());
@@ -572,13 +502,7 @@ final class HtmlTest extends TestCase
         $this->assertEquals('<input type="hidden" name="ghost" id="ghost" value="casper" />', $hidden);
 
         // #4
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'ghost' => 'casper'
-            )
-        );
+        $viewContext = $this->setContext('POST', array('ghost' => 'casper'));
 
         $this->makeActionState($viewContext);
         $this->annotateAndValidateModel($viewContext->getModelState());
@@ -622,13 +546,7 @@ final class HtmlTest extends TestCase
         $this->assertEquals('<input type="hidden" name="number" id="number" value="1024" />', $hidden);
 
         // #8
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'number' => '42'
-            )
-        );
+        $viewContext = $this->setContext('POST', array('number' => '42'));
 
         $viewContext->model = $this->getModelA();
         $viewContext->model->number = 1024;
@@ -753,13 +671,7 @@ final class HtmlTest extends TestCase
         $this->assertEquals('<select name="array[]" id="array" size="1" multiple="multiple"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3" selected="selected">three</option><option value="5">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup></select>', $listBox);
 
         // #11
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'array[]' => array('5')
-            )
-        );
+        $viewContext = $this->setContext('POST', array('array[]' => array('5')));
 
         $this->makeActionState($viewContext);
         $this->annotateAndValidateModel($viewContext->getModelState());
@@ -775,13 +687,7 @@ final class HtmlTest extends TestCase
         $this->assertEquals('<select name="array[]" id="array" size="1" multiple="multiple"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3">three</option><option value="5" selected="selected">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup></select>', $listBox);
 
         // #12
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'number[]' => array('3', '5')
-            )
-        );
+        $viewContext = $this->setContext('POST', array('number[]' => array('3', '5')));
 
         $this->makeActionState($viewContext);
         $this->annotateAndValidateModel($viewContext->getModelState());
@@ -797,13 +703,7 @@ final class HtmlTest extends TestCase
         $this->assertEquals('<select name="number[]" id="number" size="1" multiple="multiple"><optgroup lable="Odd numbers"><option value="1">one</option><option value="3" selected="selected">three</option><option value="5" selected="selected">five</option></optgroup><optgroup lable="Even numbers" disabled="disabled"><option value="2">two</option><option value="4">four</option></optgroup></select>', $listBox);
 
         // #13
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'list[]' => array('two')
-            )
-        );
+        $viewContext = $this->setContext('POST', array('list[]' => array('two')));
 
         $this->makeActionState($viewContext);
         $this->annotateAndValidateModel($viewContext->getModelState());
@@ -827,13 +727,7 @@ final class HtmlTest extends TestCase
         $this->assertEquals('<input type="password" name="password" id="password" value="123123" />', $password);
 
         // #3
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'password' => '123123'
-            )
-        );
+        $viewContext = $this->setContext('POST', array('password' => '123123'));
 
         $this->makeActionState($viewContext);
         $this->annotateAndValidateModel($viewContext->getModelState());
@@ -842,13 +736,7 @@ final class HtmlTest extends TestCase
         $this->assertEquals('<input type="password" name="password" id="password" value="123123" />', $password);
 
         // #4
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'password' => '123123'
-            )
-        );
+        $viewContext = $this->setContext('POST', array('password' => '123123'));
 
         $this->makeActionState($viewContext);
         $this->annotateAndValidateModel($viewContext->getModelState());
@@ -892,13 +780,7 @@ final class HtmlTest extends TestCase
         $this->assertEquals('<input type="password" name="text" id="text" value="" />', $password);
 
         // #8
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'text' => '123123'
-            )
-        );
+        $viewContext = $this->setContext('POST', array('text' => '123123'));
 
         $viewContext->model = $this->getModelA();
         $viewContext->model->text = 'hello, world!';
@@ -925,13 +807,7 @@ final class HtmlTest extends TestCase
         $this->assertEquals('<input type="email" name="email" id="email" value="example@example.org" />', $email);
 
         // #3
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'email' => 'example@example.org'
-            )
-        );
+        $viewContext = $this->setContext('POST', array('email' => 'example@example.org'));
 
         $this->makeActionState($viewContext);
         $this->annotateAndValidateModel($viewContext->getModelState());
@@ -940,13 +816,7 @@ final class HtmlTest extends TestCase
         $this->assertEquals('<input type="email" name="email" id="email" value="example@example.org" />', $email);
 
         // #4
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'email' => 'example@example.org'
-            )
-        );
+        $viewContext = $this->setContext('POST', array('email' => 'example@example.org'));
 
         $this->makeActionState($viewContext);
         $this->annotateAndValidateModel($viewContext->getModelState());
@@ -990,13 +860,7 @@ final class HtmlTest extends TestCase
         $this->assertEquals('<input type="email" name="text" id="text" value="" />', $email);
 
         // #8
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'text' => 'example@example.org'
-            )
-        );
+        $viewContext = $this->setContext('POST', array('text' => 'example@example.org'));
 
         $viewContext->model = $this->getModelA();
         $viewContext->model->text = 'hello@world.org';
@@ -1029,13 +893,7 @@ final class HtmlTest extends TestCase
         $this->assertEquals('<input checked="checked" type="radio" name="country" id="country" value="Russia" /><input type="radio" name="country" id="country" value="USA" />', $radio);
 
         // #4
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'country' => 'Russia'
-            )
-        );
+        $viewContext = $this->setContext('POST', array('country' => 'Russia'));
 
         $this->makeActionState($viewContext);
         $this->annotateAndValidateModel($viewContext->getModelState());
@@ -1044,13 +902,7 @@ final class HtmlTest extends TestCase
         $this->assertEquals('<input checked="checked" type="radio" name="country" id="country" value="Russia" /><input type="radio" name="country" id="country" value="USA" />', $radio);
 
         // #5
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'country' => 'USA'
-            )
-        );
+        $viewContext = $this->setContext('POST', array('country' => 'USA'));
 
         $this->makeActionState($viewContext);
         $this->annotateAndValidateModel($viewContext->getModelState());
@@ -1059,13 +911,7 @@ final class HtmlTest extends TestCase
         $this->assertEquals('<input type="radio" name="country" id="country" value="Russia" /><input checked="checked" type="radio" name="country" id="country" value="USA" />', $radio);
 
         // #6
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'country' => 'USA'
-            )
-        );
+        $viewContext = $this->setContext('POST', array('country' => 'USA'));
 
         $this->makeActionState($viewContext);
         $this->annotateAndValidateModel($viewContext->getModelState());
@@ -1143,13 +989,7 @@ final class HtmlTest extends TestCase
         $this->assertEquals('<textarea name="text" id="text">&lt;h1&gt;Hello, world!&lt;/h1&gt;</textarea>', $textarea);
 
         // #8
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'text' => 'Hello, world!'
-            )
-        );
+        $viewContext = $this->setContext('POST', array('text' => 'Hello, world!'));
 
         $this->makeActionState($viewContext);
         $this->annotateAndValidateModel($viewContext->getModelState());
@@ -1158,13 +998,7 @@ final class HtmlTest extends TestCase
         $this->assertEquals('<textarea name="text" id="text">Hello, world!</textarea>', $textarea);
 
         // #9
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'text' => 'Hello, world!'
-            )
-        );
+        $viewContext = $this->setContext('POST', array('text' => 'Hello, world!'));
 
         $this->makeActionState($viewContext);
         $this->annotateAndValidateModel($viewContext->getModelState());
@@ -1208,13 +1042,7 @@ final class HtmlTest extends TestCase
         $this->assertEquals('<textarea name="text" id="text"></textarea>', $textarea);
 
         // #13
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'text' => 'Hello, world!'
-            )
-        );
+        $viewContext = $this->setContext('POST', array('text' => 'Hello, world!'));
 
         $viewContext->model = $this->getModelA();
         $viewContext->model->text = 'Ehlo, world!';
@@ -1241,13 +1069,7 @@ final class HtmlTest extends TestCase
         $this->assertEquals('<input type="text" name="text" id="text" value="Hello, world!" />', $textBox);
 
         // #3
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'text' => 'Hello, world!'
-            )
-        );
+        $viewContext = $this->setContext('POST', array('text' => 'Hello, world!'));
 
         $this->makeActionState($viewContext);
         $this->annotateAndValidateModel($viewContext->getModelState());
@@ -1256,13 +1078,7 @@ final class HtmlTest extends TestCase
         $this->assertEquals('<input type="text" name="text" id="text" value="Hello, world!" />', $textBox);
 
         // #4
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'text' => 'Hello, world!'
-            )
-        );
+        $viewContext = $this->setContext('POST', array('text' => 'Hello, world!'));
 
         $this->makeActionState($viewContext);
         $this->annotateAndValidateModel($viewContext->getModelState());
@@ -1306,13 +1122,7 @@ final class HtmlTest extends TestCase
         $this->assertEquals('<input type="text" name="text" id="text" value="" />', $textBox);
 
         // #8
-        $viewContext = $this->setContext(
-            'POST', 
-            array(),
-            array(
-                'text' => 'Hello, world!'
-            )
-        );
+        $viewContext = $this->setContext('POST', array('text' => 'Hello, world!'));
 
         $viewContext->model = $this->getModelA();
         $viewContext->model->text = 'EHLO';
@@ -1340,21 +1150,18 @@ final class HtmlTest extends TestCase
         return $result;
     }
 
-    private function setContext($method = 'GET', $get = array(), $post = array(), $actionResult = null, $viewData = null) {
-        $routes = new RouteCollection('test');
-        $routes->add(new Route('default', '{controller=home}/{action=index}/{id?}'));
+    private function setContext($method = 'GET', $post = array(), $actionResult = null, $viewData = null) {
+        $routes = new DefaultRouteProvider();
+        $routes->add('default', '{controller=home}/{action=index}/{id?}');
 
-        $httpContext = new HttpContext(
-            $routes,
-            null,
-            array(
-                'REQUEST_URI' => '/',
-                'REQUEST_METHOD' => $method,
-                'HTTP_HOST' => 'example.org',
-                'SERVER_PORT' => 80
-            ),
-            $get, $post
-        );
+        if ($method == 'GET') {
+            $httpContext = HttpContext::get('http://example.org/');
+        }
+        else {
+            $httpContext = HttpContext::post('http://example.org/', $post);
+        }
+
+        $httpContext->setRoutes($routes);
 
         $actionContext = new ActionContext($httpContext);
         InternalHelper::setPropertyValue($actionContext, 'controller', new \PhpMvcTest\Controllers\HomeController());
@@ -1382,13 +1189,13 @@ final class HtmlTest extends TestCase
         $modelState = $actionContext->getModelState();
         $modelState->annotations = $annotations;
 
-        $makeActionStateMethod = new \ReflectionMethod('\PhpMvc\Make', 'makeActionState');
+        $makeActionStateMethod = new \ReflectionMethod('\PhpMvc\AppBuilder', 'makeActionState');
         $makeActionStateMethod->setAccessible(true);
         $makeActionStateMethod->invoke(null, $actionContext);
     }
 
     private function annotateAndValidateModel($modelState) {
-        $makeActionStateMethod = new \ReflectionMethod('\PhpMvc\Make', 'annotateAndValidateModel');
+        $makeActionStateMethod = new \ReflectionMethod('\PhpMvc\AppBuilder', 'annotateAndValidateModel');
         $makeActionStateMethod->setAccessible(true);
         $makeActionStateMethod->invoke(null, $modelState);
     }

@@ -30,4 +30,11 @@ class RouteOptions {
      */
     public $removeLastSegmentIfValueIsDefault = true;
 
+    /**
+     * Other settings.
+     * 
+     * @var array
+     */
+    public $extendedFields = array();
+
 }

@@ -3,11 +3,7 @@ declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
 
-use PhpMvc\Route;
-use PhpMvc\RouteTable;
-use PhpMvc\RouteCollection;
 use PhpMvc\PathUtility;
-use PhpMvc\Make;
 
 final class PathUtilityTest extends TestCase
 {

@@ -28,33 +28,12 @@ class RouteCollection implements \ArrayAccess, \Iterator {
     private $routes = array();
 
     /**
-     * Route options.
+     * Initializes a new named instance of the collection.
      * 
-     * @var RouteOptions
+     * @param string $name The name of instance.
      */
-    private $options;
-
     public function __construct($name) {
         $this->name = $name;
-        $this->options = new RouteOptions();
-    }
-
-    /**
-     * Sets options.
-     * 
-     * @return void
-     */
-    public function setOptions($options) {
-        $this->options = $options;
-    }
-
-    /**
-     * Gets options.
-     * 
-     * @return void
-     */
-    public function getOptions() {
-        return $this->options;
     }
 
     /**
@@ -79,107 +58,12 @@ class RouteCollection implements \ArrayAccess, \Iterator {
     }
 
     /**
-     * Returns the first route similar to the current url.
+     * Gets name of current instance.
      * 
-     * @param HttpContextBase $httpContext Context of the request.
-     * 
-     * @return Route|null
+     * @return string
      */
-    public function getRoute($httpContext) {
-        $csm = false ? '' : 'i';
-        $path = trim($httpContext->getRequest()->rawUrl(), '/');
-        
-        if (($qsIndex = strpos($path, '?')) !== false) {
-            $path = substr($path, 0, $qsIndex);
-        }
-
-        if ($path == 'index.php') {
-            $path = '';
-        }
-
-        $cache = $httpContext->getCache();
-        $cacheKey = '__route_' . $this->name . '_' . $path;
-
-        if ($cache->get($cacheKey) !== null) {
-            return $cache->get($cacheKey);
-        }
-
-        foreach($this->routes as $route) {
-            $segments = $cache->getOrAdd(
-                '__route_segments_' . $route->template,
-                $route->getSegments(),
-                1200
-            );
-
-            // make final pattern
-            $pattern = '';
-
-            foreach ($segments as $segment) {
-                if (!empty($segment->before)) {
-                    $pattern .= $segment->before;
-                }
-
-                $pattern .= $segment->pattern;
-
-                if (!empty($segment->after)) {
-                    $pattern .= $segment->after;
-                }
-
-                if (empty($segment->glued)) {
-                    if ($segment->optional || !empty($segment->end) || !empty($segment->preEnd)) {
-                        $pattern .= '(\/|)';
-                    }
-                    else {
-                        $pattern .= '\/';
-                    }
-                }
-            }
-
-            // test url
-            if (preg_match('/^' . $pattern . '$/s' . $csm, $path, $matches) === 1) {
-                // match is found
-                $result = clone $route;
-                $values = array();
-
-                foreach ($segments as $segment) {
-                    $name = $segment->name;
-
-                    if (!empty($matches[$name])) {
-                        if (empty($values[$name])) {
-                            $values[$name] = $matches[$name];
-                        }
-                    }
-
-                    if (!empty($segment->default)) {
-                        if (empty($values[$name]) && $segment->default != UrlParameter::OPTIONAL) {
-                            $values[$name] = $segment->default;
-                        }
-                    }
-                }
-
-                if (!empty($route->defaults)) {
-                    foreach ($route->defaults as $name => $defaultValue) {
-                        if (empty($values[$name])) {
-                            $values[$name] = $defaultValue;
-                        }
-                    }
-                }
-
-                if (true) {
-                    $values = array_map('strtolower', $values);
-                }
-
-                $result->values = $values;
-
-                $cache->add($cacheKey, $result, 1200);
-
-                return $result;
-            }
-        }
-
-        $cache->add($cacheKey, null, 1200);
-
-        return null;
+    public function getName() {
+        return $this->name;
     }
 
     /**

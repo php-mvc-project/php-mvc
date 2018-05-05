@@ -28,9 +28,9 @@ abstract class HttpContextBase {
     protected $response;
 
     /**
-     * Route collection.
+     * The routes collection.
      * 
-     * @var RouteCollection
+     * @var RouteProvider
      */
     protected $routes;
 
@@ -42,9 +42,9 @@ abstract class HttpContextBase {
     protected $route;
 
     /**
-     * Indicates that the request should be ignored.
+     * Indicates that the request must be ignored.
      */
-    protected $ignore;
+    protected $ignoreRoute = null;
 
     /**
      * The initial timestamp of the current HTTP request.
@@ -56,35 +56,20 @@ abstract class HttpContextBase {
     /**
      * Initializes a new instance of the HttpContextBase.
      * 
-     * @param RouteCollection $routes The routes list.
-     * @param RouteCollection $ignoreRoutes List of routes to ignore.
-     * @param HttpRequestBase $request The reqiest.
-     * @param HttpResponseBase $response The response.
+     * @param HttpContextInfo $info Context info.
      */
-    public function __construct($routes, $ignoreRoutes, $request, $response) {
-        if (!isset($routes) || !$routes instanceof RouteCollection) {
-            throw new \Exception('The $routes is requred and type must be derived from "\PhpMvc\RouteCollection".');
-        }
-
-        if (!isset($request) || !$request instanceof HttpRequestBase) {
-            throw new \Exception('The $request is requred and type must be derived from "\PhpMvc\HttpRequestBase".');
-        }
-
-        if (!isset($response) || !$response instanceof HttpResponseBase) {
-            throw new \Exception('The $response is requred and type must be derived from "\PhpMvc\HttpResponseBase".');
+    public function __construct($info) {
+        if (!isset($info) || !$info instanceof HttpContextInfo) {
+            throw new \Exception('The $info type must be the base of "\PhpMvc\HttpContextInfo".');
         }
 
         $date = new \DateTime();
         $this->timestamp = $date->getTimestamp();
 
-        $this->cache = new Cache(new CacheFileProvider()); // array('hash' => 'sha1')
-        $this->routes = $routes;
-        $this->request = $request;
-        $this->response = $response;
-
-        if (!($this->ignore = (isset($ignoreRoutes) && $ignoreRoutes instanceof RouteCollection && ($this->route = $ignoreRoutes->getRoute($this)) !== null))) {
-            $this->route = $routes->getRoute($this);
-        }
+        $this->routes = $info->routeProvider;
+        $this->cache = $info->cacheProvider;
+        $this->request = $info->request;
+        $this->response = $info->response;
     }
 
     /**
@@ -94,24 +79,6 @@ abstract class HttpContextBase {
      */
     public function getCache() {
         return $this->cache;
-    }
-
-    /**
-     * Gets list of routes.
-     * 
-     * @return RouteCollection
-     */
-    public function getRoutes() {
-        return $this->routes;
-    }
-
-    /**
-     * Gets route options.
-     * 
-     * @return RouteOptions
-     */
-    public function getRouteOptions() {
-        return $this->routes->getOptions();
     }
 
     /**
@@ -133,11 +100,33 @@ abstract class HttpContextBase {
     }
 
     /**
+     * Gets list of routes.
+     * 
+     * @return RouteCollection
+     */
+    public function getRoutes() {
+        return $this->routes->getRoutes();
+    }
+
+    /**
+     * Gets route options.
+     * 
+     * @return RouteOptions
+     */
+    public function getRouteOptions() {
+        return $this->routes->getOptions();
+    }
+
+    /**
      * Returns a route that is comparable to the current request context.
      * 
      * @return Route|null
      */
     public function getRoute() {
+        if ($this->route === null && $this->isIgnoredRoute() === false) {
+            $this->route = $this->routes->matchRoute($this);
+        }
+
         return $this->route;
     }
 
@@ -147,7 +136,11 @@ abstract class HttpContextBase {
      * @return bool
      */
     public function isIgnoredRoute() {
-        return $this->ignore;
+        if ($this->ignoreRoute === null) {
+            $this->ignoreRoute = ($this->route = $this->routes->matchIgnore($this)) !== null;
+        }
+
+        return $this->ignoreRoute;
     }
 
     /**

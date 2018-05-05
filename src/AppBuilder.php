@@ -4,31 +4,99 @@ namespace PhpMvc;
 /**
  * The main class that works wonders.
  */
-final class Make {
+final class AppBuilder {
+
+    private static $config = array();
 
     /**
-     * Magic!
+     * Sets the application namespace.
      * 
-     * @param string $appNamespace Root namespace of the application.
-     * @param HttpContextBase $httpContext The context of HTTP request.
-     * @param string $basePath The base path of application.
+     * @param string $appNamespace The root namespace of the application.
      * 
      * @return void
      */
-    public static function magic($appNamespace, $httpContext = null, $basePath = null) {
-        self::init($appNamespace, $basePath);
+    public static function useNamespace($appNamespace) {
+        self::$config['appNamespace'] = $appNamespace;
+    }
+
+    /**
+     * Sets base path.
+     * 
+     * @param string $basePath The root path of the application.
+     * 
+     * @return void
+     */
+    public static function useBasePath($basePath) {
+        self::$config['basePath'] = $basePath;
+    }
+
+    /**
+     * Sets context of the HTTP request.
+     * 
+     * @param HttpContextBase $httpContext The context to set.
+     * 
+     * @return void
+     */
+    public static function useHttpContext($httpContext) {
+        self::$config['httpContext'] = $httpContext;
+    }
+
+    /**
+     * Sets cache provider.
+     * 
+     * @param CacheProvider $cacheProvider The cache provider to set.
+     * 
+     * @return void
+     */
+    public static function useCache($cacheProvider) {
+        self::$config['cacheProvider'] = $cacheProvider;
+    }
+
+    /**
+     * Sets routе provider.
+     * 
+     * @param RouteProvider $routeProvider The route provider to set.
+     * 
+     * @return void
+     */
+    public static function useRouter($routeProvider) {
+        self::$config['routeProvider'] = $routeProvider;
+    }
+
+    /**
+     * Registers routes.
+     * 
+     * @param callback $routes A function in which an instance of the route provider will be passed, through which routing rules are created.
+     * For example:
+     * AppBuilder::routes(function($routes) {
+     *   $routes->ignore('content/{*file}');
+     *   $routes->add('default', '{controller=Home}/{action=index}/{id?}');
+     * });
+     * 
+     * @returnv void
+     */
+    public static function routes($routes) {
+        self::$config['routes'] = $routes;
+    }
+
+    /**
+     * Processes the current HTTP request.
+     * 
+     * @return void
+     */
+    public static function build() {
+        self::init();
         self::include();
 
-        $httpContext = self::httpContext($httpContext);
-        $route = self::canRoute($httpContext);
+        $route = self::canRoute();
 
         if ($route !== false) {
-            $actionContext = self::actionContext($httpContext, $route);
+            $actionContext = self::actionContext($route);
 
             if (!self::cached($actionContext)) {
                 self::filters($actionContext);
-                self::headers($httpContext);
-                self::validation($httpContext);
+                self::headers();
+                self::validation();
                 self::render($actionContext);
             }
         }
@@ -37,30 +105,82 @@ final class Make {
     /**
      * Adds headers.
      * 
-     * @param HttpContextBase $httpContext The context of the request.
-     * 
      * @return void
      */
-    private static function headers($httpContext) {
-        $response = $httpContext->getResponse();
+    private static function headers() {
+        $response = self::$config['httpContext']->getResponse();
         $response->addHeader('X-Powered-By', Info::XPOWEREDBY);
     }
 
     /**
-     * Performs the initialization of the engine.
-     * 
-     * @param string $appNamespace Root namespace of the application.
-     * @param string $basePath Base path.
+     * Performs the initialization of the builder.
      * 
      * @return void
      */
-    private static function init($appNamespace, $basePath = null) {
-        if (empty($basePath)) {
-            $basePath = getcwd();
+    private static function init() {
+        if (empty(self::$config['appNamespace'])) {
+            throw new \Exception('The root namespace for the application is required. To specify the namespace of your application, use the useNamespace method. The value must not be null or empty.');
+        }
+
+        if (empty(self::$config['basePath'])) {
+            self::$config['basePath'] = getcwd();
+        }
+
+        if (empty(self::$config['routeProvider'])) {
+            self::$config['routeProvider'] = new DefaultRouteProvider();
+        }
+        elseif (!self::$config['routeProvider'] instanceof RouteProvider) {
+            throw new \Exception('The routeProvider type must be the base of "\PhpMvc\RouteProvider".');
+        }
+
+        if (isset(self::$config['routes'])) {
+            if (is_callable(self::$config['routes'])) {
+                self::$config['routes'](self::$config['routeProvider']);
+            }
+            elseif (is_array(self::$config['routes'])) {
+                $provider = self::$config['routeProvider'];
+
+                foreach(self::$config['routes'][0] as $route) {
+                    $provider->add($route->name, $route->template, $route->defaults, $route->constraints);
+                }
+
+                if (count(self::$config['routes']) > 1) {
+                    foreach(self::$config['routes'][1] as $route) {
+                        $provider->ingnore($route->template, $route->constraints);
+                    }
+                }
+            }
+            elseif (self::$config['routes'] instanceof RouteCollection) {
+                $provider = self::$config['routeProvider'];
+
+                foreach(self::$config['routes'] as $route) {
+                    $provider->add($route->name, $route->template, $route->defaults, $route->constraints);
+                }
+            }
+        }
+
+        if (empty(self::$config['cacheProvider'])) {
+            self::$config['cacheProvider'] = new CacheIdleProvider();
+        }
+        elseif (!self::$config['cacheProvider'] instanceof CacheProvider) {
+            throw new \Exception('The $cacheProvider type must be the base of "\PhpMvc\CacheProvider".');
+        }
+
+        if (empty(self::$config['httpContext'])) {
+            $info = new HttpContextInfo();
+            $info->routeProvider = self::$config['routeProvider'];
+            $info->cacheProvider = self::$config['cacheProvider'];
+            $info->request = new HttpRequest();
+            $info->response = new HttpResponse();
+
+            self::$config['httpContext'] = new HttpContext($info);
+        }
+        elseif (!self::$config['httpContext'] instanceof HttpContextBase) {
+            throw new \Exception('The httpContext type must be the base of "\PhpMvc\HttpContextBase".');
         }
 
         if (!defined('PHPMVC_DS')) { define('PHPMVC_DS', DIRECTORY_SEPARATOR); }
-        if (!defined('PHPMVC_ROOT_PATH')) { define('PHPMVC_ROOT_PATH', $basePath . PHPMVC_DS); }
+        if (!defined('PHPMVC_ROOT_PATH')) { define('PHPMVC_ROOT_PATH', self::$config['basePath'] . PHPMVC_DS); }
         if (!defined('PHPMVC_CORE_PATH')) { define('PHPMVC_CORE_PATH', __DIR__ .PHPMVC_DS); }
         if (!defined('PHPMVC_CONFIG_PATH')) { define('PHPMVC_CONFIG_PATH', PHPMVC_ROOT_PATH . 'config' . PHPMVC_DS); }
         if (!defined('PHPMVC_FILTER_PATH')) { define('PHPMVC_FILTER_PATH', PHPMVC_ROOT_PATH . 'filters' . PHPMVC_DS); }
@@ -70,47 +190,24 @@ final class Make {
         if (!defined('PHPMVC_SHARED_PATH')) { define('PHPMVC_SHARED_PATH', PHPMVC_VIEW_PATH . 'shared' . PHPMVC_DS); }
         if (!defined('PHPMVC_UPLOAD_PATH')) { define('PHPMVC_UPLOAD_PATH', PHPMVC_ROOT_PATH . 'upload' . PHPMVC_DS); }
 
-        // define('PHPMVC_APP_NAMESPACE', $appNamespace);
-
         if (!defined('PHPMVC_APP_NAMESPACE')) {
-            define('PHPMVC_APP_NAMESPACE', $appNamespace);
+            define('PHPMVC_APP_NAMESPACE', self::$config['appNamespace']);
         }
-        elseif (PHPMVC_APP_NAMESPACE !== $appNamespace) {
+        elseif (PHPMVC_APP_NAMESPACE !== self::$config['appNamespace']) {
             throw new \Exception('Constant PHPMVC_CONTROLLER already defined. Re-define with other value is not possible.');
         }
-    }
 
-    /**
-     * Initializes the HttpContext associated with the current request.
-     * 
-     * @param HttpContextBase $httpContext The context of the request.
-     * 
-     * @return HttpContextBase
-     */
-    private static function httpContext($httpContext = null) {
-        // check request context
-        if (isset($httpContext)) {
-            if (!$httpContext instanceof HttpContextBase) {
-                throw new \Exception('The $httpContext type must be derived from "\PhpMvc\HttpContextBase".');
-            }
-        }
-        else {
-            $httpContext = new HttpContext();
-        }
-
-        InternalHelper::setStaticPropertyValue('\\PhpMvc\\HttpContext', 'current', $httpContext);
-
-        return $httpContext;
+        InternalHelper::setStaticPropertyValue('\\PhpMvc\\HttpContext', 'current', self::$config['httpContext']);
     }
 
     /**
      * Looks for a suitable route and checks whether the request can be executed.
      * 
-     * @param HttpContextBase $httpContext The context of the request.
-     * 
      * @return Route|bool
      */
-    private static function canRoute($httpContext) {
+    private static function canRoute() {
+        $httpContext = self::$config['httpContext'];
+
         if ($httpContext->isIgnoredRoute()) {
             $request = $httpContext->getRequest();
             $response = $httpContext->getResponse();
@@ -142,12 +239,13 @@ final class Make {
     /**
      * Initializes the ActionContext associated with the current request and route.
      * 
-     * @param HttpContextBase $httpContext The context of the request.
      * @param Route $route The route of the request.
      * 
      * @return ActionContext
      */
-    private static function actionContext($httpContext, $route) {
+    private static function actionContext($route) {
+        $httpContext = self::$config['httpContext'];
+
         // TODO: kill constants
         if (!defined('PHPMVC_CONTROLLER')) { define('PHPMVC_CONTROLLER', ucfirst($route->getValueOrDefault('controller', 'Home'))); }
         if (!defined('PHPMVC_ACTION')) { define('PHPMVC_ACTION', $route->getValueOrDefault('action', 'index')); }
@@ -163,7 +261,7 @@ final class Make {
         $controllerClass = new \ReflectionClass('\\' . PHPMVC_APP_NAMESPACE . '\\Controllers\\' . PHPMVC_CONTROLLER . 'Controller');
 
         if (!$controllerClass->isSubclassOf('\\PhpMvc\\Controller')) {
-            throw new \Exception('The controller type must be derived from "\\PhpMvc\\Controller".');
+            throw new \Exception('The controller type must be the base of "\\PhpMvc\\Controller".');
         }
 
         $actionContextProperty = $controllerClass->getParentClass()->getProperty('actionContext');
@@ -540,7 +638,7 @@ final class Make {
                 $filterClass = new \ReflectionClass($className);
 
                 if (!$filterClass->isSubclassOf('\\PhpMvc\\ActionFilter')) {
-                    throw new \Exception('The filter type must be derived from "\PhpMvc\ActionFilter".');
+                    throw new \Exception('The filter type must be the base of "\PhpMvc\ActionFilter".');
                 }
 
                 if ($filterClass->getConstructor() != null) {
@@ -560,11 +658,9 @@ final class Make {
     /**
      * Checks the request and throws an exception if the request contains dangerous data.
      * 
-     * @param HttpContextBase $httpContext The context of the request.
-     * 
      * @return void
      */
-    private static function validation($httpContext) {
+    private static function validation() {
         if (substr(PHPMVC_ACTION, 0, 2) == '__') {
             throw new \Exception('Action names can not begin with a "_".');
         }

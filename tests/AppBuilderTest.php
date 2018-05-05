@@ -6,12 +6,12 @@ require_once 'HttpContext.php';
 use PHPUnit\Framework\TestCase;
 
 use PhpMvc\Route;
-use PhpMvc\RouteTable;
-use PhpMvc\RouteCollection;
+use PhpMvc\AppBuilder;
 use PhpMvc\UrlParameter;
-use PhpMvc\Make;
+use PhpMvc\RouteCollection;
+use PhpMvc\DefaultRouteProvider;
 
-final class MakeTest extends TestCase
+final class AppBuilderTest extends TestCase
 {
 
     protected $preserveGlobalState = false;
@@ -19,6 +19,8 @@ final class MakeTest extends TestCase
     protected $runTestInSeparateProcess = true;
 
     private $basePath;
+
+    private $defaultRoutes;
 
     public function __construct($name = null, array $data = [], $dataName = '') {
         parent::__construct($name, $data, $dataName);
@@ -32,28 +34,22 @@ final class MakeTest extends TestCase
         if (!defined('PHPMVC_ROOT_PATH')) {
             define('PHPMVC_ROOT_PATH', $this->basePath . PHPMVC_DS);
         }
+
+        AppBuilder::useNamespace('PhpMvcTest');
+        AppBuilder::useBasePath($this->basePath);
     }
 
-    public function testMagic(): void
+    public function testBuild(): void
     {
-        RouteTable::clear();
-        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
-
-        $httpContext = new HttpContext(
-            null,
-            null,
-            array(
-                'REQUEST_URI' => '/',
-                'REQUEST_METHOD' => 'GET'
-            )
-        );
+        $httpContext = HttpContext::get('/')->useDefaultRoute();
 
         echo chr(10);
         echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
 
-        Make::magic('PhpMvcTest', $httpContext, $this->basePath);
+        AppBuilder::useHttpContext($httpContext);
+        AppBuilder::build();
 
         $result = ob_get_clean();
 
@@ -92,24 +88,15 @@ final class MakeTest extends TestCase
 
     public function testSpecifiedView(): void
     {
-        RouteTable::clear();
-        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
-
-        $httpContext = new HttpContext(
-            null,
-            null,
-            array(
-                'REQUEST_URI' => '/home/specifiedView',
-                'REQUEST_METHOD' => 'GET'
-            )
-        );
+        $httpContext = HttpContext::get('/home/specifiedView')->useDefaultRoute();
 
         echo chr(10);
         echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
-        
-        Make::magic('PhpMvcTest', $httpContext, $this->basePath);
+
+        AppBuilder::useHttpContext($httpContext);
+        AppBuilder::build();
 
         $result = ob_get_clean();
 
@@ -122,24 +109,15 @@ final class MakeTest extends TestCase
     }
 
     public function testMakeView() {
-        RouteTable::clear();
-        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
-
-        $httpContext = new HttpContext(
-            null,
-            null,
-            array(
-                'REQUEST_URI' => '/home/makeview',
-                'REQUEST_METHOD' => 'GET'
-            )
-        );
+        $httpContext = HttpContext::get('/home/makeview')->useDefaultRoute();
 
         echo chr(10);
         echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
-        
-        Make::magic('PhpMvcTest', $httpContext, $this->basePath);
+
+        AppBuilder::useHttpContext($httpContext);
+        AppBuilder::build();
 
         $result = ob_get_clean();
 
@@ -192,24 +170,15 @@ final class MakeTest extends TestCase
     }
 
     public function testSetGetViewData() {
-        RouteTable::clear();
-        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
-
-        $httpContext = new HttpContext(
-            null,
-            null,
-            array(
-                'REQUEST_URI' => '/home/setGetViewData',
-                'REQUEST_METHOD' => 'GET'
-            )
-        );
+        $httpContext = HttpContext::get('/home/setGetViewData')->useDefaultRoute();
 
         echo chr(10);
         echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
-        
-        Make::magic('PhpMvcTest', $httpContext, $this->basePath);
+
+        AppBuilder::useHttpContext($httpContext);
+        AppBuilder::build();
 
         $result = ob_get_clean();
 
@@ -232,24 +201,15 @@ final class MakeTest extends TestCase
     }
 
     public function testDifferentWaysViewData() {
-        RouteTable::clear();
-        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
-
-        $httpContext = new HttpContext(
-            null,
-            null,
-            array(
-                'REQUEST_URI' => '/home/differentWaysViewData',
-                'REQUEST_METHOD' => 'GET'
-            )
-        );
+        $httpContext = HttpContext::get('/home/differentWaysViewData')->useDefaultRoute();
 
         echo chr(10);
         echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
-        
-        Make::magic('PhpMvcTest', $httpContext, $this->basePath);
+
+        AppBuilder::useHttpContext($httpContext);
+        AppBuilder::build();
 
         $result = ob_get_clean();
 
@@ -288,50 +248,29 @@ final class MakeTest extends TestCase
     }
 
     public function testNoViewFile() {
-        RouteTable::clear();
-        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
-
-        $httpContext = new HttpContext(
-            null,
-            null,
-            array(
-                'REQUEST_URI' => '/home/noViewFile',
-                'REQUEST_METHOD' => 'GET'
-            )
-        );
+        $httpContext = HttpContext::get('/home/noViewFile')->useDefaultRoute();
 
         echo chr(10);
         echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         $this->expectExceptionMessageRegExp('/The view file could not be found/');
 
-        Make::magic('PhpMvcTest', $httpContext, $this->basePath);
+        AppBuilder::useHttpContext($httpContext);
+        AppBuilder::build();
 
         echo ' - OK' . chr(10);
     }
 
     public function testJsonData() {
-        RouteTable::clear();
-        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
-
-        $httpContext = new HttpContext(
-            null,
-            null,
-            array(
-                'REQUEST_URI' => '/home/jsonData',
-                'REQUEST_METHOD' => 'GET'
-            ),
-            array(),
-            array(),
-            true
-        );
+        $httpContext = HttpContext::get('/home/jsonData')->useDefaultRoute()->noOutputHeaders();
 
         echo chr(10);
         echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
-        
-        Make::magic('PhpMvcTest', $httpContext, $this->basePath);
+
+        AppBuilder::useHttpContext($httpContext);
+        AppBuilder::build();
 
         $result = ob_get_clean();
 
@@ -341,27 +280,15 @@ final class MakeTest extends TestCase
     }
 
     public function testGetContent() {
-        RouteTable::clear();
-        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
-
-        $httpContext = new HttpContext(
-            null,
-            null,
-            array(
-                'REQUEST_URI' => '/home/getContent',
-                'REQUEST_METHOD' => 'GET'
-            ),
-            array(),
-            array(),
-            true
-        );
+        $httpContext = HttpContext::get('/home/getContent')->useDefaultRoute()->noOutputHeaders();
 
         echo chr(10);
         echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
-        
-        Make::magic('PhpMvcTest', $httpContext, $this->basePath);
+
+        AppBuilder::useHttpContext($httpContext);
+        AppBuilder::build();
 
         $result = ob_get_clean();
 
@@ -371,27 +298,15 @@ final class MakeTest extends TestCase
     }
 
     public function testString() {
-        RouteTable::clear();
-        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
-
-        $httpContext = new HttpContext(
-            null,
-            null,
-            array(
-                'REQUEST_URI' => '/home/string',
-                'REQUEST_METHOD' => 'GET'
-            ),
-            array(),
-            array(),
-            true
-        );
+        $httpContext = HttpContext::get('/home/string')->useDefaultRoute()->noOutputHeaders();
 
         echo chr(10);
         echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
-        
-        Make::magic('PhpMvcTest', $httpContext, $this->basePath);
+
+        AppBuilder::useHttpContext($httpContext);
+        AppBuilder::build();
 
         $result = ob_get_clean();
 
@@ -401,27 +316,15 @@ final class MakeTest extends TestCase
     }
 
     public function testArr() {
-        RouteTable::clear();
-        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
-
-        $httpContext = new HttpContext(
-            null,
-            null,
-            array(
-                'REQUEST_URI' => '/home/arr',
-                'REQUEST_METHOD' => 'GET'
-            ),
-            array(),
-            array(),
-            true
-        );
+        $httpContext = HttpContext::get('/home/arr')->useDefaultRoute()->noOutputHeaders();
 
         echo chr(10);
         echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
-        
-        Make::magic('PhpMvcTest', $httpContext, $this->basePath);
+
+        AppBuilder::useHttpContext($httpContext);
+        AppBuilder::build();
 
         $result = ob_get_clean();
 
@@ -431,27 +334,15 @@ final class MakeTest extends TestCase
     }
 
     public function testObj() {
-        RouteTable::clear();
-        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
-
-        $httpContext = new HttpContext(
-            null,
-            null,
-            array(
-                'REQUEST_URI' => '/home/obj',
-                'REQUEST_METHOD' => 'GET'
-            ),
-            array(),
-            array(),
-            true
-        );
+        $httpContext = HttpContext::get('/home/obj')->useDefaultRoute()->noOutputHeaders();
 
         echo chr(10);
         echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
-        
-        Make::magic('PhpMvcTest', $httpContext, $this->basePath);
+
+        AppBuilder::useHttpContext($httpContext);
+        AppBuilder::build();
 
         $result = ob_get_clean();
 
@@ -461,27 +352,15 @@ final class MakeTest extends TestCase
     }
 
     public function testGetImage() {
-        RouteTable::clear();
-        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
-
-        $httpContext = new HttpContext(
-            null,
-            null,
-            array(
-                'REQUEST_URI' => '/home/getImage',
-                'REQUEST_METHOD' => 'GET'
-            ),
-            array(),
-            array(),
-            true
-        );
+        $httpContext = HttpContext::get('/home/getImage')->useDefaultRoute()->noOutputHeaders();
 
         echo chr(10);
         echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
-        
-        Make::magic('PhpMvcTest', $httpContext, $this->basePath);
+
+        AppBuilder::useHttpContext($httpContext);
+        AppBuilder::build();
 
         $result = ob_get_clean();
 
@@ -491,24 +370,15 @@ final class MakeTest extends TestCase
     }
 
     public function testLoginGet() {
-        RouteTable::clear();
-        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
-
-        $httpContext = new HttpContext(
-            null,
-            null,
-            array(
-                'REQUEST_URI' => '/account/login',
-                'REQUEST_METHOD' => 'GET'
-            )
-        );
+        $httpContext = HttpContext::get('/account/login')->useDefaultRoute();
 
         echo chr(10);
         echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
-        
-        Make::magic('PhpMvcTest', $httpContext, $this->basePath);
+
+        AppBuilder::useHttpContext($httpContext);
+        AppBuilder::build();
 
         $result = ob_get_clean();
 
@@ -561,29 +431,18 @@ final class MakeTest extends TestCase
     }
 
     public function testLoginPostOnlyRootCanLogin() {
-        RouteTable::clear();
-        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
-
-        $httpContext = new HttpContext(
-            null,
-            null,
-            array(
-                'REQUEST_URI' => '/account/login',
-                'REQUEST_METHOD' => 'POST'
-            ), 
-            array(),
-            array(
-                'username' => 'pupkin',
-                'password' => '123123'
-            )
-        );
+        $httpContext = HttpContext::post('/account/login', array(
+            'username' => 'pupkin',
+            'password' => '123123'
+        ))->useDefaultRoute();
 
         echo chr(10);
         echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
-        
-        Make::magic('PhpMvcTest', $httpContext, $this->basePath);
+
+        AppBuilder::useHttpContext($httpContext);
+        AppBuilder::build();
 
         $result = ob_get_clean();
 
@@ -646,29 +505,18 @@ final class MakeTest extends TestCase
     }
 
     public function testLoginPostOnlyFieldRequired() {
-        RouteTable::clear();
-        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
-
-        $httpContext = new HttpContext(
-            null,
-            null,
-            array(
-                'REQUEST_URI' => '/account/login',
-                'REQUEST_METHOD' => 'POST'
-            ),
-            array(),
-            array(
-                'username' => null,
-                'password' => null
-            )
-        );
+        $httpContext = HttpContext::post('/account/login', array(
+            'username' => null,
+            'password' => null
+        ))->useDefaultRoute();
 
         echo chr(10);
         echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
-        
-        Make::magic('PhpMvcTest', $httpContext, $this->basePath);
+
+        AppBuilder::useHttpContext($httpContext);
+        AppBuilder::build();
 
         $result = ob_get_clean();
 
@@ -726,29 +574,18 @@ final class MakeTest extends TestCase
     }
 
     public function testLoginPostSuccess() {
-        RouteTable::clear();
-        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
-
-        $httpContext = new HttpContext(
-            null,
-            null,
-            array(
-                'REQUEST_URI' => '/account/login',
-                'REQUEST_METHOD' => 'POST'
-            ),
-            array(),
-            array(
-                'username' => 'root',
-                'password' => '123123'
-            )
-        );
+        $httpContext = HttpContext::post('/account/login', array(
+            'username' => 'root',
+            'password' => '123123'
+        ))->useDefaultRoute();
 
         echo chr(10);
         echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
-        
-        Make::magic('PhpMvcTest', $httpContext, $this->basePath);
+
+        AppBuilder::useHttpContext($httpContext);
+        AppBuilder::build();
 
         $result = ob_get_clean();
 
@@ -791,28 +628,19 @@ final class MakeTest extends TestCase
     }
 
     public function testStaticFile() {
-        RouteTable::clear();
-        RouteTable::ignore('content/{files}', array('files' => '.+'));
-        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
+        $routes = new DefaultRouteProvider();
+        $routes->ignore('content/{files}', array('files' => '.+'));
+        $routes->add('default', '{controller=Home}/{action=index}/{id?}');
 
-        $httpContext = new HttpContext(
-            null,
-            null,
-            array(
-                'REQUEST_URI' => '/content/images/php.png',
-                'REQUEST_METHOD' => 'GET'
-            ),
-            array(),
-            array(),
-            true
-        );
+        $httpContext = HttpContext::get('/content/images/php.png')->noOutputHeaders()->setRoutes($routes);
 
         echo chr(10);
         echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
-        
-        Make::magic('PhpMvcTest', $httpContext, $this->basePath);
+
+        AppBuilder::useHttpContext($httpContext);
+        AppBuilder::build();
 
         $result = ob_get_clean();
 
@@ -823,24 +651,15 @@ final class MakeTest extends TestCase
 
     public function testViewContext(): void
     {
-        RouteTable::clear();
-        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
-
-        $httpContext = new HttpContext(
-            null,
-            null,
-            array(
-                'REQUEST_URI' => '/home/layoutWithParent',
-                'REQUEST_METHOD' => 'GET'
-            )
-        );
+        $httpContext = HttpContext::get('/home/layoutWithParent')->noOutputHeaders()->useDefaultRoute();
 
         echo chr(10);
         echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
-        
-        Make::magic('PhpMvcTest', $httpContext, $this->basePath);
+
+        AppBuilder::useHttpContext($httpContext);
+        AppBuilder::build();
 
         $result = ob_get_clean();
 

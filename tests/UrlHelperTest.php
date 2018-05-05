@@ -5,12 +5,12 @@ require_once 'HttpContext.php';
 
 use PHPUnit\Framework\TestCase;
 
-use PhpMvc\UrlHelper;
-use PhpMvc\ActionContext;
-use PhpMvc\ViewContext;
-use PhpMvc\UrlParameter;
-use PhpMvc\RouteTable;
+use PhpMvc\DefaultRouteProvider;
 use PhpMvc\RouteCollection;
+use PhpMvc\ActionContext;
+use PhpMvc\UrlParameter;
+use PhpMvc\ViewContext;
+use PhpMvc\UrlHelper;
 use PhpMvc\Route;
 
 final class UrlHelperTest extends TestCase
@@ -20,19 +20,17 @@ final class UrlHelperTest extends TestCase
     {
         echo chr(10);
 
-        $routes = new RouteCollection('test');
+        $routes = new DefaultRouteProvider();
 
-        $routes->add(new Route('strange', 'test/abc/aaa/{action=1123}/ffff', array('controller' => 'home')));
-        $routes->add(new Route('test', 'testovich/{action=index}/{id?}', array('controller' => 'abc')));
+        $routes->add('strange', 'test/abc/aaa/{action=1123}/ffff', array('controller' => 'home'));
+        $routes->add('test', 'testovich/{action=index}/{id?}', array('controller' => 'abc'));
 
         $routes->add(
-            new Route(
-                'news', 
-                '{yyyy}-{mm}-{dd}/{id}', 
-                array(
-                    'controller' => 'news',
-                    'action' => 'show'
-                )
+            'news', 
+            '{yyyy}-{mm}-{dd}/{id}', 
+            array(
+                'controller' => 'news',
+                'action' => 'show'
             ),
             array(
                 'yyyy' => '\d{4}',
@@ -42,16 +40,9 @@ final class UrlHelperTest extends TestCase
             )
         );
 
-        $routes->add(new Route('default', '{controller=Test}/{action=index}/{id?}'));
+        $routes->add('default', '{controller=Test}/{action=index}/{id?}');
 
-        $httpContext = new HttpContext(
-            $routes,
-            null,
-            array(
-                'REQUEST_URI' => 'test/abc/aaa/aaaaa/ffff',
-                'REQUEST_METHOD' => 'GET'
-            )
-        );
+        $httpContext = HttpContext::get('test/abc/aaa/aaaaa/ffff')->setRoutes($routes);
 
         $actionContext = new ActionContext($httpContext);
 
@@ -62,16 +53,7 @@ final class UrlHelperTest extends TestCase
 
         echo $result . ' - OK' . chr(10);
 
-        $httpContext = new HttpContext(
-            $routes,
-            null,
-            array(
-                'REQUEST_URI' => '/abc/test',
-                'REQUEST_METHOD' => 'GET',
-                'HTTPS' => 'on',
-                'HTTP_HOST' => 'example.org',
-            )
-        );
+        $httpContext = HttpContext::get('https://example.org/abc/test')->setRoutes($routes);
 
         $actionContext = new ActionContext($httpContext);
 

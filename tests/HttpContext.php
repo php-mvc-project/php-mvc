@@ -1,30 +1,73 @@
 <?php
+use PhpMvc\InternalHelper;
 use PhpMvc\HttpContextBase;
+use PhpMvc\CacheIdleProvider;
+use PhpMvc\DefaultRouteProvider;
 
 require_once 'HttpRequest.php';
 require_once 'HttpResponse.php';
+require_once 'HttpContextInfo.php';
 
 final class HttpContext extends HttpContextBase {
 
-    public function __construct($routes, $ignoreRoutes, $serverVariables, $get = array(), $post = array(), $noOutputHeaders = false) {
-        if (!isset($routes)) {
-            $routesProperty = new \ReflectionProperty('\PhpMvc\RouteTable', 'routes');
-            $routesProperty->setAccessible(true);
-            $routes = $routesProperty->getValue(null);
+    public function __construct($info) {
+        if ($info->routeProvider === null) {
+            $info->routeProvider = new DefaultRouteProvider();
         }
 
-        if (!isset($ignoreRoutes)) {
-            $ignoreRoutesProperty = new \ReflectionProperty('\PhpMvc\RouteTable', 'ignored');
-            $ignoreRoutesProperty->setAccessible(true);
-            $ignoreRoutes = $ignoreRoutesProperty->getValue(null);
+        if ($info->cacheProvider === null) {
+            $info->cacheProvider = new CacheIdleProvider();
         }
 
-        parent::__construct(
-            $routes,
-            $ignoreRoutes,
-            new HttpRequest($serverVariables, $get, $post), 
-            new HttpResponse($noOutputHeaders)
-        );
+        $info->request = new HttpRequest($info->serverVariables, $info->get, $info->post);
+        $info->response = new HttpResponse($info->noOutputHeaders);
+
+        parent::__construct($info);
+    }
+
+    /**
+     * 
+     * @return HttpContext
+     */
+    public function setCacheProvider($cacheProvider) {
+        $this->cache = $cacheProvider;
+
+        return $this;
+    }
+
+    /**
+     * 
+     * @return HttpContext
+     */
+    public function setRoutes($routeProvider) {
+        $this->routes = $routeProvider;
+
+        return $this;
+    }
+
+    /**
+     * 
+     * @return HttpContext
+     */
+    public function useDefaultRoute() {
+        $routeProvider = new DefaultRouteProvider();
+        $routeProvider->add('default', '{controller=Home}/{action=index}/{id?}');
+
+        $this->routes = $routeProvider;
+
+        return $this;
+    }
+
+    public function noOutputHeaders() {
+        $this->response->setNoOutputHeaders(true);
+
+        return $this;
+    }
+
+    public function outputHeaders() {
+        $this->response->setNoOutputHeaders(false);
+
+        return $this;
     }
 
     public static function getWithRoute($url, $routes, $ignoreRoutes = null, $serverVariables = null, $noOutputHeaders = false) {
@@ -46,6 +89,10 @@ final class HttpContext extends HttpContextBase {
         
         if ($url['scheme'] === 'https') {
             $serverVariables['HTTPS'] = true;
+            $serverVariables['SERVER_PORT'] = 443;
+        }
+        else {
+            $serverVariables['SERVER_PORT'] = 80;
         }
 
         $serverVariables['REQUEST_METHOD'] = 'GET';
@@ -60,7 +107,25 @@ final class HttpContext extends HttpContextBase {
             $get = array();
         }
 
-        return new HttpContext($routes, $ignoreRoutes, $serverVariables, $get, null, $noOutputHeaders);
+        $info = new HttpContextInfo();
+        $info->routeProvider = new DefaultRouteProvider();
+        $info->noOutputHeaders = $noOutputHeaders;
+        $info->serverVariables = $serverVariables;
+        $info->get = $get;
+
+        if (!empty($routes)) {
+            foreach ($routes as $route) {
+                $info->routeProvider->add($route->name, $route->template, $route->defaults, $route->constraints);
+            }
+        }
+
+        if (!empty($ignoreRoutes)) {
+            foreach ($ignoreRoutes as $route) {
+                $info->routeProvider->ignore($route->template, $route->constraints);
+            }
+        }
+
+        return new HttpContext($info);
     }
 
     public static function get($url, $serverVariables = null, $noOutputHeaders = false) {
@@ -86,6 +151,10 @@ final class HttpContext extends HttpContextBase {
         
         if ($url['scheme'] === 'https') {
             $serverVariables['HTTPS'] = true;
+            $serverVariables['SERVER_PORT'] = 443;
+        }
+        else {
+            $serverVariables['SERVER_PORT'] = 80;
         }
 
         $serverVariables['REQUEST_METHOD'] = 'POST';
@@ -100,7 +169,26 @@ final class HttpContext extends HttpContextBase {
             $get = array();
         }
 
-        return new HttpContext($routes, $ignoreRoutes, $serverVariables, $get, $parameters, $noOutputHeaders);
+        $info = new HttpContextInfo();
+        $info->routeProvider = new DefaultRouteProvider();
+        $info->noOutputHeaders = $noOutputHeaders;
+        $info->serverVariables = $serverVariables;
+        $info->get = $get;
+        $info->post = $parameters;
+
+        if (!empty($routes)) {
+            foreach ($routes as $route) {
+                $info->routeProvider->add($route->name, $route->template, $route->defaults, $route->constraints);
+            }
+        }
+
+        if (!empty($ignoreRoutes)) {
+            foreach ($ignoreRoutes as $route) {
+                $info->routeProvider->ignore($route->template, $route->constraints);
+            }
+        }
+
+        return new HttpContext($info);
     }
 
 }

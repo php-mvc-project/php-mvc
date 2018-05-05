@@ -6,10 +6,9 @@ require_once 'HttpContext.php';
 use PHPUnit\Framework\TestCase;
 
 use PhpMvc\Route;
-use PhpMvc\RouteTable;
 use PhpMvc\RouteCollection;
 use PhpMvc\UrlParameter;
-use PhpMvc\Make;
+use PhpMvc\AppBuilder;
 
 final class FilterTest extends TestCase
 {
@@ -18,45 +17,34 @@ final class FilterTest extends TestCase
 
     protected $runTestInSeparateProcess = true;
 
-    private $basePath;
-
     public function __construct($name = null, array $data = [], $dataName = '') {
         parent::__construct($name, $data, $dataName);
 
-        $this->basePath = getcwd() . DIRECTORY_SEPARATOR . 'tests' . DIRECTORY_SEPARATOR . 'mvc';
+        $basePath = getcwd() . DIRECTORY_SEPARATOR . 'tests' . DIRECTORY_SEPARATOR . 'mvc';
 
         if (!defined('PHPMVC_DS')) {
             define('PHPMVC_DS', DIRECTORY_SEPARATOR);
         }
 
         if (!defined('PHPMVC_ROOT_PATH')) {
-            define('PHPMVC_ROOT_PATH', $this->basePath . PHPMVC_DS);
+            define('PHPMVC_ROOT_PATH', $basePath . PHPMVC_DS);
         }
+
+        AppBuilder::useNamespace('PhpMvcTest');
+        AppBuilder::useBasePath($basePath);
     }
 
     public function testEmpty(): void
     {
-        RouteTable::clear();
-        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
-
-        $httpContext = new HttpContext(
-            null,
-            null,
-            array(
-                'REQUEST_URI' => '/filter',
-                'REQUEST_METHOD' => 'GET'
-            ),
-            array(),
-            array(),
-            true
-        );
+        $httpContext = HttpContext::get('/filter')->useDefaultRoute()->noOutputHeaders();
 
         echo chr(10);
         echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
-        
-        Make::magic('PhpMvcTest', $httpContext, $this->basePath);
+
+        AppBuilder::useHttpContext($httpContext);
+        AppBuilder::build();
 
         $result = ob_get_clean();
 
@@ -67,27 +55,15 @@ final class FilterTest extends TestCase
 
     public function testExecuting(): void
     {
-        RouteTable::clear();
-        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
-
-        $httpContext = new HttpContext(
-            null,
-            null,
-            array(
-                'REQUEST_URI' => '/filter/executingWorld',
-                'REQUEST_METHOD' => 'GET'
-            ),
-            array(),
-            array(),
-            true
-        );
+        $httpContext = HttpContext::get('/filter/executingWorld')->useDefaultRoute()->noOutputHeaders();
 
         echo chr(10);
         echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
-        
-        Make::magic('PhpMvcTest', $httpContext, $this->basePath);
+
+        AppBuilder::useHttpContext($httpContext);
+        AppBuilder::build();
 
         $result = ob_get_clean();
 
@@ -98,27 +74,15 @@ final class FilterTest extends TestCase
 
     public function testExecuted(): void
     {
-        RouteTable::clear();
-        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
-
-        $httpContext = new HttpContext(
-            null,
-            null,
-            array(
-                'REQUEST_URI' => '/filter/executedWorld',
-                'REQUEST_METHOD' => 'GET'
-            ),
-            array(),
-            array(),
-            true
-        );
+        $httpContext = HttpContext::get('/filter/executedWorld')->useDefaultRoute()->noOutputHeaders();
 
         echo chr(10);
         echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
-        
-        Make::magic('PhpMvcTest', $httpContext, $this->basePath);
+
+        AppBuilder::useHttpContext($httpContext);
+        AppBuilder::build();
 
         $result = ob_get_clean();
 
@@ -129,27 +93,15 @@ final class FilterTest extends TestCase
 
     public function testExecute(): void
     {
-        RouteTable::clear();
-        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
-
-        $httpContext = new HttpContext(
-            null,
-            null,
-            array(
-                'REQUEST_URI' => '/filter/executeWorld',
-                'REQUEST_METHOD' => 'GET'
-            ),
-            array(),
-            array(),
-            true
-        );
+        $httpContext = HttpContext::get('/filter/executeWorld')->useDefaultRoute()->noOutputHeaders();
 
         echo chr(10);
         echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
-        
-        Make::magic('PhpMvcTest', $httpContext, $this->basePath);
+
+        AppBuilder::useHttpContext($httpContext);
+        AppBuilder::build();
 
         $result = ob_get_clean();
 
@@ -160,27 +112,15 @@ final class FilterTest extends TestCase
 
     public function testExecute2(): void
     {
-        RouteTable::clear();
-        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
-
-        $httpContext = new HttpContext(
-            null,
-            null,
-            array(
-                'REQUEST_URI' => '/filter/executeWorld2',
-                'REQUEST_METHOD' => 'GET'
-            ),
-            array(),
-            array(),
-            true
-        );
+        $httpContext = HttpContext::get('/filter/executeWorld2')->useDefaultRoute()->noOutputHeaders();
 
         echo chr(10);
         echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
 
-        Make::magic('PhpMvcTest', $httpContext, $this->basePath);
+        AppBuilder::useHttpContext($httpContext);
+        AppBuilder::build();
 
         $result = ob_get_clean();
 
@@ -191,27 +131,15 @@ final class FilterTest extends TestCase
 
     public function testError(): void
     {
-        RouteTable::clear();
-        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
-
-        $httpContext = new HttpContext(
-            null,
-            null,
-            array(
-                'REQUEST_URI' => '/filter/error',
-                'REQUEST_METHOD' => 'GET'
-            ),
-            array(),
-            array(),
-            true
-        );
+        $httpContext = HttpContext::get('/filter/error')->useDefaultRoute()->noOutputHeaders();
 
         echo chr(10);
         echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
-        
-        Make::magic('PhpMvcTest', $httpContext, $this->basePath);
+
+        AppBuilder::useHttpContext($httpContext);
+        AppBuilder::build();
 
         $result = ob_get_clean();
 
@@ -222,27 +150,15 @@ final class FilterTest extends TestCase
 
     public function testErrorNoResult(): void
     {
-        RouteTable::clear();
-        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
-
-        $httpContext = new HttpContext(
-            null,
-            null,
-            array(
-                'REQUEST_URI' => '/filter/errorNoResult',
-                'REQUEST_METHOD' => 'GET'
-            ),
-            array(),
-            array(),
-            true
-        );
+        $httpContext = HttpContext::get('/filter/errorNoResult')->useDefaultRoute()->noOutputHeaders();
 
         echo chr(10);
         echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
-        
-        Make::magic('PhpMvcTest', $httpContext, $this->basePath);
+
+        AppBuilder::useHttpContext($httpContext);
+        AppBuilder::build();
 
         $result = ob_get_clean();
 
@@ -253,27 +169,15 @@ final class FilterTest extends TestCase
 
     public function testErrorRewrited(): void
     {
-        RouteTable::clear();
-        RouteTable::add('default', '{controller=Home}/{action=index}/{id?}');
-
-        $httpContext = new HttpContext(
-            null,
-            null,
-            array(
-                'REQUEST_URI' => '/filter/errorRewrited',
-                'REQUEST_METHOD' => 'GET'
-            ),
-            array(),
-            array(),
-            true
-        );
+        $httpContext = HttpContext::get('/filter/errorRewrited')->useDefaultRoute()->noOutputHeaders();
 
         echo chr(10);
         echo 'Request: ' . $httpContext->getRequest()->rawUrl();
 
         ob_start();
-        
-        Make::magic('PhpMvcTest', $httpContext, $this->basePath);
+
+        AppBuilder::useHttpContext($httpContext);
+        AppBuilder::build();
 
         $result = ob_get_clean();
 
