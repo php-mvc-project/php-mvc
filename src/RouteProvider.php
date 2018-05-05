@@ -71,6 +71,13 @@ interface RouteProvider {
     function ignore($template, $constraints = null);
 
     /**
+     * Initializes the provider.
+     * 
+     * @return void
+     */
+    function init();
+
+    /**
      * Returns the first ignored route similar to the current url.
      * 
      * @param HttpContextBase $httpContext Context of the request.

@@ -28,6 +28,7 @@ final class FileCacheProviderTest extends TestCase
     public function testDefault(): void {
         $cache = new FileCacheProvider();
 
+        $cache->init();
         $cache->clear();
 
         $this->assertNull($cache->get('test'));
@@ -109,6 +110,7 @@ final class FileCacheProviderTest extends TestCase
     public function testRegion(): void {
         $cache = new FileCacheProvider();
 
+        $cache->init();
         $cache->clear();
 
         $this->assertNull($cache->get('test'));
@@ -161,6 +163,7 @@ final class FileCacheProviderTest extends TestCase
     public function testKeys(): void {
         $cache = new FileCacheProvider();
 
+        $cache->init();
         $cache->clear();
 
         $this->assertNull($cache->get('!@#/#$%@&*(/\\'));
@@ -173,6 +176,8 @@ final class FileCacheProviderTest extends TestCase
         $this->assertNull($cache->get('!@#/#$%@&*(/\\'));
 
         $cache = new FileCacheProvider(array('hash' => 'sha1'));
+
+        $cache->init();
 
         $this->assertEquals('Hello, World!', $cache->getOrAdd('!@#/#$%@&*(/\\', function() { return 'Hello, World!'; }, 5));
         $this->assertEquals(123, $cache->getOrAdd('!@####!/#$%@&*(/\\', function() { return 123; }, 5));
@@ -188,6 +193,7 @@ final class FileCacheProviderTest extends TestCase
     public function testAccess(): void {
         $cache = new FileCacheProvider();
 
+        $cache->init();
         $cache->clear();
 
         $cache->add('test', 'Hello, world!', 300);

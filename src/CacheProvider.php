@@ -47,6 +47,13 @@ interface CacheProvider {
     function count($regionName = null);
 
     /**
+     * Initializes the provider.
+     * 
+     * @return void
+     */
+    function init();
+
+    /**
      * Gets the specified cache entry from the cache as an object.
      * 
      * @param string $key A unique identifier for the cache entry.

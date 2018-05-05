@@ -16,6 +16,8 @@ final class DefaultRouteProviderTest extends TestCase
     public function testGetRoute(): void {
         $routes = new DefaultRouteProvider();
 
+        $routes->init();
+
         $routes->ignore('favicon.ico');
         $routes->ignore('preview{extension}', array('extension' => '\.(png|jpg)'));
         $routes->ignore('content/{*file}');

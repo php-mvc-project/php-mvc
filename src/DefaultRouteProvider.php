@@ -143,6 +143,14 @@ final class DefaultRouteProvider implements RouteProvider {
     }
 
     /**
+     * Initializes the provider.
+     * 
+     * @return void
+     */
+    public function init() {
+    }
+
+    /**
      * Removes all routes.
      * 
      * @return void

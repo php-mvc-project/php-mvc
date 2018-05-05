@@ -64,6 +64,30 @@ final class AppBuilder {
     }
 
     /**
+     * Sets response HTTP headers.
+     * 
+     * @param array $headers The HTTP headers collection.
+     * For example: array('X-Powered-By' => 'PHP', 'X-PhpVersion' => '7.0')
+     * 
+     * @return void
+     */
+    public static function useHeaders($headers) {
+        self::$config['httpHeaders'] = $headers;
+    }
+
+    /**
+     * Start new or resume existing session.
+     * 
+     * @param array $opions If provided, this is an associative array of options that will override the currently set session configuration directives.
+     * http://php.net/manual/en/session.configuration.php
+     * 
+     * @return void
+     */
+    public static function useSession($opions = null) {
+        self::$config['session'] = (!empty($opions) ? $opions : true);
+    }
+
+    /**
      * Registers routes.
      * 
      * @param callback $routes A function in which an instance of the route provider will be passed, through which routing rules are created.
@@ -108,8 +132,12 @@ final class AppBuilder {
      * @return void
      */
     private static function headers() {
+        if (empty(self::$config['httpHeaders'])) {
+            return;
+        }
+
         $response = self::$config['httpContext']->getResponse();
-        $response->addHeader('X-Powered-By', Info::XPOWEREDBY);
+        $response->setHeaders(self::$config['httpHeaders']);
     }
 
     /**
@@ -126,12 +154,32 @@ final class AppBuilder {
             self::$config['basePath'] = getcwd();
         }
 
+        if (!defined('PHPMVC_DS')) { define('PHPMVC_DS', DIRECTORY_SEPARATOR); }
+        if (!defined('PHPMVC_ROOT_PATH')) { define('PHPMVC_ROOT_PATH', self::$config['basePath'] . PHPMVC_DS); }
+        if (!defined('PHPMVC_CORE_PATH')) { define('PHPMVC_CORE_PATH', __DIR__ .PHPMVC_DS); }
+        if (!defined('PHPMVC_CONFIG_PATH')) { define('PHPMVC_CONFIG_PATH', PHPMVC_ROOT_PATH . 'config' . PHPMVC_DS); }
+        if (!defined('PHPMVC_FILTER_PATH')) { define('PHPMVC_FILTER_PATH', PHPMVC_ROOT_PATH . 'filters' . PHPMVC_DS); }
+        if (!defined('PHPMVC_CONTROLLER_PATH')) { define('PHPMVC_CONTROLLER_PATH', PHPMVC_ROOT_PATH . 'controllers' . PHPMVC_DS); }
+        if (!defined('PHPMVC_MODEL_PATH')) { define('PHPMVC_MODEL_PATH', PHPMVC_ROOT_PATH . 'models' . PHPMVC_DS); }
+        if (!defined('PHPMVC_VIEW_PATH')) { define('PHPMVC_VIEW_PATH', PHPMVC_ROOT_PATH . 'views' . PHPMVC_DS); }
+        if (!defined('PHPMVC_SHARED_PATH')) { define('PHPMVC_SHARED_PATH', PHPMVC_VIEW_PATH . 'shared' . PHPMVC_DS); }
+        if (!defined('PHPMVC_UPLOAD_PATH')) { define('PHPMVC_UPLOAD_PATH', PHPMVC_ROOT_PATH . 'upload' . PHPMVC_DS); }
+
+        if (!defined('PHPMVC_APP_NAMESPACE')) {
+            define('PHPMVC_APP_NAMESPACE', self::$config['appNamespace']);
+        }
+        elseif (PHPMVC_APP_NAMESPACE !== self::$config['appNamespace']) {
+            throw new \Exception('Constant PHPMVC_CONTROLLER already defined. Re-define with other value is not possible.');
+        }
+
         if (empty(self::$config['routeProvider'])) {
             self::$config['routeProvider'] = new DefaultRouteProvider();
         }
         elseif (!self::$config['routeProvider'] instanceof RouteProvider) {
             throw new \Exception('The routeProvider type must be the base of "\PhpMvc\RouteProvider".');
         }
+
+        self::$config['routeProvider']->init();
 
         if (isset(self::$config['routes'])) {
             if (is_callable(self::$config['routes'])) {
@@ -166,6 +214,8 @@ final class AppBuilder {
             throw new \Exception('The $cacheProvider type must be the base of "\PhpMvc\CacheProvider".');
         }
 
+        self::$config['cacheProvider']->init();
+
         if (empty(self::$config['httpContext'])) {
             $info = new HttpContextInfo();
             $info->routeProvider = self::$config['routeProvider'];
@@ -179,22 +229,14 @@ final class AppBuilder {
             throw new \Exception('The httpContext type must be the base of "\PhpMvc\HttpContextBase".');
         }
 
-        if (!defined('PHPMVC_DS')) { define('PHPMVC_DS', DIRECTORY_SEPARATOR); }
-        if (!defined('PHPMVC_ROOT_PATH')) { define('PHPMVC_ROOT_PATH', self::$config['basePath'] . PHPMVC_DS); }
-        if (!defined('PHPMVC_CORE_PATH')) { define('PHPMVC_CORE_PATH', __DIR__ .PHPMVC_DS); }
-        if (!defined('PHPMVC_CONFIG_PATH')) { define('PHPMVC_CONFIG_PATH', PHPMVC_ROOT_PATH . 'config' . PHPMVC_DS); }
-        if (!defined('PHPMVC_FILTER_PATH')) { define('PHPMVC_FILTER_PATH', PHPMVC_ROOT_PATH . 'filters' . PHPMVC_DS); }
-        if (!defined('PHPMVC_CONTROLLER_PATH')) { define('PHPMVC_CONTROLLER_PATH', PHPMVC_ROOT_PATH . 'controllers' . PHPMVC_DS); }
-        if (!defined('PHPMVC_MODEL_PATH')) { define('PHPMVC_MODEL_PATH', PHPMVC_ROOT_PATH . 'models' . PHPMVC_DS); }
-        if (!defined('PHPMVC_VIEW_PATH')) { define('PHPMVC_VIEW_PATH', PHPMVC_ROOT_PATH . 'views' . PHPMVC_DS); }
-        if (!defined('PHPMVC_SHARED_PATH')) { define('PHPMVC_SHARED_PATH', PHPMVC_VIEW_PATH . 'shared' . PHPMVC_DS); }
-        if (!defined('PHPMVC_UPLOAD_PATH')) { define('PHPMVC_UPLOAD_PATH', PHPMVC_ROOT_PATH . 'upload' . PHPMVC_DS); }
-
-        if (!defined('PHPMVC_APP_NAMESPACE')) {
-            define('PHPMVC_APP_NAMESPACE', self::$config['appNamespace']);
-        }
-        elseif (PHPMVC_APP_NAMESPACE !== self::$config['appNamespace']) {
-            throw new \Exception('Constant PHPMVC_CONTROLLER already defined. Re-define with other value is not possible.');
+        if (isset(self::$config['session'])) {
+            // TODO: session provider
+            if (is_array(self::$config['session'])) {
+                session_start(self::$config['session']);
+            }
+            else {
+                session_start();
+            }
         }
 
         InternalHelper::setStaticPropertyValue('\\PhpMvc\\HttpContext', 'current', self::$config['httpContext']);

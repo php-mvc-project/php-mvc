@@ -28,6 +28,13 @@ final class FileCacheProvider implements CacheProvider {
     private $hash;
 
     /**
+     * Defines cache settings.
+     * 
+     * @var FileCacheProviderConfig
+     */
+    private $config;
+
+    /**
      * Initializes a new instance of the FileCacheProvider class.
      * 
      * @param FileCacheProviderConfig $config Cache settings.
@@ -44,9 +51,7 @@ final class FileCacheProvider implements CacheProvider {
             $config->cachePath = '~/cache';
         }
 
-        $this->cachePath = PathUtility::mapPath($config->cachePath);
-        $this->accessTime = (isset($config->accessTime) ? (int)$config->accessTime : 100) * 1000;
-        $this->hash = (isset($config->hash) ? $config->hash : null);
+        $this->config = $config;
     }
 
     /**
@@ -102,6 +107,17 @@ final class FileCacheProvider implements CacheProvider {
      */
     public function count($regionName = null) {
         return count(glob($this->getPath($regionName) . DIRECTORY_SEPARATOR . '*.cache'));
+    }
+
+    /**
+     * Initializes the provider.
+     * 
+     * @return void
+     */
+    public function init() {
+        $this->cachePath = PathUtility::mapPath($this->config->cachePath);
+        $this->accessTime = (isset($this->config->accessTime) ? (int)$this->config->accessTime : 100) * 1000;
+        $this->hash = (isset($this->config->hash) ? $this->config->hash : null);
     }
 
     /**

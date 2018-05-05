@@ -38,6 +38,7 @@ final class OutputCacheTest extends TestCase
         AppBuilder::useBasePath($basePath);
 
         $this->cacheProvider = new FileCacheProvider();
+        $this->cacheProvider->init();
     }
 
     public function testNoCache(): void {

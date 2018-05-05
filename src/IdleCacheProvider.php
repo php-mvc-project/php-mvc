@@ -54,6 +54,14 @@ final class IdleCacheProvider implements CacheProvider {
     }
 
     /**
+     * Initializes the provider.
+     * 
+     * @return void
+     */
+    public function init() {
+    }
+
+    /**
      * Gets the specified cache entry from the cache as an object.
      * 
      * @param string $key A unique identifier for the cache entry.
