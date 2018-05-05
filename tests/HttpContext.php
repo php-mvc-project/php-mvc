@@ -1,7 +1,7 @@
 <?php
 use PhpMvc\InternalHelper;
 use PhpMvc\HttpContextBase;
-use PhpMvc\CacheIdleProvider;
+use PhpMvc\IdleCacheProvider;
 use PhpMvc\DefaultRouteProvider;
 
 require_once 'HttpRequest.php';
@@ -16,7 +16,7 @@ final class HttpContext extends HttpContextBase {
         }
 
         if ($info->cacheProvider === null) {
-            $info->cacheProvider = new CacheIdleProvider();
+            $info->cacheProvider = new IdleCacheProvider();
         }
 
         $info->request = new HttpRequest($info->serverVariables, $info->get, $info->post);

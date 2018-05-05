@@ -5,10 +5,10 @@ require_once 'models/ModelA.php';
 
 use PHPUnit\Framework\TestCase;
 
-use PhpMvc\CacheFileProviderConfig;
-use PhpMvc\CacheFileProvider;
+use PhpMvc\FileCacheProviderConfig;
+use PhpMvc\FileCacheProvider;
 
-final class CacheFileProviderTest extends TestCase
+final class FileCacheProviderTest extends TestCase
 {
 
     public function __construct($name = null, array $data = [], $dataName = '') {
@@ -26,7 +26,7 @@ final class CacheFileProviderTest extends TestCase
     }
 
     public function testDefault(): void {
-        $cache = new CacheFileProvider();
+        $cache = new FileCacheProvider();
 
         $cache->clear();
 
@@ -107,7 +107,7 @@ final class CacheFileProviderTest extends TestCase
     }
 
     public function testRegion(): void {
-        $cache = new CacheFileProvider();
+        $cache = new FileCacheProvider();
 
         $cache->clear();
 
@@ -159,7 +159,7 @@ final class CacheFileProviderTest extends TestCase
     }
 
     public function testKeys(): void {
-        $cache = new CacheFileProvider();
+        $cache = new FileCacheProvider();
 
         $cache->clear();
 
@@ -172,7 +172,7 @@ final class CacheFileProviderTest extends TestCase
 
         $this->assertNull($cache->get('!@#/#$%@&*(/\\'));
 
-        $cache = new CacheFileProvider(array('hash' => 'sha1'));
+        $cache = new FileCacheProvider(array('hash' => 'sha1'));
 
         $this->assertEquals('Hello, World!', $cache->getOrAdd('!@#/#$%@&*(/\\', function() { return 'Hello, World!'; }, 5));
         $this->assertEquals(123, $cache->getOrAdd('!@####!/#$%@&*(/\\', function() { return 123; }, 5));
@@ -186,7 +186,7 @@ final class CacheFileProviderTest extends TestCase
     }
 
     public function testAccess(): void {
-        $cache = new CacheFileProvider();
+        $cache = new FileCacheProvider();
 
         $cache->clear();
 

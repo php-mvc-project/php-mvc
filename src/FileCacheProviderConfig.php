@@ -4,7 +4,7 @@ namespace PhpMvc;
 /**
  * Represents a standard cache provider for storing the cache in the file system.
  */
-final class CacheFileProviderConfig {
+final class FileCacheProviderConfig {
 
     /**
      * The path to the cache files directory.

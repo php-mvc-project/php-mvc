@@ -4,7 +4,7 @@ namespace PhpMvc;
 /**
  * Represents a standard cache provider for storing the cache in the file system.
  */
-final class CacheFileProvider implements CacheProvider {
+final class FileCacheProvider implements CacheProvider {
 
     /**
      * The path to the cache files directory.
@@ -28,13 +28,13 @@ final class CacheFileProvider implements CacheProvider {
     private $hash;
 
     /**
-     * Initializes a new instance of the CacheFileProvider class.
+     * Initializes a new instance of the FileCacheProvider class.
      * 
-     * @param CacheFileProviderConfig $config Cache settings.
+     * @param FileCacheProviderConfig $config Cache settings.
      */
     public function __construct($config = null) {
         if (!isset($config)) {
-            $config = new CacheFileProviderConfig();
+            $config = new FileCacheProviderConfig();
         }
         elseif (is_array($config)) {
             $config = InternalHelper::arrayToObject($config);

@@ -4,7 +4,7 @@ namespace PhpMvc;
 /**
  * Represents a cache provider that does nothing.
  */
-final class CacheIdleProvider implements CacheProvider {
+final class IdleCacheProvider implements CacheProvider {
 
     /**
      * Inserts a cache entry into the cache.

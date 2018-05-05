@@ -160,7 +160,7 @@ final class AppBuilder {
         }
 
         if (empty(self::$config['cacheProvider'])) {
-            self::$config['cacheProvider'] = new CacheIdleProvider();
+            self::$config['cacheProvider'] = new IdleCacheProvider();
         }
         elseif (!self::$config['cacheProvider'] instanceof CacheProvider) {
             throw new \Exception('The $cacheProvider type must be the base of "\PhpMvc\CacheProvider".');

@@ -7,7 +7,7 @@ use PHPUnit\Framework\TestCase;
 
 use PhpMvc\Route;
 use PhpMvc\RouteCollection;
-use PhpMvc\CacheFileProvider;
+use PhpMvc\FileCacheProvider;
 use PhpMvc\DefaultRouteProvider;
 use PhpMvc\UrlParameter;
 use PhpMvc\AppBuilder;
@@ -37,7 +37,7 @@ final class OutputCacheTest extends TestCase
         AppBuilder::useNamespace('PhpMvcTest');
         AppBuilder::useBasePath($basePath);
 
-        $this->cacheProvider = new CacheFileProvider();
+        $this->cacheProvider = new FileCacheProvider();
     }
 
     public function testNoCache(): void {
