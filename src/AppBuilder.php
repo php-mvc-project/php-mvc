@@ -6,6 +6,14 @@ namespace PhpMvc;
  */
 final class AppBuilder {
 
+    /**
+     * @var AppContext
+     */
+    private static $appContext;
+
+    /**
+     * @var array
+     */
     private static $config = array();
 
     /**
@@ -88,11 +96,26 @@ final class AppBuilder {
     }
 
     /**
+     * Sets custom handlers.
+     * 
+     * @param callback $callback
+     * For example:
+     * AppBuilder::use(function($appContext: AppContext) {
+     *   // ...
+     * });
+     * 
+     * @return void
+     */
+    public static function use($callback) {
+        self::$config['customHandlers'] = $callback;
+    }
+
+    /**
      * Registers routes.
      * 
      * @param callback $routes A function in which an instance of the route provider will be passed, through which routing rules are created.
      * For example:
-     * AppBuilder::routes(function($routes) {
+     * AppBuilder::routes(function($routes: RouteProvider) {
      *   $routes->ignore('content/{*file}');
      *   $routes->add('default', '{controller=Home}/{action=index}/{id?}');
      * });
@@ -146,16 +169,31 @@ final class AppBuilder {
      * @return void
      */
     private static function init() {
-        if (empty(self::$config['appNamespace'])) {
+        self::$appContext = new AppContext(self::$config);
+
+        if (isset(self::$config['customHandlers'])) {
+            if (is_callable(self::$config['customHandlers'])) {
+                self::$config['customHandlers'](self::$appContext);
+            }
+            else {
+                throw new \Exception('Function is expected.');
+            }
+        }
+
+        self::invokeAll(self::$appContext->getPreInit(), array(self::$appContext));
+
+        $config = self::$appContext->getConfig();
+
+        if (empty($config['appNamespace'])) {
             throw new \Exception('The root namespace for the application is required. To specify the namespace of your application, use the useNamespace method. The value must not be null or empty.');
         }
 
-        if (empty(self::$config['basePath'])) {
-            self::$config['basePath'] = getcwd();
+        if (empty($config['basePath'])) {
+            $config['basePath'] = getcwd();
         }
 
         if (!defined('PHPMVC_DS')) { define('PHPMVC_DS', DIRECTORY_SEPARATOR); }
-        if (!defined('PHPMVC_ROOT_PATH')) { define('PHPMVC_ROOT_PATH', self::$config['basePath'] . PHPMVC_DS); }
+        if (!defined('PHPMVC_ROOT_PATH')) { define('PHPMVC_ROOT_PATH', $config['basePath'] . PHPMVC_DS); }
         if (!defined('PHPMVC_CORE_PATH')) { define('PHPMVC_CORE_PATH', __DIR__ .PHPMVC_DS); }
         if (!defined('PHPMVC_CONFIG_PATH')) { define('PHPMVC_CONFIG_PATH', PHPMVC_ROOT_PATH . 'config' . PHPMVC_DS); }
         if (!defined('PHPMVC_FILTER_PATH')) { define('PHPMVC_FILTER_PATH', PHPMVC_ROOT_PATH . 'filters' . PHPMVC_DS); }
@@ -166,80 +204,84 @@ final class AppBuilder {
         if (!defined('PHPMVC_UPLOAD_PATH')) { define('PHPMVC_UPLOAD_PATH', PHPMVC_ROOT_PATH . 'upload' . PHPMVC_DS); }
 
         if (!defined('PHPMVC_APP_NAMESPACE')) {
-            define('PHPMVC_APP_NAMESPACE', self::$config['appNamespace']);
+            define('PHPMVC_APP_NAMESPACE', $config['appNamespace']);
         }
-        elseif (PHPMVC_APP_NAMESPACE !== self::$config['appNamespace']) {
+        elseif (PHPMVC_APP_NAMESPACE !== $config['appNamespace']) {
             throw new \Exception('Constant PHPMVC_CONTROLLER already defined. Re-define with other value is not possible.');
         }
 
-        if (empty(self::$config['routeProvider'])) {
-            self::$config['routeProvider'] = new DefaultRouteProvider();
+        if (empty($config['routeProvider'])) {
+            $config['routeProvider'] = new DefaultRouteProvider();
         }
-        elseif (!self::$config['routeProvider'] instanceof RouteProvider) {
+        elseif (!$config['routeProvider'] instanceof RouteProvider) {
             throw new \Exception('The routeProvider type must be the base of "\PhpMvc\RouteProvider".');
         }
 
-        self::$config['routeProvider']->init();
+        $config['routeProvider']->init();
 
-        if (isset(self::$config['routes'])) {
-            if (is_callable(self::$config['routes'])) {
-                self::$config['routes'](self::$config['routeProvider']);
+        if (isset($config['routes'])) {
+            if (is_callable($config['routes'])) {
+                $config['routes']($config['routeProvider']);
             }
-            elseif (is_array(self::$config['routes'])) {
-                $provider = self::$config['routeProvider'];
+            elseif (is_array($config['routes'])) {
+                $provider = $config['routeProvider'];
 
-                foreach(self::$config['routes'][0] as $route) {
+                foreach($config['routes'][0] as $route) {
                     $provider->add($route->name, $route->template, $route->defaults, $route->constraints);
                 }
 
-                if (count(self::$config['routes']) > 1) {
-                    foreach(self::$config['routes'][1] as $route) {
+                if (count($config['routes']) > 1) {
+                    foreach($config['routes'][1] as $route) {
                         $provider->ingnore($route->template, $route->constraints);
                     }
                 }
             }
-            elseif (self::$config['routes'] instanceof RouteCollection) {
-                $provider = self::$config['routeProvider'];
+            elseif ($config['routes'] instanceof RouteCollection) {
+                $provider = $config['routeProvider'];
 
-                foreach(self::$config['routes'] as $route) {
+                foreach($config['routes'] as $route) {
                     $provider->add($route->name, $route->template, $route->defaults, $route->constraints);
                 }
             }
         }
 
-        if (empty(self::$config['cacheProvider'])) {
-            self::$config['cacheProvider'] = new IdleCacheProvider();
+        if (empty($config['cacheProvider'])) {
+            $config['cacheProvider'] = new IdleCacheProvider();
         }
-        elseif (!self::$config['cacheProvider'] instanceof CacheProvider) {
+        elseif (!$config['cacheProvider'] instanceof CacheProvider) {
             throw new \Exception('The $cacheProvider type must be the base of "\PhpMvc\CacheProvider".');
         }
 
-        self::$config['cacheProvider']->init();
+        $config['cacheProvider']->init();
 
-        if (empty(self::$config['httpContext'])) {
+        if (empty($config['httpContext'])) {
             $info = new HttpContextInfo();
-            $info->routeProvider = self::$config['routeProvider'];
-            $info->cacheProvider = self::$config['cacheProvider'];
+            $info->routeProvider = $config['routeProvider'];
+            $info->cacheProvider = $config['cacheProvider'];
             $info->request = new HttpRequest();
             $info->response = new HttpResponse();
 
-            self::$config['httpContext'] = new HttpContext($info);
+            $config['httpContext'] = new HttpContext($info);
         }
-        elseif (!self::$config['httpContext'] instanceof HttpContextBase) {
+        elseif (!$config['httpContext'] instanceof HttpContextBase) {
             throw new \Exception('The httpContext type must be the base of "\PhpMvc\HttpContextBase".');
         }
 
-        if (isset(self::$config['session'])) {
+        if (isset($config['session'])) {
             // TODO: session provider
-            if (is_array(self::$config['session'])) {
-                session_start(self::$config['session']);
+            if (is_array($config['session'])) {
+                session_start($config['session']);
             }
             else {
                 session_start();
             }
         }
 
-        InternalHelper::setStaticPropertyValue('\\PhpMvc\\HttpContext', 'current', self::$config['httpContext']);
+        InternalHelper::setStaticPropertyValue('\\PhpMvc\\HttpContext', 'current', $config['httpContext']);
+
+        self::$appContext->setConfig($config);
+        self::invokeAll(self::$appContext->getInit(), array(self::$appContext));
+        self::$config = self::$appContext->getConfig();
     }
 
     /**
@@ -335,14 +377,17 @@ final class AppBuilder {
         // response handling
         $httpContext->getResponse()->setFlushHandler(function($eventArgs) use ($actionContext) {
             self::cachingPartial($actionContext, $eventArgs);
+            self::invokeAll(self::$appContext->getFlush(), array($actionContext, $eventArgs));
         });
 
         $httpContext->getResponse()->setEndHandler(function() use ($actionContext) {
             self::caching($actionContext);
+            self::invokeAll(self::$appContext->getEnd(), array($actionContext));
         });
 
         $httpContext->getResponse()->setPreSendHandler(function() use ($actionContext) {
             self::cachingClient($actionContext);
+            self::invokeAll(self::$appContext->getPreSend(), array($actionContext));
         });
 
         // arguments and model state
@@ -1106,6 +1151,17 @@ final class AppBuilder {
         }
 
         return $context;
+    }
+
+    /**
+     * @param callback[] $callbacks
+     * 
+     * @return void
+     */
+    private static function invokeAll($callbacks, $parameters = array()) {
+        foreach ($callbacks as $callback) {
+            call_user_func_array($callback, $parameters);
+        }
     }
 
 }
