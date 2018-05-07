@@ -12,6 +12,8 @@ final class AppBuilder {
     private static $appContext;
 
     /**
+     * The config of the AppBuilder.
+     * 
      * @var array
      */
     private static $config = array();
@@ -111,6 +113,37 @@ final class AppBuilder {
     }
 
     /**
+     * Adds a custom setting.
+     * 
+     * @param string $key The unique key.
+     * @param mixed $value The value.
+     * 
+     * @return void
+     */
+    public static function set($key, $value) {
+        if (!isset(self::$config['settings'])) {
+            self::$config['settings'] = array();
+        }
+
+        self::$config['settings'][$key] = $value;
+    }
+
+    /**
+     * Gets a custom setting.
+     * 
+     * @param string $key The name of the parameter to get.
+     * 
+     * @return mixed
+     */
+    public static function get($key) {
+        if (!isset(self::$config['settings']) || !isset(self::$config['settings'][$key])) {
+            return null;
+        }
+
+        return self::$config['settings'][$key];
+    }
+
+    /**
      * Registers routes.
      * 
      * @param callback $routes A function in which an instance of the route provider will be passed, through which routing rules are created.
@@ -140,7 +173,7 @@ final class AppBuilder {
         if ($route !== false) {
             $actionContext = self::actionContext($route);
 
-            if (!self::cached($actionContext)) {
+            if ($actionContext !== null && !self::cached($actionContext)) {
                 self::filters($actionContext);
                 self::headers();
                 self::validation();
@@ -260,6 +293,7 @@ final class AppBuilder {
             $info->cacheProvider = $config['cacheProvider'];
             $info->request = new HttpRequest();
             $info->response = new HttpResponse();
+            $info->session = $_SESSION;
 
             $config['httpContext'] = new HttpContext($info);
         }
@@ -277,6 +311,18 @@ final class AppBuilder {
             }
         }
 
+        // default response handlers
+        $response = $config['httpContext']->getResponse();
+
+        $response->setEndHandler(function() use ($config) {
+            self::invokeAll(self::$appContext->getEnd(), array(new ActionContext($config['httpContext'])));
+        });
+
+        $response->setPreSendHandler(function() use ($config) {
+            self::invokeAll(self::$appContext->getPreSend(), array(new ActionContext($config['httpContext'])));
+        });
+
+        // set context and config, and invoke init handlers
         InternalHelper::setStaticPropertyValue('\\PhpMvc\\HttpContext', 'current', $config['httpContext']);
 
         self::$appContext->setConfig($config);
@@ -329,6 +375,7 @@ final class AppBuilder {
      */
     private static function actionContext($route) {
         $httpContext = self::$config['httpContext'];
+        $response = $httpContext->getResponse();
 
         // TODO: kill constants
         if (!defined('PHPMVC_CONTROLLER')) { define('PHPMVC_CONTROLLER', ucfirst($route->getValueOrDefault('controller', 'Home'))); }
@@ -337,13 +384,21 @@ final class AppBuilder {
         if (!defined('PHPMVC_CURRENT_CONTROLLER_PATH')) { define('PHPMVC_CURRENT_CONTROLLER_PATH', PHPMVC_CONTROLLER_PATH . PHPMVC_VIEW . PHPMVC_DS); }
         if (!defined('PHPMVC_CURRENT_VIEW_PATH')) { define('PHPMVC_CURRENT_VIEW_PATH', PHPMVC_VIEW_PATH . PHPMVC_VIEW . PHPMVC_DS . PHPMVC_ACTION . '.php'); }
 
+        $controllerClassName = '\\' . PHPMVC_APP_NAMESPACE . '\\Controllers\\' . PHPMVC_CONTROLLER . 'Controller';
+
+        if (!class_exists($controllerClassName)) {
+            $response->setStatusCode(404);
+            $response->end();
+            return null;
+        }
+
         // create action context
         $actionContext = new ActionContext($httpContext);
         InternalHelper::setPropertyValue($actionContext, 'actionName', PHPMVC_ACTION);
 
-        // preparing to create an instance of the controller class 
-        $controllerClass = new \ReflectionClass('\\' . PHPMVC_APP_NAMESPACE . '\\Controllers\\' . PHPMVC_CONTROLLER . 'Controller');
-
+        // preparing to create an instance of the controller class
+        $controllerClass = new \ReflectionClass($controllerClassName);
+        
         if (!$controllerClass->isSubclassOf('\\PhpMvc\\Controller')) {
             throw new \Exception('The controller type must be the base of "\\PhpMvc\\Controller".');
         }
@@ -375,17 +430,17 @@ final class AppBuilder {
         // InternalHelper::setPropertyValue($modelState, 'annotations', $annotations);
 
         // response handling
-        $httpContext->getResponse()->setFlushHandler(function($eventArgs) use ($actionContext) {
+        $response->setFlushHandler(function($eventArgs) use ($actionContext) {
             self::cachingPartial($actionContext, $eventArgs);
             self::invokeAll(self::$appContext->getFlush(), array($actionContext, $eventArgs));
         });
 
-        $httpContext->getResponse()->setEndHandler(function() use ($actionContext) {
+        $response->setEndHandler(function() use ($actionContext) {
             self::caching($actionContext);
             self::invokeAll(self::$appContext->getEnd(), array($actionContext));
         });
 
-        $httpContext->getResponse()->setPreSendHandler(function() use ($actionContext) {
+        $response->setPreSendHandler(function() use ($actionContext) {
             self::cachingClient($actionContext);
             self::invokeAll(self::$appContext->getPreSend(), array($actionContext));
         });

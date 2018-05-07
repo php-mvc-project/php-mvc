@@ -49,13 +49,6 @@ abstract class HttpRequestBase {
     protected $cookies;
 
     /**
-     * An associative array containing session variables available to the current script.
-     * 
-     * @var array
-     */
-    protected $session;
-
-    /**
      * An associative array of variables passed to the current script via the URL parameters.
      * 
      * @var array
@@ -96,7 +89,6 @@ abstract class HttpRequestBase {
     protected function __construct(
         $serverVariables, 
         $cookies = array(), 
-        $session = array(), 
         $get = array(), 
         $post = array(), 
         $files = array()
@@ -104,7 +96,6 @@ abstract class HttpRequestBase {
         $this->serverVariables = $serverVariables;
         
         $this->cookies = $cookies;
-        $this->session = $session;
         $this->get = $get;
         $this->post = $post;
         $this->files = $files;
@@ -147,7 +138,7 @@ abstract class HttpRequestBase {
      * 
      * @return string
      */
-    public function rawUrl () {
+    public function rawUrl() {
         if ($this->rawUrl === null) {
             $this->rawUrl = (isset($this->serverVariables['REQUEST_URI']) ? $this->serverVariables['REQUEST_URI'] : '');
         }
@@ -216,7 +207,7 @@ abstract class HttpRequestBase {
      * @return array|string
      */
     public function server($key = null) {
-        return $this->getSingleKeyOrAll($this->serverVariables, $key);
+        return InternalHelper::getSingleKeyOrAll($this->serverVariables, $key);
     }
 
     /**
@@ -227,18 +218,7 @@ abstract class HttpRequestBase {
      * @return array|string
      */
     public function cookies($key = null) {
-        return $this->getSingleKeyOrAll($this->cookies, $key);
-    }
-
-    /**
-     * Returns session.
-     * 
-     * @param string|null $key The session key to get. Default: null - all keys.
-     * 
-     * @return array|mixed
-     */
-    public function session($key = null) {
-        return $this->getSingleKeyOrAll($this->session, $key);
+        return InternalHelper::getSingleKeyOrAll($this->cookies, $key);
     }
 
     /**
@@ -249,7 +229,7 @@ abstract class HttpRequestBase {
      * @return array|mixed
      */
     public function get($key = null) {
-        return $this->getSingleKeyOrAll($this->get, $key);
+        return InternalHelper::getSingleKeyOrAll($this->get, $key);
     }
 
     /**
@@ -260,7 +240,7 @@ abstract class HttpRequestBase {
      * @return array|mixed
      */
     public function post($key = null) {
-        return $this->getSingleKeyOrAll($this->post, $key);
+        return InternalHelper::getSingleKeyOrAll($this->post, $key);
     }
 
     /**
@@ -271,7 +251,7 @@ abstract class HttpRequestBase {
      * @return array|mixed
      */
     public function files($key = null) {
-        return $this->getSingleKeyOrAll($this->files, $key);
+        return InternalHelper::getSingleKeyOrAll($this->files, $key);
     }
 
     /**
@@ -390,19 +370,7 @@ abstract class HttpRequestBase {
             $this->headers = $result;
         }
 
-        return $this->getSingleKeyOrAll($this->headers, $key);
-    }
-
-    /**
-     * Gets single key from array or all keys, if key is null.
-     */
-    private function getSingleKeyOrAll($array, $key) {
-        if ($key !== null) {
-            return (isset($array[$key])) ? $array[$key] : null;
-        }
-        else {
-            return $array;
-        }
+        return InternalHelper::getSingleKeyOrAll($this->headers, $key);
     }
 
 }

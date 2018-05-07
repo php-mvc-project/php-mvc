@@ -28,6 +28,13 @@ abstract class HttpContextBase {
     protected $response;
 
     /**
+     * An associative array containing session variables available to the current script.
+     * 
+     * @var array
+     */
+    protected $session;
+
+    /**
      * The routes collection.
      * 
      * @var RouteProvider
@@ -70,6 +77,7 @@ abstract class HttpContextBase {
         $this->cache = $info->cacheProvider;
         $this->request = $info->request;
         $this->response = $info->response;
+        $this->session = $info->session;
     }
 
     /**
@@ -97,6 +105,29 @@ abstract class HttpContextBase {
      */
     public function getResponse() {
         return $this->response;
+    }
+
+    /**
+     * Gets the session variables.
+     * 
+     * @param string|null $key The key to get. Default: null - all variables.
+     * 
+     * @return array|mixed
+     */
+    public function getSession($key = null) {
+        return InternalHelper::getSingleKeyOrAll($this->session, $key);
+    }
+
+    /**
+     * Sets the variable to the session.
+     * 
+     * @param string $key The key to set.
+     * @param string $value The value to set.
+     * 
+     * @return void
+     */
+    public function setSession($key, $value) {
+        $this->session[$key] = $value;
     }
 
     /**

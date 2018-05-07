@@ -34,4 +34,11 @@ class HttpContextInfo {
      */
     public $response;
 
+    /**
+     * Gets or sets session variables.
+     * 
+     * @var array
+     */
+    public $session;
+
 }

@@ -239,6 +239,23 @@ final class InternalHelper {
     }
 
     /**
+     * Gets single key from array or all keys, if key is null.
+     * 
+     * @param array $array The array to work.
+     * @param string|null $key The key to get, or null to get the $array.
+     * 
+     * @return array|mixed|null
+     */
+    public static function getSingleKeyOrAll($array, $key) {
+        if ($key !== null) {
+            return (isset($array[$key])) ? $array[$key] : null;
+        }
+        else {
+            return $array;
+        }
+    }
+
+    /**
      * Sets view context to static classes.
      * 
      * @param ViewContext $parentActionViewContext The ViewContext instance of the action.
