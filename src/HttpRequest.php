@@ -13,7 +13,6 @@ final class HttpRequest extends HttpRequestBase {
         parent::__construct(
             $_SERVER,
             $_COOKIE,
-            isset($_SESSION) ? $_SESSION : array(),
             $_GET,
             $_POST,
             $_FILES

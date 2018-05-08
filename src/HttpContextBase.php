@@ -28,9 +28,9 @@ abstract class HttpContextBase {
     protected $response;
 
     /**
-     * An associative array containing session variables available to the current script.
+     * Gets the HttpSessionProvider for the current HTTP request.
      * 
-     * @var array
+     * @var HttpSessionProvider
      */
     protected $session;
 
@@ -90,7 +90,7 @@ abstract class HttpContextBase {
     }
 
     /**
-     * Gets request.
+     * Gets the HttpRequestBase object.
      * 
      * @return HttpRequestBase
      */
@@ -99,7 +99,7 @@ abstract class HttpContextBase {
     }
 
     /**
-     * Gets response.
+     * Gets the HttpResponseBase object.
      * 
      * @return HttpResponseBase
      */
@@ -108,26 +108,12 @@ abstract class HttpContextBase {
     }
 
     /**
-     * Gets the session variables.
-     * 
-     * @param string|null $key The key to get. Default: null - all variables.
+     * Gets the HttpSessionProvider.
      * 
      * @return array|mixed
      */
-    public function getSession($key = null) {
-        return InternalHelper::getSingleKeyOrAll($this->session, $key);
-    }
-
-    /**
-     * Sets the variable to the session.
-     * 
-     * @param string $key The key to set.
-     * @param string $value The value to set.
-     * 
-     * @return void
-     */
-    public function setSession($key, $value) {
-        $this->session[$key] = $value;
+    public function getSession() {
+        return $this->session;
     }
 
     /**

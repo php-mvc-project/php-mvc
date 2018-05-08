@@ -88,13 +88,12 @@ final class AppBuilder {
     /**
      * Start new or resume existing session.
      * 
-     * @param array $opions If provided, this is an associative array of options that will override the currently set session configuration directives.
-     * http://php.net/manual/en/session.configuration.php
+     * @param HttpSessionProvider $sessionProvider The session provider to set.
      * 
      * @return void
      */
-    public static function useSession($opions = null) {
-        self::$config['session'] = (!empty($opions) ? $opions : true);
+    public static function useSession($sessionProvider = null) {
+        self::$config['sessionProvider'] = (isset($sessionProvider) ? $sessionProvider : true);
     }
 
     /**
@@ -287,28 +286,29 @@ final class AppBuilder {
 
         $config['cacheProvider']->init();
 
+        if (isset($config['sessionProvider'])) {
+            if ($config['sessionProvider'] === true) {
+                $config['sessionProvider'] = new HttpSession();
+            }
+            elseif (!$config['sessionProvider'] instanceof HttpSessionProvider) {
+                throw new \Exception('The $sessionProvider type must be the base of "\PhpMvc\HttpSessionProvider".');
+            }
+
+            $config['sessionProvider']->init();
+        }
+
         if (empty($config['httpContext'])) {
             $info = new HttpContextInfo();
             $info->routeProvider = $config['routeProvider'];
             $info->cacheProvider = $config['cacheProvider'];
             $info->request = new HttpRequest();
             $info->response = new HttpResponse();
-            $info->session = $_SESSION;
+            $info->session = $config['sessionProvider'];
 
             $config['httpContext'] = new HttpContext($info);
         }
         elseif (!$config['httpContext'] instanceof HttpContextBase) {
             throw new \Exception('The httpContext type must be the base of "\PhpMvc\HttpContextBase".');
-        }
-
-        if (isset($config['session'])) {
-            // TODO: session provider
-            if (is_array($config['session'])) {
-                session_start($config['session']);
-            }
-            else {
-                session_start();
-            }
         }
 
         // default response handlers

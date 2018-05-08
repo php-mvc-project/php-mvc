@@ -37,7 +37,7 @@ class HttpContextInfo {
     /**
      * Gets or sets session variables.
      * 
-     * @var array
+     * @var HttpSessionProvider
      */
     public $session;
 

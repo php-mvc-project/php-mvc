@@ -23,6 +23,15 @@ final class View {
     }
 
     /**
+     * Gets context of the current request.
+     * 
+     * @return HttpContextBase
+     */
+    public static function getHttpContext() {
+        return self::$viewContext->getHttpContext();
+    }
+
+    /**
      * Sets layout.
      * 
      * @param string $path The layout file name in the shared folder or full path to layout file.

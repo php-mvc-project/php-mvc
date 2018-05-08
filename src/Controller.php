@@ -80,6 +80,15 @@ class Controller {
     }
 
     /**
+     * Gets the HttpSessionProvider object for the current request.
+     * 
+     * @return HttpSessionProvider
+     */
+    protected function getSession() {
+        return $this->actionContext->getHttpContext()->getSession();
+    }
+
+    /**
      * Returns ModelState.
      * 
      * @return ModelState
