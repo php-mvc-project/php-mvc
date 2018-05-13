@@ -117,11 +117,13 @@ class Route {
     /**
      * Returns segments of the route.
      * 
+     * @param bool $named Specify whether to return a named collection (true) or array (false, default).
+     * 
      * @var RouteSegment[]
      */
-    public function getSegments() {
+    public function getSegments($named = false) {
         if (!empty($this->segments)) {
-            return $this->segments;
+            return $named === true ? $this->segmentsNamed : $this->segments;
         }
 
         // required parameters
@@ -133,7 +135,7 @@ class Route {
         // extract segments
         $this->segments = $this->extractSegments($this, $safeTemplate, $required);
 
-        return $this->segments;
+        return $named === true ? $this->segmentsNamed : $this->segments;
     }
 
     /**
@@ -142,7 +144,12 @@ class Route {
      * @return string
      */
     private function escapeTemplate($value) {
-        return preg_replace_callback('/([^\{\/\x5c]+|)(\{[^\}]+\})([^\{\/\x5c]+|)/', function($m) {
+        $result = $value;
+
+        $result = str_replace('{{', chr(1), $result);
+        $result = str_replace('}}', chr(2), $result);
+
+        $result = preg_replace_callback('/([^\{\/\x5c]+|)(\{[^\}]+\})([^\{\/\x5c]+|)/', function($m) {
             array_shift($m);
 
             $m = array_filter($m, function($item) {
@@ -154,7 +161,12 @@ class Route {
             }, $m);
 
             return implode('', $m);
-        }, $value);
+        }, $result);
+
+        $result = str_replace(chr(1), '\\{', $result);
+        $result = str_replace(chr(2), '\\}', $result);
+
+        return $result;
     }
 
     /**
@@ -234,7 +246,11 @@ class Route {
                 elseif (empty($default) && !empty($route->defaults[$name])) {
                     $default = $route->defaults[$name];
                 }
-
+                
+                if (!empty($default) && empty($route->defaults[$name])) {
+                    $route->defaults[$name] = $default;
+                }
+        
                 // check uniqueness
                 if (!empty($namedSegments[$name])) {
                     trigger_error(
@@ -335,15 +351,22 @@ class Route {
                     $last->optional = false;
 
                     $segments[] = $last;
+                    $namedSegments[] = $last;
                 }
             }
         }
         else {
-            $segment = new RouteSegment();
-            $segment->pattern = $template;
-            $segment->optional = false;
+            $items = explode('/', $template);
 
-            $segments[] = $segment;
+            foreach ($items as $item) {
+                $segment = new RouteSegment();
+                $segment->pattern = $item;
+                $segment->optional = false;
+    
+                $segments[] = $segment;
+            }
+
+            $namedSegments = $segments;
         }
 
         $this->setBounds($segments);

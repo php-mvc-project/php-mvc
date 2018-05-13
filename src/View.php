@@ -65,6 +65,9 @@ final class View {
             if ($actionResult instanceof ViewResult && !empty($actionResult->model)) {
                 $model = $actionResult->model;
             }
+            else {
+                $model = null;
+            }
         }
     }
 

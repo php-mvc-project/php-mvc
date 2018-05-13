@@ -157,7 +157,27 @@ class ActionContext {
      * @return bool
      */
     public function actionNameEquals($name) {
-        return $this->actionName == strtolower($name);
+        return strtolower($this->actionName) == strtolower($name);
+    }
+
+    /**
+     * Returns name of the controller.
+     * 
+     * @return string
+     */
+    public function getControllerName() {
+        return $this->getRoute()->values['controller'];
+    }
+
+    /**
+     * Checks the equivalence of the specified string with the name of the controller.
+     * 
+     * @param string $name The string to compare.
+     * 
+     * @return bool
+     */
+    public function controllerNameEquals($name) {
+        return strtolower($this->getControllerName()) == strtolower($name);
     }
 
     /**

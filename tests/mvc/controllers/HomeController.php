@@ -9,6 +9,10 @@ use \PhpMvcTest\Models\HomePage;
 
 class HomeController extends Controller {
 
+    public function __construct() {
+        return $this->content('It\'s not safe!');
+    }
+
     public function index($id) {
         $model = new HomePage();
         
@@ -130,6 +134,10 @@ class HomeController extends Controller {
         $view->model = $model;
 
         return $view;
+    }
+
+    public function justModel($m) {
+        return $this->view('index');
     }
 
 }

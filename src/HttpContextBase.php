@@ -35,7 +35,7 @@ abstract class HttpContextBase {
     protected $session;
 
     /**
-     * The routes collection.
+     * The routes provider.
      * 
      * @var RouteProvider
      */
@@ -126,15 +126,6 @@ abstract class HttpContextBase {
     }
 
     /**
-     * Gets route options.
-     * 
-     * @return RouteOptions
-     */
-    public function getRouteOptions() {
-        return $this->routes->getOptions();
-    }
-
-    /**
      * Returns a route that is comparable to the current request context.
      * 
      * @return Route|null
@@ -167,6 +158,23 @@ abstract class HttpContextBase {
      */
     public function getTimestamp() {
         return $this->timestamp;
+    }
+
+    
+    /**
+     * Tries to build a url with the specified parameters.
+     * 
+     * @param string $actionName The name of the action.
+     * @param string $controllerName The name of the controller. Default: current controller.
+     * @param array $routeValues An array that contains the parameters for a route.
+     * @param string $fragment The URL fragment name (the anchor name).
+     * @param string $schema The protocol for the URL, such as "http" or "https".
+     * @param string $host The host name for the URL.
+     * 
+     * @return string
+     */
+    public function tryBuildUrl($actionName, $controllerName = null, $routeValues = null, $fragment = null, $schema = null, $host = null) {
+        return $this->routes->tryBuildUrl($this, $actionName, $controllerName, $routeValues, $fragment, $schema, $host);
     }
 
 }

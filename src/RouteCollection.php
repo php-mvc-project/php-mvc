@@ -49,6 +49,19 @@ class RouteCollection implements \ArrayAccess, \Iterator {
     }
 
     /**
+     * Inserts a route into the collection at the specified index.
+     * 
+     * @param int $index The zero-based index at which route should be inserted.
+     * @param Route $route The route to add.
+     * 
+     * @return void
+     */
+    public function insert($index, $route) {
+        $this->validateRoute($route);
+        array_splice($this->routes, $index, 0, array($route));
+    }
+
+    /**
      * Remove all routes.
      * 
      * @return void

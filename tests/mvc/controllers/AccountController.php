@@ -34,6 +34,10 @@ class AccountController extends Controller {
             }
         }
 
+        if (!isset($model)) {
+            $model = new \PhpMvcTest\Models\Login();
+        }
+
         return $this->view($model);
     }
 

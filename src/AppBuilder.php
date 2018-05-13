@@ -97,6 +97,26 @@ final class AppBuilder {
     }
 
     /**
+     * Allows to manage HTTP request validators.
+     * By default, all validators are enabled. With this method, you can disable certain validators.
+     * 
+     * WARNING: Disabling HTTP requests validation can jeopardize your site and users of your site.
+     * For security reasons, it is not recommended to disable HTTP request validation.
+     * 
+     * @param array|bool $validators List of validators to use or disable.
+     * For example:
+     * array(
+     *  'crossSiteScripting' => false, // disable CrossSiteScriptingValidation
+     *  'actionName' => false // disable action name validation
+     * )
+     * 
+     * @return void
+     */
+    public static function useValidation($validators) {
+        self::$config['validators'] = $validators;
+    }
+
+    /**
      * Sets custom handlers.
      * 
      * @param callback $callback
@@ -164,19 +184,29 @@ final class AppBuilder {
      * @return void
      */
     public static function build() {
-        self::init();
-        self::include();
+        try {
+            self::init();
+            self::include();
+    
+            $route = self::canRoute();
+    
+            if ($route !== false) {
+                $actionContext = self::actionContext($route);
+    
+                if ($actionContext !== null && !self::cached($actionContext)) {
+                    self::filters($actionContext);
+                    self::headers();
+                    self::validation();
+                    self::render($actionContext);
+                }
+            }
+        }
+        catch (\Exception $ex) {
+            $errorHandlerEventArgs = new ErrorHandlerEventArgs($ex);
+            self::invokeAll(self::$appContext->getErrorHandler(), array($errorHandlerEventArgs));
 
-        $route = self::canRoute();
-
-        if ($route !== false) {
-            $actionContext = self::actionContext($route);
-
-            if ($actionContext !== null && !self::cached($actionContext)) {
-                self::filters($actionContext);
-                self::headers();
-                self::validation();
-                self::render($actionContext);
+            if ($errorHandlerEventArgs->getHandled() !== true) {
+                throw $ex;
             }
         }
     }
@@ -423,6 +453,12 @@ final class AppBuilder {
 
         InternalHelper::setPropertyValue($actionContext, 'controller', $controllerInstance);
 
+        if (!method_exists($controllerInstance, PHPMVC_ACTION)) {
+            $response->setStatusCode(404);
+            $response->end();
+            return null;
+        }
+
         // get and set model annotations
         $annotations = InternalHelper::getStaticPropertyValue('\\PhpMvc\\Model', 'annotations');
         $modelState = $actionContext->getModelState();
@@ -447,6 +483,9 @@ final class AppBuilder {
 
         // arguments and model state
         self::makeActionState($actionContext);
+
+        // invoke custom handlers
+        self::invokeAll(self::$appContext->getActionContextInit(), array($actionContext));
 
         return $actionContext;
     }
@@ -803,8 +842,62 @@ final class AppBuilder {
      * @return void
      */
     private static function validation() {
-        if (substr(PHPMVC_ACTION, 0, 2) == '__') {
-            throw new \Exception('Action names can not begin with a "_".');
+        if (isset(self::$config['validators'])) {
+            $validators = self::$config['validators'];
+        }
+        else {
+            $validators = true;
+        }
+
+        // action name validation
+        if ($validators === true || (!isset($validators['actionName']) || $validators['actionName'] === true)) {
+            if (substr(PHPMVC_ACTION, 0, 2) == '__') {
+                throw new ActionNameValidationException();
+            }
+        }
+
+        // request verification token
+        if ($validators === true || (!isset($validators['antiForgeryToken']) || $validators['antiForgeryToken'] === true)) {
+            if (($request = self::$config['httpContext']->getRequest())->isPost()) {
+                $post = $request->post();
+                $expected = $request->cookies('__requestVerificationToken');
+
+                if (!isset($post)) { $post = array(); }
+
+                if ((isset($expected) && (!isset($post['__requestVerificationToken']) || $post['__requestVerificationToken'] != $expected)) || (isset($post['__requestVerificationToken']) && empty($expected))) {
+                    throw new HttpAntiForgeryException();
+                }
+            }
+        }
+
+        // cross site scripting validation
+        if ($validators === true || (!isset($validators['crossSiteScripting']) || $validators['crossSiteScripting'] === true)) {
+            $request = self::$config['httpContext']->getRequest();
+
+            $get = $request->get();
+            $post = $request->post();
+
+            if (!isset($get)) { $get = array(); }
+            if (!isset($post)) { $post = array(); }
+
+            $items = array_merge($get, $post);
+
+            foreach ($items as $key => $value) {
+                $isDangerousString = CrossSiteScriptingValidation::IsDangerousString($key) || CrossSiteScriptingValidation::IsDangerousString($value);
+    
+                if ($isDangerousString) {
+                    $source = null;
+
+                    if (!empty($get[$key])) {
+                        $source = '$_GET';
+                    }
+                    elseif (!empty($post[$key])) {
+                        $source = '$_POST';
+                    }
+    
+                    throw new HttpRequestValidationException($source, $key, $value);
+                }
+            }
         }
     }
 
@@ -927,8 +1020,9 @@ final class AppBuilder {
         $hasModel = false;
         $request = $actionContext->getHttpContext()->getRequest();
 
-        // route values
+        // route
         $route = $actionContext->getRoute();
+        $segments = $route->getSegments(true);
 
         // params of get http
         // TODO: подумать о возможности управлять этим
@@ -937,27 +1031,8 @@ final class AppBuilder {
         // change case of keys
         $get = array_change_key_case($get, CASE_LOWER);
 
-        // params of post
+        // post
         $isPost = $request->isPost();
-        $postData = $isPost ? $request->post() : null;
-        $post =  null;
-
-        if (!empty($postData)) {
-            $post = InternalHelper::arrayToObject($postData);
-        }
-        
-        if (empty($post) && $isPost) {
-            $contentType = $request->contentType();
-
-            if (strrpos($contentType, '/json') !== false) {
-                $requestBody = file_get_contents('php://input');
-
-                $post = json_decode($requestBody);
-            }
-            else {
-                // TODO...
-            }
-        }
 
         // get params of action method
         $r = new \ReflectionMethod(get_class($actionContext->getController()), $actionContext->getActionName());
@@ -976,14 +1051,49 @@ final class AppBuilder {
             }
             else {
                 // parameter not found
-                if ($isPost && !$hasModel && !isset($get[$name])) {
+                if ($isPost && !$hasModel && !isset($get[$name]) && !isset($segments[$name])) {
+                    $postData = $request->post();
+                    $paramTypeName = '\stdClass';
+                    $post = null;
+
+                    if (isset($postData) && isset($postData['__requestVerificationToken'])) {
+                        unset($postData['__requestVerificationToken']);
+                    }
+
+                    if ($param->hasType()) {
+                        if ($param->getType()->isBuiltin()) {
+                            $arguments[$name] = ($param->isOptional() ? $param->getDefaultValue() : null);
+                            continue;
+                        }
+
+                        if (($paramTypeName = $param->getClass()) !== null) {
+                            $paramTypeName = $paramTypeName->getName();
+                        }
+                    }
+
+                    if (!empty($postData)) {
+                        InternalHelper::arrayToObject($postData, $post, $paramTypeName);
+                    }
+                    
+                    if (empty($post)) {
+                        $contentType = $request->contentType();
+            
+                        if (strrpos($contentType, '/json') !== false) {
+                            $requestBody = file_get_contents('php://input');
+                            InternalHelper::arrayToObject(json_decode($requestBody, true), $post, $paramTypeName);
+                        }
+                        else {
+                            // TODO...
+                        }
+                    }
+
                     // post method and model not yet received
                     if ($post == null) {
                         throw new \Exception('"' . $name . ' is required.');
                     }
 
                     $arguments[$name] = $post;
-                    
+
                     // parse post data
                     foreach (get_object_vars($post) as $key => $value) {
                         $modelState[$key] = new ModelStateEntry($key, $value);

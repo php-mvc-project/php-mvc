@@ -245,6 +245,8 @@ class Html {
         return '<a href="' . $url . '"' . (!empty($attr) ? ' ' : '') . $attr . '>' . htmlspecialchars($linkText) . '</a>';
     }
 
+    private static $token = null;
+
     /**
      * Returns a <hidden> element (antiforgery token) that will be validated when the containing <form> is submitted.
      * 
@@ -254,15 +256,17 @@ class Html {
      * @return string
      */
     public static function antiForgeryToken($dynamic = false) {
-        $token = bin2hex(random_bytes(64));
-
-        $response = self::$viewContext->getHttpContext()->getResponse();
+        if (self::$token === null) {
+            self::$token = bin2hex(random_bytes(64));
+            $response = self::$viewContext->getHttpContext()->getResponse();
+            $response->addCookie('__requestVerificationToken', self::$token, 0, '/', '', false, true);
+        }
 
         if ($dynamic === true) {
-            return '<script>document.write(\'<input type="hidden" name="__requestVerificationToken" id="__requestVerificationToken" value="' . $token . '" />\');</script>';
+            return '<script>document.write(\'<input type="hidden" name="__requestVerificationToken" id="__requestVerificationToken" value="' . self::$token . '" />\');</script>';
         }
         else {
-            return '<input type="hidden" name="__requestVerificationToken" id="__requestVerificationToken" value="' . $token . '" />';
+            return '<input type="hidden" name="__requestVerificationToken" id="__requestVerificationToken" value="' . self::$token . '" />';
         }
     }
 
@@ -351,7 +355,7 @@ class Html {
     public static function dropDownList($name, $list, $selectedValue = null, $htmlAttributes = array()) {
         $result = '';
 
-        if (self::getModelValue($name, $modelValue) === true) {
+        if (self::getModelValue(rtrim($name, '[]'), $modelValue) === true) {
             $selectedValue = $modelValue;
         }
 
@@ -739,7 +743,14 @@ class Html {
             return '';
         }
 
-        return str_replace('"', '&quot;', $value);
+        $result = $value;
+
+        $result = str_replace('&', '&amp;', $result);
+        $result = str_replace('<', '&lt;', $result);
+        $result = str_replace('"', '&quot;', $result);
+        $result = str_replace('\'', '&#39;', $result);
+
+        return $result;
     }
 
     /**

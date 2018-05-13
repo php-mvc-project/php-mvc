@@ -627,6 +627,81 @@ final class AppBuilderTest extends TestCase
         echo ' - OK' . chr(10);
     }
 
+    public function testActionNameValidation() {
+        $this->expectException(\PhpMvc\ActionNameValidationException::class);
+
+        $httpContext = HttpContext::get('/home/__construct')->useDefaultRoute();
+
+        echo chr(10);
+        echo 'Request: ' . $httpContext->getRequest()->rawUrl();
+
+        AppBuilder::useHttpContext($httpContext);
+        AppBuilder::build();
+
+        echo ' - OK' . chr(10);
+    }
+
+    public function testDisabledActionNameValidation() {
+        $httpContext = HttpContext::get('/home/__construct')->useDefaultRoute()->noOutputHeaders();
+
+        echo chr(10);
+        echo 'Request: ' . $httpContext->getRequest()->rawUrl();
+
+        ob_start();
+
+        AppBuilder::useValidation(array('actionName' => false));
+        AppBuilder::useHttpContext($httpContext);
+        AppBuilder::build();
+
+        $result = ob_get_clean();
+
+        $this->assertEquals('It\'s not safe!', $result);
+
+        echo ' - OK' . chr(10);
+    }
+
+    public function testCrossSiteScriptingValidation() {
+        $this->expectException(\PhpMvc\HttpRequestValidationException::class);
+
+        $httpContext = HttpContext::post('/account/login', array(
+            'username' => '<root>',
+            'password' => '&#!'
+        ))->useDefaultRoute();
+
+        echo chr(10);
+        echo 'Request: ' . $httpContext->getRequest()->rawUrl();
+
+        AppBuilder::useHttpContext($httpContext);
+        AppBuilder::build();
+
+        echo ' - OK' . chr(10);
+    }
+
+    public function testDisabledCrossSiteScriptingValidation() {
+        $httpContext = HttpContext::post('/account/login', array(
+            'username' => '<root>',
+            'password' => '&#!'
+        ))->useDefaultRoute();
+
+        echo chr(10);
+        echo 'Request: ' . $httpContext->getRequest()->rawUrl();
+
+        ob_start();
+
+        AppBuilder::useValidation(array('crossSiteScripting' => false));
+        AppBuilder::useHttpContext($httpContext);
+        AppBuilder::build();
+
+        $result = ob_get_clean();
+
+        $this->assertContains(
+            '&lt;root>',
+            $result
+        );
+
+        echo ' - OK' . chr(10);
+    }
+
     public function testStaticFile() {
         $routes = new DefaultRouteProvider();
         $routes->ignore('content/{files}', array('files' => '.+'));

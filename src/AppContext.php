@@ -28,6 +28,13 @@ class AppContext {
     protected $init = array();
 
     /**
+     * The handlers for the "actionContextInit" event.
+     * 
+     * @var callback[]
+     */
+    protected $actionContextInit = array();
+
+    /**
      * The handlers for the "flush" event.
      * 
      * @var callback[]
@@ -49,6 +56,13 @@ class AppContext {
     protected $preSend = array();
 
     /**
+     * Application error handler.
+     * 
+     * @var callback[]
+     */
+    protected $errorHandler = array();
+
+    /**
      * Initializes a new instance of the AppContext.
      * 
      * @param array $config The application config.
@@ -60,21 +74,29 @@ class AppContext {
     /**
      * Gets config.
      * 
-     * @return array
+     * @param string|null $key The parameter name to get. Default: null - all paramters.
+     * 
+     * @return array|mixed
      */
-    public function getConfig() {
-        return $this->config;
+    public function getConfig($key = null) {
+        return InternalHelper::getSingleKeyOrAll($this->config, $key);
     }
 
     /**
      * Sets config.
      * 
+     * @param string|array $configOrKey The config or key to set.
      * @param array $config The config to set.
      * 
      * @return void
      */
-    public function setConfig($config) {
-        $this->config = $config;
+    public function setConfig($configOrKey, $config = null) {
+        if ($config !== null) {
+            $this->config[$configOrKey] = $config;
+        }
+        else {
+            $this->config = ($configOrKey !== null ? $configOrKey : array());
+        }
     }
 
     /**
@@ -94,16 +116,29 @@ class AppContext {
     /**
      * @return callback[]
      */
+    public function getActionContextInit() {
+        return $this->actionContextInit;
+    }
+
+    /**
+     * @return callback[]
+     */
     public function getFlush() {
         return $this->flush;
     }
 
-    
     /**
      * @return callback[]
      */
     public function getEnd() {
         return $this->end;
+    }
+
+    /**
+     * @return callback[]
+     */
+    public function getErrorHandler() {
+        return $this->errorHandler;
     }
 
     /**
@@ -138,6 +173,18 @@ class AppContext {
     }
 
     /**
+     * Adds the "actionContextInit" handler.
+     * 
+     * @param callback $callback The function of the handler.
+     * @param string $key The unique name of the handler.
+     * 
+     * @return void
+     */
+    public function addActionContextInit($callback, $key = null) {
+        $this->add('actionContextInit', $callback, $key);
+    }
+
+    /**
      * Adds the "flush" handler.
      * 
      * @param callback $callback The function of the handler.
@@ -159,6 +206,18 @@ class AppContext {
      */
     public function addEnd($callback, $key = null) {
         $this->add('end', $callback, $key);
+    }
+
+    /**
+     * Adds the "errorHandler".
+     * 
+     * @param callback $callback The function of the handler.
+     * @param string $key The unique name of the handler.
+     * 
+     * @return void
+     */
+    public function addErrorHandler($callback, $key = null) {
+        $this->add('errorHandler', $callback, $key);
     }
 
     /**

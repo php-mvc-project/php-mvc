@@ -210,32 +210,136 @@ final class InternalHelper {
      * Converts array to object,
      * 
      * @param array $array The array to convert.
-     * @param \stdClass $parent The parent object.
+     * @param \stdClass|mixed|null $object The result object.
+     * @param string $type The type of data that the function should return. Default: \stdClass
      * 
-     * @return \stdClass
+     * @return void
      */
-    public static function arrayToObject($array, $parent = null) {
-        $result = isset($parent) ? $parent : new \stdClass();
-        
+    public static function arrayToObject($array, &$object = null, $type = null) {
+        $object = isset($object) ? $object : (isset($type) ? new $type() : new \stdClass());
+
         ksort($array);
 
         foreach ($array as $key => $value)
         {
             if (strpos($key, '_') === false) {
-                $result->$key = $value;
+                $activeObject = $object;
+                
+                if (is_array($object) && $type !== null) {
+                    $activeObject = new $type();
+                    $object[] = $activeObject;
+                }
+
+                // is array
+                if (substr($key, -1) == ']') {
+                    $key = substr($key, 0, strrpos($key, '['));
+
+                    if (!isset($activeObject->$key) || !is_array($activeObject->$key)) {
+                        $activeObject->$key = array();
+                    }
+
+                    if (is_array($value)) {
+                        foreach ($value as $v) {
+                            $activeObject->$key[] = $v;
+                        }
+                    }
+                    else {
+                        $activeObject->$key[] = $value;
+                    }
+                }
+                else {
+                    $activeObject->$key = $value;
+                }
             } else {
                 $name = explode('_', $key);
-                $newKey = array_shift($name);
+                $activeObject = $object;
 
-                if (!isset($result->$newKey)) {
-                    $result->$newKey = new \stdClass();
+                while (count($name) > 1) {
+                    $current = array_shift($name);
+                    $isArray = false;
+
+                    // is array
+                    if (substr($current, -1) == ']') {
+                        $index = substr($current, strrpos($current, '[') + 1, -1);
+                        $current = substr($current, 0, strrpos($current, '['));
+                        $isArray = true;
+                    }
+
+                    if (isset($activeObject->$current)) {
+                        if ($isArray) {
+                            if (!isset($activeObject->$current[$index])) {
+                                $activeObject->$current[$index] = (isset($type) ? new $type() : new \stdClass());
+                            }
+
+                            $activeObject = $activeObject->$current[$index];
+                        }
+                        else {
+                            $activeObject = $activeObject->$current;
+                        }
+
+                        continue;
+                    }
+
+                    $reflection = new \ReflectionClass($activeObject);
+
+                    if (isset($reflection) &&  $reflection->hasProperty($current)) {
+                        $property = $reflection->getProperty($current);
+
+                        if (($propertyComment = $property->getDocComment()) !== null && $propertyComment !== '' && preg_match('/@var\s+(?<name>[^\n]+)/', $propertyComment, $m) === 1) {
+                            $propertyType = trim($m[1]);
+
+                            if (substr($propertyType, -1) == ']') {
+                                $propertyType = substr($propertyType, 0, strrpos($propertyType, '['));
+                            }
+
+                            if (!class_exists($propertyType)) {
+                                if (is_object($object)) {
+                                    $objectReflection = new \ReflectionClass($object);
+                                    $propertyTypeNamesapce = $objectReflection->getNamespaceName();
+                                }
+                                elseif ($type !== null && $type != '\stdClass') {
+                                    $propertyTypeNamesapce = substr($type, 0, strrpos($type, '\\'));
+                                }
+
+                                if (class_exists($propertyTypeNamesapce . '\\' . $propertyType)) {
+                                    $propertyType = $propertyTypeNamesapce . '\\' . $propertyType;
+                                }
+                                else {
+                                    $propertyType = '\stdClass';
+                                }
+                            }
+                        }
+                        else {
+                            $propertyType = '\stdClass';
+                        }
+                    }
+                    else {
+                        $propertyType = '\stdClass';
+                    }
+
+                    if ($isArray) {
+                        $newObject = array();
+                        $newObject[$index] = new $propertyType();
+                        $type = $propertyType;
+                    }
+                    else {
+                        $newObject = new $propertyType();
+                        $type = null;
+                    }
+
+                    if (isset($property)) {
+                        $property->setValue($activeObject, $newObject);
+                    }
+                    else {
+                        $activeObject->$current = $newObject;
+                    }
+
+                    $activeObject = ($isArray ? $newObject[$index] : $newObject);
                 }
-                
-                self::arrayToObject(array($name[0] => $value), $result->$newKey);
+
+                self::arrayToObject(array($name[0] => $value), $activeObject, $type);
             }
         }
-
-        return $result;
     }
 
     /**

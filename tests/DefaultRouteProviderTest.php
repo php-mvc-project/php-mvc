@@ -241,7 +241,7 @@ final class DefaultRouteProviderTest extends TestCase
                 $this->assertNotNull($route);
                 $this->assertEquals($request['expectRoute'], $route->name);
                 $this->assertEquals(count($request['expectSegments']), count($route->values));
-    
+
                 foreach ($request['expectSegments'] as $key => $value) {
                     $this->assertEquals($value, $route->values[$key]);
                 }

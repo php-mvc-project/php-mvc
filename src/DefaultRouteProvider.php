@@ -125,6 +125,35 @@ final class DefaultRouteProvider implements RouteProvider {
     }
 
     /**
+     * Inserts a route into the collection at the specified index.
+     * 
+     * @param int $index The zero-based index at which route should be inserted.
+     * @param string $name The unique name of the route.
+     * @param string $template The template by which the route will be searched.
+     * Use curly braces to denote the elements of the route.
+     * For example: {controller}/{action}/{id}
+     * {controller=Home}/{action=index}/{id?}
+     * @param array $defaults An associative array containing the default values for the elements defined in the $template.
+     * For example, $template is {controller}/{action}/{id}
+     * $defaults = array('controller' => 'Home', 'action' => 'index', id => \PhpMvc\UrlParameter.OPTIONAL)
+     * @param array $constraints An associative array containing regular expressions for checking the elements of the route.
+     * For example, $template is {controller}/{action}/{id}
+     * $constraints = array('id' => '\w+')
+     * 
+     * @return void
+     */
+    public function insert($index, $name, $template, $defaults = null, $constraints = null) {
+        $route = new Route();
+
+        $route->name = $name;
+        $route->template = $template;
+        $route->defaults = $defaults;
+        $route->constraints = $constraints;
+
+        $this->routes->insert($index, $route);
+    }
+
+    /**
      * Adds an URL pattern that should not be checked for matches against routes if a request URL meets the specified constraints.
      * 
      * @param string $template The URL pattern to be ignored.
@@ -161,6 +190,160 @@ final class DefaultRouteProvider implements RouteProvider {
     }
 
     /**
+     * Tries to build a url with the specified parameters.
+     * 
+     * @param HttpContextBase $httpContext The context of the request.
+     * @param string $actionName The name of the action.
+     * @param string $controllerName The name of the controller. Default: current controller.
+     * @param array $routeValues An array that contains the parameters for a route.
+     * @param string $fragment The URL fragment name (the anchor name).
+     * @param string $schema The protocol for the URL, such as "http" or "https".
+     * @param string $host The host name for the URL.
+     * 
+     * @return string
+     */
+    public function tryBuildUrl($httpContext, $actionName, $controllerName = null, $routeValues = null, $fragment = null, $schema = null, $host = null) {
+        $options = $this->getOptions();
+
+        $result = '';
+
+        if (!empty($schema)) {
+            $result .= $schema . '://';
+
+            if (empty($host)) {
+                $result .= $httpContext->getRequest()->server('HTTP_HOST') . '/';
+            }
+        }
+
+        if (!empty($host)) {
+            if (empty($schema)) {
+                if ($httpContext->getRequest()->isSecureConnection()) {
+                    $schema = 'https';
+                }
+                else {
+                    $schema = 'http';
+                }
+
+                $result .= $schema . '://';
+            }
+
+            $result .= $host . '/';
+        }
+
+        if (empty($result)) {
+            $result = '/';
+        }
+
+        $routeValues = isset($routeValues) ? $routeValues : array();
+
+        if (empty($controllerName)) {
+            // use controller of the current route
+            $controllerName = $httpContext->getRoute()->values['controller'];
+        }
+
+        // search route
+        $routes = $httpContext->getRoutes();
+        $possibleRoute = null;
+        $foundRoute = null;
+
+        foreach ($routes as $route) {
+            if (empty($route->defaults)) {
+                continue;
+            }
+
+            if (!empty($route->defaults['controller']) && $route->defaults['controller'] == $controllerName) {
+                $segments = $route->getSegments(true);
+                $possibleRoute = !empty($segments['action']) ? $route : null;
+
+                if (empty($segments['action']) && !empty($route->defaults['action']) && $route->defaults['action'] != $actionName) {
+                    continue;
+                }
+
+                $foundRoute = $route;
+
+                break;
+            }
+        }
+
+        if ($foundRoute !== null) {
+            $route = $foundRoute;
+        }
+        elseif ($possibleRoute != null) {
+            $route = $possibleRoute;
+        }
+
+        $segments = $route->getSegments();
+
+        $last = null;
+
+        foreach ($segments as $segment) {
+            $result .= $segment->after;
+
+            if (empty($segment->name)) {
+                $result .= $segment->pattern;
+            }
+            elseif ($segment->name == 'controller' && !empty($controllerName)) {
+                $result .= $controllerName;
+            }
+            elseif ($segment->name == 'controller' && empty($controllerName) && !empty($route->values['controller'])) {
+                $result .= $route->values['controller'];
+            }
+            elseif ($segment->name == 'action') {
+                $result .= $actionName;
+            }
+            else {
+                if (!empty($routeValues[$segment->name])) {
+                    $result .= $routeValues[$segment->name];
+                    unset($routeValues[$segment->name]);
+                }
+                else
+                {
+                    if ($segment->default !== UrlParameter::OPTIONAL) {
+                        $result .= $segment->default;
+                    }
+                }
+            }
+
+            $result .= $segment->before;
+
+            $result .= '/';
+
+            if ($segment->preEnd === true || ($segment->end === true && $segment->default !== UrlParameter::OPTIONAL)) {
+                $last = $segment;
+            }
+        }
+
+        $result = rtrim($result, '/');
+
+        if ($options->removeLastSegmentIfValueIsDefault === true) {
+            $lastSegmentPos = strrpos($result, '/');
+            $lastSegment = trim(mb_substr($result, $lastSegmentPos), '/');
+
+            if (empty($last->before) && !empty($last->default) && mb_strtolower($last->default) === mb_strtolower($lastSegment)) {
+                $result = mb_substr($result, 0, $lastSegmentPos);
+            }
+        }
+
+        if ($options->lowercaseUrls === true) {
+            $result = mb_strtolower($result);
+        }
+
+        if ($options->appendTrailingSlash === true) {
+            $result .= '/';
+        }
+
+        if (!empty($routeValues)) {
+            $result .= '?' . http_build_query($routeValues);
+        }
+
+        if (!empty($fragment)) {
+            $result .= '#' . $fragment;
+        }
+
+        return $result;
+    }
+
+    /**
      * Returns from the specified collection the first route similar to the current url.
      * 
      * @param RouteCollection $routes The route collection.
@@ -189,7 +372,7 @@ final class DefaultRouteProvider implements RouteProvider {
 
         foreach($routes as $route) {
             $segments = $cache->getOrAdd(
-                '__route_segments_' . $route->template,
+                '__route_segments_0_' . $route->template,
                 $route->getSegments(),
                 1200
             );
@@ -242,7 +425,7 @@ final class DefaultRouteProvider implements RouteProvider {
 
                 if (!empty($route->defaults)) {
                     foreach ($route->defaults as $name => $defaultValue) {
-                        if (empty($values[$name])) {
+                        if (empty($values[$name]) && $defaultValue != UrlParameter::OPTIONAL) {
                             $values[$name] = $defaultValue;
                         }
                     }

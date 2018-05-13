@@ -44,10 +44,12 @@ final class FileCacheProvider implements CacheProvider {
             $config = new FileCacheProviderConfig();
         }
         elseif (is_array($config)) {
-            $config = InternalHelper::arrayToObject($config);
+            $configArray = $config;
+            $config = null;
+            InternalHelper::arrayToObject($configArray, $config, '\PhpMvc\FileCacheProviderConfig');
         }
 
-        if (empty($config->cachePath)) {
+        if (!isset($config->cachePath) || empty($config->cachePath)) {
             $config->cachePath = '~/cache';
         }
 

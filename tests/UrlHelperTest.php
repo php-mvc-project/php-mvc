@@ -23,6 +23,7 @@ final class UrlHelperTest extends TestCase
         $routes = new DefaultRouteProvider();
 
         $routes->add('strange', 'test/abc/aaa/{action=1123}/ffff', array('controller' => 'home'));
+        $routes->add('anyname', 'alibaba/the', array('controller' => 'abc', 'action' => 'kaadabrov'));
         $routes->add('test', 'testovich/{action=index}/{id?}', array('controller' => 'abc'));
 
         $routes->add(
@@ -53,40 +54,40 @@ final class UrlHelperTest extends TestCase
 
         echo $result . ' - OK' . chr(10);
 
-        $httpContext = HttpContext::get('https://example.org/abc/test')->setRoutes($routes);
+        $httpContext = HttpContext::get('https://example.org/abcdef/test')->setRoutes($routes);
 
         $actionContext = new ActionContext($httpContext);
 
         $this->assertEquals(
-            '/test',
+            '/abcdef',
             $result = UrlHelper::action($actionContext, 'index')
         );
 
         echo $result . ' - OK' . chr(10);
 
         $this->assertEquals(
-            'https://example.org/test#test',
+            'https://example.org/abcdef#test',
             $result = UrlHelper::action($actionContext, 'index', null, null, 'test', 'https', 'example.org')
         );
 
         echo $result . ' - OK' . chr(10);
 
         $this->assertEquals(
-            'https://example.org/test',
+            'https://example.org/abcdef',
             $result = UrlHelper::action($actionContext, 'index', null, null, null, null, 'example.org')
         );
 
         echo $result . ' - OK' . chr(10);
 
         $this->assertEquals(
-            'git://example.org/test',
+            'git://example.org/abcdef',
             $result = UrlHelper::action($actionContext, 'index', null, null, null, 'git')
         );
 
         echo $result . ' - OK' . chr(10);
 
         $this->assertEquals(
-            '/test/page/123?text=hello+world%21&n=555',
+            '/abcdef/page/123?text=hello+world%21&n=555',
             $result = UrlHelper::action(
                 $actionContext, 
                 'page', 
@@ -111,6 +112,13 @@ final class UrlHelperTest extends TestCase
         $this->assertEquals(
             '/testovich/examplovich', 
             $result = UrlHelper::action($actionContext, 'examplovich', 'abc')
+        );
+
+        echo $result . ' - OK' . chr(10);
+
+        $this->assertEquals(
+            '/alibaba/the', 
+            $result = UrlHelper::action($actionContext, 'kaadabrov', 'abc')
         );
 
         echo $result . ' - OK' . chr(10);
