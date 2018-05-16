@@ -45,11 +45,16 @@ class Html {
     /**
      * Gets display name for the specified field.
      * 
-     * @param string $propertyName The name of the property to display the name.
+     * @param string|array $propertyName The name of the property to display the name.
+     * It can be a string or an array.
+     * If an array is specified, the property chain in the model will be searched.
+     * For example: array('A', 'B') is $model->A->B.
      * 
      * @return string
      */
     public static function displayName($propertyName) {
+        $propertyName = (is_array($propertyName) ? implode('_', $propertyName) : $propertyName);
+
         if (($dataAnnotation = self::$viewContext->getModelDataAnnotation($propertyName)) !== null) {
             return htmlspecialchars($dataAnnotation->displayName);
         }
@@ -61,11 +66,16 @@ class Html {
     /**
      * Gets display text for the specified field.
      * 
-     * @param string $propertyName The name of the property to display the text.
+     * @param string|array $propertyName The name of the property to display the text.
+     * It can be a string or an array.
+     * If an array is specified, the property chain in the model will be searched.
+     * For example: array('A', 'B') is $model->A->B.
      * 
      * @return string
      */
     public static function displayText($propertyName) {
+        $propertyName = (is_array($propertyName) ? implode('_', $propertyName) : $propertyName);
+
         if (($dataAnnotation = self::$viewContext->getModelDataAnnotation($propertyName)) !== null) {
             return htmlspecialchars($dataAnnotation->displayText);
         }
@@ -125,7 +135,10 @@ class Html {
     /**
      * Gets a validation message if an error exists for the specified field.
      * 
-     * @param string $properyName The name of the property that is being validated.
+     * @param string|array $propertyName The name of the property that is being validated.
+     * It can be a string or an array.
+     * If an array is specified, the property chain in the model will be searched.
+     * For example: array('A', 'B') is $model->A->B.
      * @param string $validationMessage The message to display if the field contains an error.
      * @param string $tag The tag to wrap the message in the generated HTML. Default: span.
      * @param array $htmlAttributes The HTML attributes for the element.
@@ -133,8 +146,9 @@ class Html {
      * @return string
      */
     public static function validationMessage($propertyName, $validationMessage = null, $tag = 'span', $htmlAttributes = array()) {
-        $htmlAttributes = $htmlAttributes === null ? array() : $htmlAttributes;
-        $tag =  empty($tag) ? 'div' : trim($tag, '<>');
+        $propertyName = (is_array($propertyName) ? implode('_', $propertyName) : $propertyName);
+        $htmlAttributes = ($htmlAttributes === null ? array() : $htmlAttributes);
+        $tag = empty($tag) ? 'div' : trim($tag, '<>');
 
         if (!isset($htmlAttributes['class'])) {
             $htmlAttributes['class'] = 'field-validation-error';
@@ -321,7 +335,10 @@ class Html {
     /**
      * Returns an <input> element of type "checkbox".
      * 
-     * @param string $name The name of the element.
+     * @param string|array $name The name of the element.
+     * It can be a string or an array.
+     * If an array is specified, the property chain in the model will be searched.
+     * For example: array('A', 'B') is $model->A->B.
      * @param bool|null $checked If true, checkbox is initially checked.
      * @param array $htmlAttributes The HTML attributes for the element.
      * 
@@ -345,7 +362,10 @@ class Html {
     /**
      * Returns a single-selection HTML <select> element.
      * 
-     * @param string $name The name of the element.
+     * @param string|array $name The name of the element.
+     * It can be a string or an array.
+     * If an array is specified, the property chain in the model will be searched.
+     * For example: array('A', 'B') is $model->A->B.
      * @param array|SelectListItem[] $list The list of values.
      * @param string|array|null $selectedValue If non-null, this value will be used as the selected value.
      * @param array $htmlAttributes The HTML attributes for the element.
@@ -355,9 +375,13 @@ class Html {
     public static function dropDownList($name, $list, $selectedValue = null, $htmlAttributes = array()) {
         $result = '';
 
-        if (self::getModelValue(rtrim($name, '[]'), $modelValue) === true) {
+        $name = is_array($name) ? $name : rtrim($name, '[]');
+
+        if (self::getModelValue($name, $modelValue) === true) {
             $selectedValue = $modelValue;
         }
+
+        $name = is_array($name) ? implode('_', $name) : $name;
 
         $htmlAttributes = $htmlAttributes === null ? array() : $htmlAttributes;
         $htmlAttributes['name'] = isset($htmlAttributes['name']) ? $htmlAttributes['name'] : $name;
@@ -473,7 +497,10 @@ class Html {
     /**
      * Returns an <input> element of type "hidden".
      * 
-     * @param string $name The name of the element.
+     * @param string|array $name The name of the element.
+     * It can be a string or an array.
+     * If an array is specified, the property chain in the model will be searched.
+     * For example: array('A', 'B') is $model->A->B.
      * @param string $value If non-null, value to include in the element.
      * @param array $htmlAttributes The HTML attributes for the element.
      * 
@@ -486,15 +513,25 @@ class Html {
     /**
      * Returns a <label> element.
      * 
-     * @param string $name The name of the element.
+     * @param string|array $name The name of the element.
+     * It can be a string or an array.
+     * If an array is specified, the property chain in the model will be searched.
+     * For example: array('A', 'B') is $model->A->B.
      * @param string $text The inner text of the element.
      * @param array $htmlAttributes The HTML attributes for the element.
      * 
      * @return string
      */
-    public static function label($name, $text, $htmlAttributes = array()) {
+    public static function label($name, $text = null, $htmlAttributes = array()) {
+        $name = is_array($name) ? implode('_', $name) : $name;
         $htmlAttributes = $htmlAttributes === null ? array() : $htmlAttributes;
-        $htmlAttributes['for']  = isset($htmlAttributes['for']) ? $htmlAttributes['for'] : $name;
+        $htmlAttributes['for'] = isset($htmlAttributes['for']) ? $htmlAttributes['for'] : $name;
+
+        if (empty($text)) {
+            if (!empty($annotation = self::$viewContext->getModelState()->getAnnotation($name))) {
+                $text = $annotation->displayName;
+            }
+        }
 
         return '<label ' . self::buildAttributes($htmlAttributes) . '>' . htmlspecialchars($text) . '</label>';
     }
@@ -502,7 +539,10 @@ class Html {
     /**
      * Returns a multi-selection <select> element.
      * 
-     * @param string $name The name of the element.
+     * @param string|array $name The name of the element.
+     * It can be a string or an array.
+     * If an array is specified, the property chain in the model will be searched.
+     * For example: array('A', 'B') is $model->A->B.
      * @param array|SelectListItem[] $list The list of values.
      * @param int $size The size of the list.
      * @param string|array|null $selectedValue If non-null, this value will be used as the selected value.
@@ -513,13 +553,19 @@ class Html {
     public static function listBox($name, $list, $size = 1, $selectedValue = null, $htmlAttributes = array()) {
         $htmlAttributes = $htmlAttributes === null ? array() : $htmlAttributes;
 
-        if (empty($size)) { 
+        if (empty($size)) {
             $size = 1;
         }
 
-        $htmlAttributes['name'] = rtrim(isset($htmlAttributes['name']) ? $htmlAttributes['name'] : $name, '[]') . '[]';
-        $htmlAttributes['id'] = isset($htmlAttributes['id']) ? $htmlAttributes['id'] :  rtrim($name, '[]');
-        $name = $htmlAttributes['name'];
+        $nameString = is_array($name) ? implode('_', $name) : $name;
+        $name = isset($htmlAttributes['name']) ? rtrim($htmlAttributes['name'], '[]') . '[]' : $name;
+
+        if (is_array($name)) {
+            $name[count($name) - 1] = rtrim($name[count($name) - 1], '[]') . '[]';
+        }
+
+        $htmlAttributes['name'] = rtrim(isset($htmlAttributes['name']) ? $htmlAttributes['name'] : $nameString, '[]') . '[]';
+        $htmlAttributes['id'] = isset($htmlAttributes['id']) ? $htmlAttributes['id'] :  rtrim($nameString, '[]');
 
         $htmlAttributes['size']  = $size;
         $htmlAttributes['multiple']  = 'multiple';
@@ -530,7 +576,10 @@ class Html {
     /**
      * Returns an <input> element of type "password".
      * 
-     * @param string $name The name of the element.
+     * @param string|array $name The name of the element.
+     * It can be a string or an array.
+     * If an array is specified, the property chain in the model will be searched.
+     * For example: array('A', 'B') is $model->A->B.
      * @param string $value If non-null, value to include in the element.
      * @param array $htmlAttributes The HTML attributes for the element.
      * 
@@ -543,7 +592,10 @@ class Html {
     /**
      * Returns an <input> element of type "email".
      * 
-     * @param string $name The name of the element.
+     * @param string|array $name The name of the element.
+     * It can be a string or an array.
+     * If an array is specified, the property chain in the model will be searched.
+     * For example: array('A', 'B') is $model->A->B.
      * @param string $value If non-null, value to include in the element.
      * @param array $htmlAttributes The HTML attributes for the element.
      * 
@@ -556,7 +608,10 @@ class Html {
     /**
      * Returns an <input> element of type "radio".
      * 
-     * @param string $name The name of the element.
+     * @param string|array $name The name of the element.
+     * It can be a string or an array.
+     * If an array is specified, the property chain in the model will be searched.
+     * For example: array('A', 'B') is $model->A->B.
      * @param mixed $value If non-null, value to include in the element. Must not be null if $checked is also null and no "checked" entry exists in $htmlAttributes.
      * @param bool|null $checked If true, checkbox is initially checked.
      * @param array $htmlAttributes The HTML attributes for the element.
@@ -588,7 +643,10 @@ class Html {
     /**
      * Returns a <textarea> element.
      * 
-     * @param string $name The name of the element.
+     * @param string|array $name The name of the element.
+     * It can be a string or an array.
+     * If an array is specified, the property chain in the model will be searched.
+     * For example: array('A', 'B') is $model->A->B.
      * @param string $value If non-null, value to include in the element.
      * @param int $rows Number of rows in the textarea.
      * @param int $columns Number of columns in the textarea.
@@ -599,9 +657,10 @@ class Html {
     public static function textArea($name, $value = '', $rows = null, $columns = null, $htmlAttributes = array()) {
         $result = '';
         $htmlAttributes = $htmlAttributes === null ? array() : $htmlAttributes;
+        $nameString = is_array($name) ? implode('_', $name) : $name;
 
-        $htmlAttributes['name'] = isset($htmlAttributes['name']) ? $htmlAttributes['name'] : $name;
-        $htmlAttributes['id'] = isset($htmlAttributes['id']) ? $htmlAttributes['id'] : $name;
+        $htmlAttributes['name'] = isset($htmlAttributes['name']) ? $htmlAttributes['name'] : $nameString;
+        $htmlAttributes['id'] = isset($htmlAttributes['id']) ? $htmlAttributes['id'] : $nameString;
 
         if (self::getModelValue($name, $modelValue) === true) {
             $value = $modelValue;
@@ -625,7 +684,10 @@ class Html {
     /**
      * Returns an <input> element of type "text".
      * 
-     * @param string $name The name of the element.
+     * @param string|array $name The name of the element.
+     * It can be a string or an array.
+     * If an array is specified, the property chain in the model will be searched.
+     * For example: array('A', 'B') is $model->A->B.
      * @param string $value If non-null, value to include in the element.
      * @param array $htmlAttributes The HTML attributes for the element.
      * 
@@ -676,7 +738,10 @@ class Html {
     /**
      * Returns an <input> element.
      * 
-     * @param string $name The element name.
+     * @param string|array $name The name of the element.
+     * It can be a string or an array.
+     * If an array is specified, the property chain in the model will be searched.
+     * For example: array('A', 'B') is $model->A->B.
      * @param string $type The element type. Default: text.
      * @param string $value If non-null, value to include in the element.
      * @param array $htmlAttributes The HTML attributes for the element.
@@ -686,9 +751,11 @@ class Html {
     private static function input($name, $type = 'text', $value = null, $htmlAttributes = null, $ignoreModelValue = false) {
         $htmlAttributes = $htmlAttributes === null ? array() : $htmlAttributes;
 
+        $nameString = is_array($name) ? implode('_', $name) : $name;
+
         $htmlAttributes['type'] = isset($htmlAttributes['type']) ? $htmlAttributes['type'] : $type;
-        $htmlAttributes['name'] = isset($htmlAttributes['name']) ? $htmlAttributes['name'] : $name;
-        $htmlAttributes['id'] = isset($htmlAttributes['id']) ? $htmlAttributes['id'] : $name;
+        $htmlAttributes['name'] = isset($htmlAttributes['name']) ? $htmlAttributes['name'] : $nameString;
+        $htmlAttributes['id'] = isset($htmlAttributes['id']) ? $htmlAttributes['id'] : $nameString;
 
         if ($ignoreModelValue !== true && self::getModelValue($name, $modelValue) === true) {
             $value = $modelValue;
@@ -756,7 +823,10 @@ class Html {
     /**
      * Gets value from model state or model.
      * 
-     * @param string $name The name of model item.
+     * @param string|array $name The name of the element.
+     * It can be a string or an array.
+     * If an array is specified, the property chain in the model will be searched.
+     * For example: array('A', 'B') is $model->A->B.
      * @param mixed $value The result.
      * @param int $filter See http://php.net/manual/en/filter.filters.php
      * 
@@ -764,12 +834,13 @@ class Html {
      */
     private static function getModelValue($name, &$value, $filter = \FILTER_DEFAULT) {
         $modelState = self::$viewContext->getModelState();
+        $name = is_array($name) ? $name : array($name);
 
         if (empty($modelState->items)) {
             $model = self::$viewContext->model;
         }
         else {
-            if (isset($modelState->items[$name])) {
+            if (isset($modelState->items[implode('_', $name)])) {
                 $model = $modelState->items;
             }
             else {
@@ -782,17 +853,53 @@ class Html {
             return false;
         }
 
-        if (is_object($model)) {
-            if (substr($name, -2) == '[]') {
-                $name = rtrim($name, '[]');
+        if (is_object($model) && $model instanceof ModelStateEntry) {
+            if (is_array($model->value)) {
+                $value = $model->value;
+            }
+            else {
+                $value = filter_var($model->value, $filter);
             }
 
-            if (isset($model->$name)) {
-                if (is_array($model->$name)) {
-                    $value = $model->$name;
+            return true;
+        }
+        elseif (is_object($model)) {
+            $current = $model;
+
+            while (count($name) > 1) {
+                $key = array_shift($name);
+
+                if (substr($key, -2) == '[]') {
+                    $key = rtrim($key, '[]');
+                }
+    
+                if (isset($current->$key)) {
+                    $current = $current->$key;
                 }
                 else {
-                    $value = filter_var($model->$name, $filter);
+                    $current = null;
+                    break;
+                }
+            }
+
+            $name = rtrim($name[0], '[]');
+
+            if (is_object($current) && isset($current->$name)) {
+                if (is_array($current->$name)) {
+                    $value = $current->$name;
+                }
+                else {
+                    $value = filter_var($current->$name, $filter);
+                }
+
+                return true;
+            }
+            elseif (is_array($current) && isset($current[$name])) {
+                if (is_array($current->$name)) {
+                    $value = $current->$name;
+                }
+                else {
+                    $value = filter_var($current->$name, $filter);
                 }
 
                 return true;
@@ -803,6 +910,8 @@ class Html {
             }
         }
         elseif (is_array($model)) {
+            $name = implode('_', $name);
+
             if (isset($model[$name])) {
                 $value = ($model[$name] instanceof ModelStateEntry ? $model[$name]->value : $model[$name]);
 

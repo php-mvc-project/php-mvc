@@ -25,13 +25,12 @@ final class Model {
      * and it is expected that the property value must be specified.
      * 
      * @param string $actionName Action name.
-     * @param string|array $propertyName Property name or names of properties to mark.
-     * It is possible to specify both the property names and the associative array. 
-     * In the array, the key is the property's name, and the value contains an error message.
+     * @param string $propertyName The property name.
+     * @param string $errorMessage The error message.
      * 
      * @return void
      */
-    public static function required($actionName, ...$propertyName) {
+    public static function required($actionName, $propertyName, $errorMessage = null) {
         if (!self::$actionContext->actionNameEquals($actionName)) {
             return;
         }
@@ -44,20 +43,9 @@ final class Model {
             throw new \Exception('$propertyName must not be empty.');
         }
 
-        foreach ($propertyName as $item) {
-            $errorMessage = null;
+        self::makeDataAnnotation($propertyName);
 
-            if (is_array($item)) {
-                $key = key($item);
-                $errorMessage = $item[$key];
-            } else {
-                $key = $item;
-            }
-
-            self::makeDataAnnotation($key);
-
-            self::$annotations[$key]->required = array($errorMessage);
-        }
+        self::$annotations[$propertyName]->required = array($errorMessage);
     }
 
     /**
@@ -221,7 +209,9 @@ final class Model {
         self::$annotations[$propertyName]->displayText = $text;
     }
 
-    private static function makeDataAnnotation($propertyName) {
+    private static function makeDataAnnotation(&$propertyName) {
+        $propertyName = is_array($propertyName) ? implode('_', $propertyName) : $propertyName;
+
         if (!isset(self::$annotations[$propertyName])) {
             self::$annotations[$propertyName] = new ModelDataAnnotation();
         }

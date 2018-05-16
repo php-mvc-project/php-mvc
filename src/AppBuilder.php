@@ -440,6 +440,7 @@ final class AppBuilder {
         InternalHelper::setStaticPropertyValue('\\PhpMvc\\Model', 'actionContext', $actionContext);
         InternalHelper::setStaticPropertyValue('\\PhpMvc\\Filter', 'actionContext', $actionContext);
         InternalHelper::setStaticPropertyValue('\\PhpMvc\\OutputCache', 'actionContext', $actionContext);
+        InternalHelper::setStaticPropertyValue('\\PhpMvc\\ValidateAntiForgeryToken', 'actionContext', $actionContext);
 
         // create instance of controller
         if ($controllerClass->getConstructor() != null) {
@@ -857,7 +858,8 @@ final class AppBuilder {
         }
 
         // request verification token
-        if ($validators === true || (!isset($validators['antiForgeryToken']) || $validators['antiForgeryToken'] === true)) {
+        $antiForgeryTokenForAction = InternalHelper::getStaticPropertyValue('\\PhpMvc\\ValidateAntiForgeryToken', 'enable');
+        if ($antiForgeryTokenForAction === true || (($validators === true || (!isset($validators['antiForgeryToken']) || $validators['antiForgeryToken'] === true)) && $antiForgeryTokenForAction !== false)) {
             if (($request = self::$config['httpContext']->getRequest())->isPost()) {
                 $post = $request->post();
                 $expected = $request->cookies('__requestVerificationToken');
@@ -1095,10 +1097,8 @@ final class AppBuilder {
                     $arguments[$name] = $post;
 
                     // parse post data
-                    foreach (get_object_vars($post) as $key => $value) {
-                        $modelState[$key] = new ModelStateEntry($key, $value);
-                    }
-                    
+                    self::parseObjectToModelState($modelState, $post);
+
                     $hasModel = true;
                     continue;
                 }
@@ -1120,6 +1120,18 @@ final class AppBuilder {
 
         InternalHelper::setPropertyValue($actionContext, 'arguments', $arguments);
         InternalHelper::setPropertyValue($actionContext, 'modelState', $modelState);
+    }
+
+    private static function parseObjectToModelState(&$modelState, $object, $keys = array()) {
+        foreach (get_object_vars($object) as $key => $value) {
+            if (is_object($value)) {
+                self::parseObjectToModelState($modelState, $value, array_merge($keys, array($key)));
+            }
+            else {
+                $key = implode('_', array_merge($keys, array($key)));
+                $modelState[$key] = new ModelStateEntry($key, $value);
+            }
+        }
     }
 
     /**
