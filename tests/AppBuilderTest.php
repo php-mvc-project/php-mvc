@@ -169,8 +169,8 @@ final class AppBuilderTest extends TestCase
         echo ' - OK' . chr(10);
     }
 
-    public function testSetGetViewData() {
-        $httpContext = HttpContext::get('/home/setGetViewData')->useDefaultRoute();
+    public function testSetGetData() {
+        $httpContext = HttpContext::get('/home/setGetData')->useDefaultRoute();
 
         echo chr(10);
         echo 'Request: ' . $httpContext->getRequest()->rawUrl();
@@ -219,12 +219,12 @@ final class AppBuilderTest extends TestCase
         );
 
         $this->assertContains(
-            'Hello setViewData!',
+            'Hello setData!',
             $result
         );
 
         $this->assertContains(
-            'Replaced setViewData2!',
+            'Replaced setData2!',
             $result
         );
 

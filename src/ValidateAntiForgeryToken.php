@@ -27,7 +27,7 @@ final class ValidateAntiForgeryToken {
      * 
      * @return void
      */
-    public static function disable($actionName) {
+    public static function disable($actionName = null) {
         self::set($actionName, false);
     }
 
@@ -38,7 +38,7 @@ final class ValidateAntiForgeryToken {
      * 
      * @return void
      */
-    public static function enable($actionName) {
+    public static function enable($actionName = null) {
         self::set($actionName, true);
     }
 
@@ -50,7 +50,9 @@ final class ValidateAntiForgeryToken {
      * 
      * @return void
      */
-    public static function set($actionName, $enable) {
+    public static function set($actionName = null, $enable) {
+        $actionName = ($actionName === null ? '.' : $actionName);
+
         if ($actionName != '.' && !self::$actionContext->actionNameEquals($actionName)) {
             return;
         }

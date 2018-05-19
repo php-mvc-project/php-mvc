@@ -32,6 +32,33 @@ final class View {
     }
 
     /**
+     * Gets route of the current request.
+     * 
+     * @return Route
+     */
+    public static function getRoute() {
+        return self::$viewContext->getHttpContext()->getRoute();
+    }
+
+    /**
+     * Gets the HttpRequestBase object for the current request.
+     * 
+     * @return HttpRequestBase
+     */
+    public static function getRequest() {
+        return self::$viewContext->getHttpContext()->getRequest();
+    }
+
+    /**
+     * Gets the HttpResponseBase object for the current request.
+     * 
+     * @return HttpResponseBase
+     */
+    public static function getResponse() {
+        return self::$viewContext->getHttpContext()->getResponse();
+    }
+
+    /**
      * Sets layout.
      * 
      * @param string $path The layout file name in the shared folder or full path to layout file.

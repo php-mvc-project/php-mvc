@@ -49,18 +49,18 @@ class HomeController extends Controller {
         return $this->view('hello', 'Test message passed to the view file "hello.php" from the action method "specifiedView".', '_lite');
     }
 
-    public function setGetViewData() {
-        $this->setViewData('key', 'value');
-        $this->setViewData('message', 'Hello world!');
-        $this->setViewData('option', true);
-        $this->setViewData('int', 123);
+    public function setGetData() {
+        $this->setData('key', 'value');
+        $this->setData('message', 'Hello world!');
+        $this->setData('option', true);
+        $this->setData('int', 123);
 
         return $this->view('index');
     }
 
     public function differentWaysViewData() {
-        $this->setViewData('setViewData', 'Hello setViewData!');
-        $this->setViewData('setViewData2', 'Hello setViewData2!');
+        $this->setData('setData', 'Hello setData!');
+        $this->setData('setData2', 'Hello setData2!');
 
         $view = new ViewResult();
 
@@ -69,10 +69,10 @@ class HomeController extends Controller {
 
         $view->viewData['viewData'] = 'Hello viewData!';
         $view->viewData['viewData2'] = 'Hello viewData2!';
-        $view->viewData['setViewData2'] = 'Replaced setViewData2!';
+        $view->viewData['setData2'] = 'Replaced setData2!';
 
         // TODO: one common collection of data is needed
-        $this->setViewData('viewData2', 'This change will be ignored');
+        $this->setData('viewData2', 'This change will be ignored');
 
         return $view;
     }

@@ -28,7 +28,7 @@ class Controller {
      * 
      * @return void
      */
-    protected function setViewData($key, $value) {
+    protected function setData($key, $value) {
         $this->viewData[$key] = $value;
     }
 
@@ -39,7 +39,7 @@ class Controller {
      * 
      * @return mixed
      */
-    protected function getViewData($key) {
+    protected function getData($key) {
         return $this->viewData[$key];
     }
 

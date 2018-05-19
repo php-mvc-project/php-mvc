@@ -347,12 +347,19 @@ final class InternalHelper {
      * 
      * @param array $array The array to work.
      * @param string|null $key The key to get, or null to get the $array.
+     * @param string|null $default The default value if the key is not null, and the value with the specified key was not found. The default value is null.
+     * @param bool $nullIfEmpty Check the value with the empty() function. If empty() returns true, the function returns $default.
      * 
      * @return array|mixed|null
      */
-    public static function getSingleKeyOrAll($array, $key) {
+    public static function getSingleKeyOrAll($array, $key, $default = null, $nullIfEmpty = false) {
         if ($key !== null) {
-            return (isset($array[$key])) ? $array[$key] : null;
+            if ($nullIfEmpty === true) {
+                return (isset($array[$key])) && !empty($array[$key]) ? $array[$key] : $default;
+            }
+            else {
+                return (isset($array[$key])) ? $array[$key] : $default;
+            }
         }
         else {
             return $array;

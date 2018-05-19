@@ -203,55 +203,65 @@ abstract class HttpRequestBase {
      * Returns server variables.
      * 
      * @param string|null $key The key to get. Default: null - all variables.
+     * @param string|null $default The default value if the key is not null, and the value with the specified key was not found. The default value is null.
+     * @param bool $nullIfEmpty Check the value with the empty() function. If empty() returns true, the function returns $default.
      * 
      * @return array|string
      */
-    public function server($key = null) {
-        return InternalHelper::getSingleKeyOrAll($this->serverVariables, $key);
+    public function server($key = null, $default = null, $nullIfEmpty = false) {
+        return InternalHelper::getSingleKeyOrAll($this->serverVariables, $key, $default, $nullIfEmpty);
     }
 
     /**
      * Returns cookies.
      * 
      * @param string|null $key The cookie name to get. Default: null - all cookies.
+     * @param string|null $default The default value if the key is not null, and the value with the specified key was not found. The default value is null.
+     * @param bool $nullIfEmpty Check the value with the empty() function. If empty() returns true, the function returns $default.
      * 
      * @return array|string
      */
-    public function cookies($key = null) {
-        return InternalHelper::getSingleKeyOrAll($this->cookies, $key);
+    public function cookies($key = null, $default = null, $nullIfEmpty = false) {
+        return InternalHelper::getSingleKeyOrAll($this->cookies, $key, $default, $nullIfEmpty);
     }
 
     /**
      * Returns GET data.
      * 
      * @param string|null $key The key to get. Default: null - all keys.
+     * @param string|null $default The default value if the key is not null, and the value with the specified key was not found. The default value is null.
+     * @param bool $nullIfEmpty Check the value with the empty() function. If empty() returns true, the function returns $default.
      * 
      * @return array|mixed
      */
-    public function get($key = null) {
-        return InternalHelper::getSingleKeyOrAll($this->get, $key);
+    public function get($key = null, $default = null, $nullIfEmpty = false) {
+        return InternalHelper::getSingleKeyOrAll($this->get, $key, $default, $nullIfEmpty);
     }
 
     /**
      * Returns POST data.
      * 
      * @param string|null $key The key to get. Default: null - all keys.
+     * @param string|null $default The default value if the key is not null, and the value with the specified key was not found. The default value is null.
+     * @param bool $nullIfEmpty Check the value with the empty() function. If empty() returns true, the function returns $default.
      * 
      * @return array|mixed
      */
-    public function post($key = null) {
-        return InternalHelper::getSingleKeyOrAll($this->post, $key);
+    public function post($key = null, $default = null, $nullIfEmpty = false) {
+        return InternalHelper::getSingleKeyOrAll($this->post, $key, $default, $nullIfEmpty);
     }
 
     /**
      * Returns posted files.
      * 
      * @param string|null $key The key to get. Default: null - all keys.
+     * @param string|null $default The default value if the key is not null, and the value with the specified key was not found. The default value is null.
+     * @param bool $nullIfEmpty Check the value with the empty() function. If empty() returns true, the function returns $default.
      * 
      * @return array|mixed
      */
-    public function files($key = null) {
-        return InternalHelper::getSingleKeyOrAll($this->files, $key);
+    public function files($key = null, $default = null, $nullIfEmpty = false) {
+        return InternalHelper::getSingleKeyOrAll($this->files, $key, $default, $nullIfEmpty);
     }
 
     /**
@@ -351,10 +361,12 @@ abstract class HttpRequestBase {
      * Returns HTTP headers of the request.
      * 
      * @param string|null $key The key to get. Default: null - all keys.
+     * @param string|null $default The default value if the key is not null, and the value with the specified key was not found. The default value is null.
+     * @param bool $nullIfEmpty Check the value with the empty() function. If empty() returns true, the function returns $default.
      * 
      * @return array|string
      */
-    public function headers($key = null) {
+    public function headers($key = null, $default = null, $nullIfEmpty = false) {
         if ($this->headers === null) {
             $result = array(); 
 
@@ -370,7 +382,7 @@ abstract class HttpRequestBase {
             $this->headers = $result;
         }
 
-        return InternalHelper::getSingleKeyOrAll($this->headers, $key);
+        return InternalHelper::getSingleKeyOrAll($this->headers, $key, $default, $nullIfEmpty);
     }
 
 }

@@ -31,7 +31,7 @@ class AccountController extends Controller {
             $modelState = $this->getModelState();
 
             if ($modelState->isValid()) {
-                $this->setViewData('success', true);
+                $this->setData('success', true);
                 return $this->view();
             }
         }
