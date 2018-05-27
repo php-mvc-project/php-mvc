@@ -22,7 +22,7 @@ The best implementation of the **Model-View-Controller** architectural pattern i
 ## Installation
 
 ```
-$ composer require meet-aleksey/php-mvc
+$ composer require php-mvc-project/php-mvc
 ```
 
 ## Server Configuration
@@ -35,11 +35,11 @@ The server must send the entire request to the `./index.php` file.
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
-  # Redirect /index.php to /
+  # redirect /index.php to /
   RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /.*index\.php
   RewriteRule ^index.php/?(.*)$ $1 [R=301,L]
 
-  # Run everything else but real files through index.php
+  # process all requests through index.php, except for actually existing files
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteRule ^(.*)$ index.php/$1?%{QUERY_STRING} [QSA,L]
@@ -76,7 +76,7 @@ Create the following structure in the project root directory:
 ```php
 <?php
 // include PhpMvc
-require_once __DIR__ . '/vendor/meet-aleksey/php-mvc/src/index.php';
+require_once __DIR__ . '/vendor/php-mvc-project/php-mvc/src/index.php';
 
 // import the AppBuilder class
 use PhpMvc\AppBuilder;

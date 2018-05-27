@@ -1,6 +1,6 @@
 {
-    "name": "meet-aleksey/php-mvc",
-    "description": "Implementation of MVC in PHP.",
+    "name": "php-mvc-project/php-mvc",
+    "description": "Implementation of the MVC (Model-View-Controller) architectural pattern in PHP.",
     "keywords": ["mvc"],
     "license": "MIT",
     "type": "library",
