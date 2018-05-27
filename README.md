@@ -1,8 +1,5 @@
 # PHP MVC
 
-![PHP from Packagist](https://img.shields.io/packagist/php-v/meet-aleksey/php-mvc.svg?style=flat)
-[![License](https://img.shields.io/github/license/meet-aleksey/php-mvc.svg?style=flat)](LICENSE)
-
 The best implementation of the **Model-View-Controller** architectural pattern in **PHP**!
 
 ## Features
