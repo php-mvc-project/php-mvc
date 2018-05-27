@@ -143,7 +143,8 @@ final class FilterTest extends TestCase
 
         $result = ob_get_clean();
 
-        $this->assertEquals('hello exception!', $result);
+        // $this->assertEquals('hello exception!', $result);
+        $this->assertContains('An error occurred while processing the request.', $result);
 
         echo ' - OK' . chr(10);
     }

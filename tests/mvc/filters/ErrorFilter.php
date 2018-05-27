@@ -3,6 +3,7 @@ namespace PhpMvcTest\Filters;
 
 use \PhpMvc\ActionFilter;
 use \PhpMvc\ContentResult;
+use \PhpMvc\ViewResult;
 
 class ErrorFilter extends ActionFilter {
 
@@ -14,7 +15,8 @@ class ErrorFilter extends ActionFilter {
      * @return void
      */
     public function exception($exceptionContext) {
-        $exceptionContext->setResult(new ContentResult('hello exception!'));
+        $exceptionContext->setResult(new ViewResult('error'));
+        // $exceptionContext->setResult(new ContentResult('hello exception!'));
     }
 
 }
