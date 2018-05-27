@@ -1,6 +1,6 @@
 # PHP MVC
 
-[![PHP from Packagist](https://img.shields.io/packagist/php-v/php-mvc-project/php-mvc.svg?style=flat)(http://php.net)]
+[![PHP from Packagist](https://img.shields.io/packagist/php-v/php-mvc-project/php-mvc.svg?style=flat)](http://php.net)
 [![License](https://img.shields.io/github/license/php-mvc-project/php-mvc.svg?style=flat)](LICENSE)
 [![GitHub release](https://img.shields.io/github/release/php-mvc-project/php-mvc.svg)](https://github.com/php-mvc-project/php-mvc/releases)
 [![Packagist](https://img.shields.io/packagist/dt/php-mvc-project/php-mvc.svg)](https://packagist.org/packages/php-mvc-project/php-mvc)
