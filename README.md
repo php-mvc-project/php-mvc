@@ -1,6 +1,7 @@
-# ATTENTION: The project moved to https://github.com/php-mvc-project/php-mvc
-
 # PHP MVC
+
+![PHP from Packagist](https://img.shields.io/packagist/php-v/php-mvc-project/php-mvc.svg?style=flat)
+[![License](https://img.shields.io/github/license/php-mvc-project/php-mvc.svg?style=flat)](LICENSE)
 
 The best implementation of the **Model-View-Controller** architectural pattern in **PHP**!
 
