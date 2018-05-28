@@ -45,22 +45,71 @@ final class Model {
     private static $annotations = array();
 
     /**
+     * Gets or sets type of the current model.
+     * 
+     * @var string|object
+     */
+    private static $modelType;
+
+    /**
+     * Specifies the model type for the action.
+     * 
+     * @param string|string[] $actionName The action name.
+     * @param string|object $modelType The type name of model.
+     * 
+     * @return void
+     */
+    public static function use($actionName, $modelType) {
+        if (empty($actionName)) {
+            throw new \Exception('$actionName must not be empty.');
+        }
+
+        if (empty($modelType)) {
+            throw new \Exception('$modelType must not be empty.');
+        }
+
+        $canUse = false;
+
+        if ($actionName !== '.') {
+            if (!is_array($actionName)) {
+                $actionName = array($actionName);
+            }
+
+            foreach ($actionName as $action) {
+                if (self::$actionContext->actionNameEquals($action)) {
+                    $canUse = true;
+                    break;
+                }
+            }
+        }
+        else {
+            $canUse = true;
+        }
+
+        if (!$canUse) {
+            return;
+        }
+
+        if (is_object($modelType)) {
+            $modelType = get_class($modelType);
+        }
+
+        self::$modelType = $modelType;
+    }
+
+    /**
      * Marks the specified property with the attribute "requred" 
      * and it is expected that the property value must be specified.
      * 
-     * @param string $actionName Action name.
+     * @param string|object $modelType The name type of model.
      * @param string $propertyName The property name.
      * @param string $errorMessage The error message.
      * 
      * @return void
      */
-    public static function required($actionName, $propertyName, $errorMessage = null) {
-        if (!self::$actionContext->actionNameEquals($actionName)) {
+    public static function required($modelType, $propertyName, $errorMessage = null) {
+        if (!self::canAnnotate($modelType)) {
             return;
-        }
-
-        if (empty($actionName)) {
-            throw new \Exception('$actionName must not be empty.');
         }
 
         if (empty($propertyName)) {
@@ -75,20 +124,16 @@ final class Model {
     /**
      * Sets a property whose value needs to be compared to the value of the specified property.
      * 
-     * @param string $actionName Action name.
+     * @param string|object $modelType The name type of model.
      * @param string $propertyName The property name.
      * @param string $compareWith The name of the property with which to compare.
      * @param string $errorMessage The error message.
      * 
      * @return void
      */
-    public static function compare($actionName, $propertyName, $compareWith, $errorMessage = null) {
-        if (!self::$actionContext->actionNameEquals($actionName)) {
+    public static function compare($modelType, $propertyName, $compareWith, $errorMessage = null) {
+        if (!self::canAnnotate($modelType)) {
             return;
-        }
-
-        if (empty($actionName)) {
-            throw new \Exception('$actionName must not be empty.');
         }
 
         if (empty($propertyName)) {
@@ -111,7 +156,7 @@ final class Model {
     /**
      * Specifies the minimum and maximum length of characters that are allowed in a data field.
      * 
-     * @param string $actionName Action name.
+     * @param string|object $modelType The name type of model.
      * @param string $propertyName The property name to check.
      * @param int $maxLength The maximum length of a string.
      * @param int $minLength The minimum length of a string.
@@ -119,13 +164,9 @@ final class Model {
      * 
      * @return void
      */
-    public static function stringLength($actionName, $propertyName, $maxLength, $minLength = null, $errorMessage = null) {
-        if (!self::$actionContext->actionNameEquals($actionName)) {
+    public static function stringLength($modelType, $propertyName, $maxLength, $minLength = null, $errorMessage = null) {
+        if (!self::canAnnotate($modelType)) {
             return;
-        }
-
-        if (empty($actionName)) {
-            throw new \Exception('$actionName must not be empty.');
         }
 
         if (empty($propertyName)) {
@@ -140,7 +181,7 @@ final class Model {
     /**
      * Specifies the numeric range constraints for the value of a data field.
      * 
-     * @param string $actionName Action name.
+     * @param string|object $modelType The name type of model.
      * @param string $propertyName The property name to check.
      * @param int $max The maximum allowed field value.
      * @param int $min The minimum allowed field value.
@@ -148,13 +189,9 @@ final class Model {
      * 
      * @return void
      */
-    public static function range($actionName, $propertyName, $min, $max, $errorMessage = null) {
-        if (!self::$actionContext->actionNameEquals($actionName)) {
+    public static function range($modelType, $propertyName, $min, $max, $errorMessage = null) {
+        if (!self::canAnnotate($modelType)) {
             return;
-        }
-
-        if (empty($actionName)) {
-            throw new \Exception('$actionName must not be empty.');
         }
 
         if (empty($propertyName)) {
@@ -173,7 +210,7 @@ final class Model {
     /**
      * Specifies a custom validation method that is used to validate the property.
      * 
-     * @param string $actionName Action name.
+     * @param string|object $modelType The name type of model.
      * @param string $propertyName The property name to check.
      * @param callback $callback Function to valid the value. 
      *                           The function takes a value of the property and must return true, 
@@ -182,13 +219,9 @@ final class Model {
      * 
      * @return void
      */
-    public static function validation($actionName, $propertyName, $callback, $errorMessage = null) {
-        if (!self::$actionContext->actionNameEquals($actionName)) {
+    public static function validation($modelType, $propertyName, $callback, $errorMessage = null) {
+        if (!self::canAnnotate($modelType)) {
             return;
-        }
-
-        if (empty($actionName)) {
-            throw new \Exception('$actionName must not be empty.');
         }
 
         if (empty($propertyName)) {
@@ -207,20 +240,16 @@ final class Model {
     /**
      * Sets a values that is used for display in the UI.
      * 
-     * @param string $actionName Action name.
+     * @param string|object $modelType The name type of model.
      * @param string $propertyName The property name to set.
      * @param string $name The value that is used for display in the UI.
      * @param string $text The value that is used to display a description in the UI.
      * 
      * @return void
      */
-    public static function display($actionName, $propertyName, $name, $text = null) {
-        if (!self::$actionContext->actionNameEquals($actionName)) {
+    public static function display($modelType, $propertyName, $name, $text = null) {
+        if (!self::canAnnotate($modelType)) {
             return;
-        }
-
-        if (empty($actionName)) {
-            throw new \Exception('$actionName must not be empty.');
         }
 
         if (empty($propertyName)) {
@@ -231,6 +260,18 @@ final class Model {
 
         self::$annotations[$propertyName]->displayName = $name;
         self::$annotations[$propertyName]->displayText = $text;
+    }
+
+    private static function canAnnotate($modelType) {
+        if (empty($modelType)) {
+            throw new \Exception('$modelType must not be empty.');
+        }
+
+        if (is_object($modelType)) {
+            $modelType = get_class($modelType);
+        }
+
+        return self::$modelType === $modelType;
     }
 
     private static function makeDataAnnotation(&$propertyName) {
