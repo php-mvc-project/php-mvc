@@ -147,7 +147,7 @@ final class PathUtility {
             return false;
         }
 
-        if (is_file($result = $path)) {
+        if ((strpos($path, '/') !== false || strpos($path, '\\') !== false) && is_file($result = $path)) {
             return $result;
         }
 
