@@ -357,7 +357,7 @@ final class AppBuilder {
             $info->cacheProvider = $config['cacheProvider'];
             $info->request = new HttpRequest();
             $info->response = new HttpResponse();
-            $info->session = $config['sessionProvider'];
+            $info->session = isset($config['sessionProvider']) ? $config['sessionProvider'] : null;
 
             $config['httpContext'] = new HttpContext($info);
         }
@@ -1009,7 +1009,7 @@ final class AppBuilder {
 
                 // create view
                 $viewContext = InternalHelper::makeViewContext(
-                    PHPMVC_CURRENT_VIEW_PATH,
+                    (!empty($actionResult->viewFile) ? $actionResult->viewFile : PHPMVC_CURRENT_VIEW_PATH),
                     $actionContext,
                     $actionResult,
                     null,
