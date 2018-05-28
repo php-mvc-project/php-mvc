@@ -297,62 +297,84 @@ final class DefaultRouteProvider implements RouteProvider {
         }
 
         $segments = $route->getSegments();
-
-        $last = null;
+        $default = array();
+        $path = '';
 
         foreach ($segments as $segment) {
-            $result .= $segment->after;
+            $isDefault = false;
+            $path .= $segment->after;
 
             if (empty($segment->name)) {
-                $result .= $segment->pattern;
+                $path .= $segment->pattern;
             }
             elseif ($segment->name == 'controller' && !empty($controllerName)) {
-                $result .= $controllerName;
+                $path .= $controllerName;
+                $isDefault = (!empty($segment->default) && mb_strtolower($segment->default) === mb_strtolower($controllerName));
             }
             elseif ($segment->name == 'controller' && empty($controllerName) && !empty($route->values['controller'])) {
-                $result .= $route->values['controller'];
+                $path .= $route->values['controller'];
+                $isDefault = (!empty($segment->default) && mb_strtolower($segment->default) === mb_strtolower($route->values['controller']));
             }
             elseif ($segment->name == 'action') {
-                $result .= $actionName;
+                $path .= $actionName;
+                $isDefault = (!empty($segment->default) && mb_strtolower($segment->default) === mb_strtolower($actionName));
             }
             else {
                 if (!empty($routeValues[$segment->name])) {
-                    $result .= $routeValues[$segment->name];
+                    $path .= $routeValues[$segment->name];
                     unset($routeValues[$segment->name]);
+                    $isDefault = false;
                 }
                 else
                 {
                     if ($segment->default !== UrlParameter::OPTIONAL) {
-                        $result .= $segment->default;
+                        $path .= $segment->default;
+                    }
+                    else {
+                        $isDefault = true;
                     }
                 }
             }
 
-            $result .= $segment->before;
+            $path .= $segment->before;
 
-            $result .= '/';
+            $path .= '/';
 
-            if ($segment->preEnd === true || ($segment->end === true && $segment->default !== UrlParameter::OPTIONAL)) {
-                $last = $segment;
+            if ($isDefault) {
+                $isDefault = empty($segment->before);
             }
+
+            $default[] = $isDefault;
         }
 
-        $result = rtrim($result, '/');
+        $path = rtrim($path, '/');
 
         if ($options->removeLastSegmentIfValueIsDefault === true) {
-            $lastSegmentPos = strrpos($result, '/');
-            $lastSegment = trim(mb_substr($result, $lastSegmentPos), '/');
+            $resultSegments = explode('/', $path);
 
-            if (empty($last->before) && !empty($last->default) && mb_strtolower($last->default) === mb_strtolower($lastSegment)) {
-                $result = mb_substr($result, 0, $lastSegmentPos);
+            if (count($default) > count($resultSegments)) {
+                $default = array_slice($default, 0, count($resultSegments));
             }
+
+            for ($i = count($resultSegments) - 1; $i >= 0; --$i) {
+                if ($default[$i]) {
+                    unset($resultSegments[$i]);
+                }
+                else {
+                    break;
+                }
+            }
+
+            $path = implode('/', $resultSegments);
         }
+
+        $result .= $path;
 
         if ($options->lowercaseUrls === true) {
             $result = mb_strtolower($result);
         }
 
-        if ($options->appendTrailingSlash === true) {
+        if ($options->appendTrailingSlash === true && $result !== '/') {
             $result .= '/';
         }
 
