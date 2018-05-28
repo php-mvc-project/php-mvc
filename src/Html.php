@@ -51,7 +51,7 @@ class Html {
      * 
      * @return string
      */
-    public static function getTitle($default) {
+    public static function getTitle($default = '') {
         if (empty(self::$viewContext->title)) {
             if (isset(self::$viewContext->body) && !empty(self::$viewContext->body->title)) {
                 return htmlspecialchars(self::$viewContext->body->title);
@@ -686,6 +686,14 @@ class Html {
         $htmlAttributes['name'] = isset($htmlAttributes['name']) ? $htmlAttributes['name'] : $nameString;
         $htmlAttributes['id'] = isset($htmlAttributes['id']) ? $htmlAttributes['id'] : $nameString;
 
+        if (!isset($htmlAttributes['required'])) {
+            if (!empty($annotation = self::$viewContext->getModelState()->getAnnotation($name))) {
+                if (isset($annotation->required)) {
+                    $htmlAttributes['required'] = 'required';
+                }
+            }
+        }
+
         if (self::getModelValue($name, $modelValue) === true) {
             $value = $modelValue;
         }
@@ -780,6 +788,14 @@ class Html {
         $htmlAttributes['type'] = isset($htmlAttributes['type']) ? $htmlAttributes['type'] : $type;
         $htmlAttributes['name'] = isset($htmlAttributes['name']) ? $htmlAttributes['name'] : $nameString;
         $htmlAttributes['id'] = isset($htmlAttributes['id']) ? $htmlAttributes['id'] : $nameString;
+
+        if (!isset($htmlAttributes['required'])) {
+            if (!empty($annotation = self::$viewContext->getModelState()->getAnnotation($name))) {
+                if (isset($annotation->required)) {
+                    $htmlAttributes['required'] = 'required';
+                }
+            }
+        }
 
         if ($ignoreModelValue !== true && self::getModelValue($name, $modelValue) === true) {
             $value = $modelValue;
