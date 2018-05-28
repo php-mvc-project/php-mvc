@@ -131,6 +131,10 @@ class ModelState implements \ArrayAccess {
      * @return void
      */
     public function addError($key, $error) {
+        if (is_array($key)) {
+            $key = implode('_', $key);
+        }
+
         if (array_key_exists($key, $this->errors)) {
             $this->errors[$key][] = $error;
         }
@@ -143,11 +147,15 @@ class ModelState implements \ArrayAccess {
      * Gets the metadata for the specified model key.
      * If there is no data, it returns null.
      * 
-     * @param string @key The key to get metadata.
+     * @param string|string[] @key The key to get metadata.
      * 
      * @return ModelDataAnnotation|null
      */
     public function getAnnotation($key) {
+        if (is_array($key)) {
+            $key = implode('_', $key);
+        }
+
         if (array_key_exists($key, $this->annotations)) {
             return $this->annotations[$key];
         }

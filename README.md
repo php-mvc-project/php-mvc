@@ -77,8 +77,10 @@ Create the following structure in the project root directory:
 
 ```php
 <?php
-// include PhpMvc
-require_once __DIR__ . '/vendor/php-mvc-project/php-mvc/src/index.php';
+// use aoutoload (recommended)
+require_once getcwd() . '/vendor/autoload.php';
+// or include the required files
+// require_once getcwd() . '/vendor/php-mvc-project/php-mvc/src/index.php';
 
 // import the AppBuilder class
 use PhpMvc\AppBuilder;
@@ -183,6 +185,8 @@ use PhpMvc\Model;
 class AccountController extends Controller {
 
     public function __construct() {
+        Model::use('join', 'join');
+
         Model::required('join', 'username');
         Model::required('join', 'email');
         Model::required('join', 'password');
@@ -428,7 +432,7 @@ The filters must be in the `./Filters` folder.
 
 Each filter must be inherited from the `PhpMvc\ActionFilter` class.
 
-Filters can be global, or work at the level of a single controller, or at the level of a single action.
+Filters can be global, or work at the level of an individual controller, or action.
 
 Filters for specific controller or action can be set in the controller's constructor:
 
@@ -609,7 +613,7 @@ var_dump($cache->get('test'));
 
 For output caching, you can use the static `OutputCache` class.
 
-Caching rules can be specified for both the controller and for a single action.
+Caching rules can be specified for both the controller and for an each action.
 
 Cache rules should be specified in the constructor of the controller.
 

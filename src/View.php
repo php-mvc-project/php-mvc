@@ -94,12 +94,32 @@ final class View {
     }
 
     /**
+     * Gets current layout file name or path.
+     * 
+     * @return void
+     */
+    public static function getLayout() {
+        return self::$viewContext->layout;
+    }
+
+    /**
      * Sets page title.
+     * 
+     * @param string $title The title to set.
      * 
      * @return void
      */
     public static function setTitle($title) {
         self::$viewContext->title = $title;
+    }
+
+    /**
+     * Gets page title.
+     * 
+     * @return void
+     */
+    public static function getTitle() {
+        return self::$viewContext->title;
     }
 
     /**

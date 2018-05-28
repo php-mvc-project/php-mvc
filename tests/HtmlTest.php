@@ -43,8 +43,9 @@ final class HtmlTest extends TestCase
 
         $viewContext->model = $this->getModelA('Hello, world!');
 
-        Model::display('index', 'text', 'Program', 'The program name.');
-        Model::display('index', 'number', 'Lines', 'The lines of program code.');
+        Model::use('.', 'test');
+        Model::display('test', 'text', 'Program', 'The program name.');
+        Model::display('test', 'number', 'Lines', 'The lines of program code.');
 
         $this->makeActionState($viewContext);
 
@@ -63,8 +64,9 @@ final class HtmlTest extends TestCase
 
         $viewContext->model = $this->getModelB(null, 'Hello, world!');
 
-        Model::display('index', array('a', 'text'), 'Program', 'The program name.');
-        Model::display('index', array('a', 'number'), 'Lines', 'The lines of program code.');
+        Model::use('.', 'test');
+        Model::display('test', array('a', 'text'), 'Program', 'The program name.');
+        Model::display('test', array('a', 'number'), 'Lines', 'The lines of program code.');
 
         $this->makeActionState($viewContext);
 
@@ -83,8 +85,9 @@ final class HtmlTest extends TestCase
 
         $viewContext->model = $this->getModelA();
 
-        Model::required('justModel', 'text');
-        Model::validation('justModel', 'number', function($value, &$errorMessage) {
+        Model::use('.', 'test');
+        Model::required('test', 'text');
+        Model::validation('test', 'number', function($value, &$errorMessage) {
             if ($value != 555) {
                 $errorMessage = '555 is expected.';
                 return false;
@@ -116,8 +119,9 @@ final class HtmlTest extends TestCase
 
         $viewContext = $this->setContext('justModel', 'Home', 'POST', array('text' => '', 'number' => 555));
 
-        Model::required('justModel', 'text');
-        Model::validation('justModel', 'number', function($value, &$errorMessage) {
+        Model::use('.', 'test');
+        Model::required('test', 'text');
+        Model::validation('test', 'number', function($value, &$errorMessage) {
             if ($value != 555) {
                 $errorMessage = '555 is expected.';
                 return false;
@@ -126,7 +130,7 @@ final class HtmlTest extends TestCase
             return true;
         });
 
-        Model::display('justModel', 'text', 'Program name');
+        Model::display('test', 'text', 'Program name');
 
         $this->makeActionState($viewContext);
         $this->annotateAndValidateModel($viewContext->getModelState());
@@ -139,8 +143,9 @@ final class HtmlTest extends TestCase
 
         $viewContext = $this->setContext('justModel', 'Home', 'POST', array('text' => 'Hello, world!', 'number' => 555));
 
-        Model::required('justModel', 'text');
-        Model::required('justModel', 'number');
+        Model::use('.', 'test');
+        Model::required('test', 'text');
+        Model::required('test', 'number');
 
         $this->makeActionState($viewContext);
         $this->annotateAndValidateModel($viewContext->getModelState());
@@ -156,8 +161,9 @@ final class HtmlTest extends TestCase
         $viewContext->model = $this->getModelB();
         $viewContext->model->a->number = 123;
 
-        Model::required('justModel', array('a', 'text'));
-        Model::validation('justModel', array('a', 'number'), function($value, &$errorMessage) {
+        Model::use('.', 'test');
+        Model::required('test', array('a', 'text'));
+        Model::validation('test', array('a', 'number'), function($value, &$errorMessage) {
             if ($value != 555) {
                 $errorMessage = '555 is expected.';
                 return false;
@@ -166,7 +172,7 @@ final class HtmlTest extends TestCase
             return true;
         });
 
-        Model::display('justModel', array('a', 'text'), 'Test text');
+        Model::display('test', array('a', 'text'), 'Test text');
 
         $this->makeActionState($viewContext);
         $this->annotateAndValidateModel($viewContext->getModelState());
@@ -183,8 +189,9 @@ final class HtmlTest extends TestCase
 
         $viewContext->model = $this->getModelA();
 
-        Model::required('justModel', 'text');
-        Model::validation('justModel', 'number', function($value, &$errorMessage) {
+        Model::use('.', 'test');
+        Model::required('test', 'text');
+        Model::validation('test', 'number', function($value, &$errorMessage) {
             if ($value != 555) {
                 $errorMessage = '555 is expected.';
                 return false;
@@ -220,8 +227,9 @@ final class HtmlTest extends TestCase
         $viewContext->model->b1 = new ModelB();
         $viewContext->model->b1->a = new ModelA();
 
-        Model::required('justModel', array('b1', 'a', 'text'));
-        Model::validation('justModel', array('b1', 'a', 'number'), function($value, &$errorMessage) {
+        Model::use('.', 'test');
+        Model::required('test', array('b1', 'a', 'text'));
+        Model::validation('test', array('b1', 'a', 'number'), function($value, &$errorMessage) {
             if ($value != 555) {
                 $errorMessage = '555 is expected.';
                 return false;
@@ -259,8 +267,9 @@ final class HtmlTest extends TestCase
         $viewContext->model->b1->a->text = 'hello, world!';
         $viewContext->model->b1->a->number = 555;
 
-        Model::required('justModel', array('b1', 'a', 'text'));
-        Model::validation('justModel', array('b1', 'a', 'number'), function($value, &$errorMessage) {
+        Model::use('.', 'test');
+        Model::required('test', array('b1', 'a', 'text'));
+        Model::validation('test', array('b1', 'a', 'number'), function($value, &$errorMessage) {
             if ($value != 555) {
                 $errorMessage = '555 is expected.';
                 return false;
@@ -290,7 +299,7 @@ final class HtmlTest extends TestCase
         $this->assertEquals('/home/page', $action);
 
         $action = Html::action('index');
-        $this->assertEquals('/home', $action);
+        $this->assertEquals('/', $action);
 
         $action = Html::action('Index', 'Forum');
         $this->assertEquals('/forum', $action);
@@ -325,7 +334,7 @@ final class HtmlTest extends TestCase
         $this->assertEquals('<a href="/home/page">link</a>', $action);
 
         $action = Html::actionLink('home', 'index');
-        $this->assertEquals('<a href="/home">home</a>', $action);
+        $this->assertEquals('<a href="/">home</a>', $action);
 
         $action = Html::actionLink('forum', 'Index', 'Forum');
         $this->assertEquals('<a href="/forum">forum</a>', $action);
@@ -1452,6 +1461,7 @@ final class HtmlTest extends TestCase
     }
 
     private function resetModel() {
+        InternalHelper::setStaticPropertyValue('\\PhpMvc\\Model', 'modelType', null);
         InternalHelper::setStaticPropertyValue('\\PhpMvc\\Model', 'annotations', array());
     }
 

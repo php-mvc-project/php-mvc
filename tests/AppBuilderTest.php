@@ -418,7 +418,7 @@ final class AppBuilderTest extends TestCase
         );
 
         $this->assertContains(
-            '<a href="/home" class="btn btn-default">Cancel</a>',
+            '<a href="/" class="btn btn-default">Cancel</a>',
             $result
         );
 

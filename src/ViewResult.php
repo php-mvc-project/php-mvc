@@ -102,7 +102,7 @@ class ViewResult implements ActionResult {
         !empty($this->model) ? $viewContext->model = $this->model : null;
 
         if (!empty($this->viewData)) {
-            $viewContext->viewData = array_unique(array_merge($viewContext->viewData, $this->viewData), SORT_REGULAR);
+            $viewContext->viewData = array_unique(array_merge($viewContext->viewData, $this->viewData), \SORT_REGULAR);
         }
     }
 
