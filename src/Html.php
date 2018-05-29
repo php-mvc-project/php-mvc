@@ -343,6 +343,9 @@ class Html {
         elseif (is_array($antiforgery)) {
             $result .= self::antiForgeryToken(true);
         }
+        else {
+            self::$viewContext->getHttpContext()->getResponse()->addCookie('__requestVerificationToken', 'false', 0, '/', '', false, true);
+        }
 
         return $result;
     }

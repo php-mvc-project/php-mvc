@@ -176,12 +176,25 @@ class ActionContext {
     /**
      * Checks the equivalence of the specified string with the name of the action.
      * 
-     * @param string $name The string to compare.
+     * @param string|array $name The string or string array to compare.
      * 
      * @return bool
      */
     public function actionNameEquals($name) {
-        return strtolower($this->actionName) == strtolower($name);
+        $actionName = strtolower($this->actionName);
+
+        if (is_array($name)) {
+            foreach ($name as $n) {
+                if ($actionName == strtolower($n)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        else {
+            return $actionName == strtolower($name);
+        }
     }
 
     /**
@@ -196,12 +209,25 @@ class ActionContext {
     /**
      * Checks the equivalence of the specified string with the name of the controller.
      * 
-     * @param string $name The string to compare.
+     * @param string|array $name The string or string array to compare.
      * 
      * @return bool
      */
     public function controllerNameEquals($name) {
-        return strtolower($this->getControllerName()) == strtolower($name);
+        $controllerName = strtolower($this->getControllerName());
+
+        if (is_array($name)) {
+            foreach ($name as $n) {
+                if ($controllerName == strtolower($n)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        else {
+            return $controllerName == strtolower($name);
+        }
     }
 
     /**

@@ -890,7 +890,11 @@ final class AppBuilder {
 
                 if (!isset($post)) { $post = array(); }
 
-                if ((isset($expected) && (!isset($post['__requestVerificationToken']) || $post['__requestVerificationToken'] != $expected)) || (isset($post['__requestVerificationToken']) && empty($expected))) {
+                if (
+                    (isset($expected) && $expected !== 'false' && (!isset($post['__requestVerificationToken']) || $post['__requestVerificationToken'] != $expected)) ||
+                    (isset($expected) && $expected === 'false' && !empty($post['__requestVerificationToken'])) ||
+                    (isset($post['__requestVerificationToken']) && empty($expected))
+                   ) {
                     throw new HttpAntiForgeryException();
                 }
             }
