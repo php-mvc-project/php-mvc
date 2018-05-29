@@ -28,7 +28,7 @@ namespace PhpMvc;
 /**
  * Represents the application context.
  */
-class AppContext {
+final class AppContext {
 
     /**
      * The config of the application.
@@ -271,10 +271,10 @@ class AppContext {
         }
 
         if ($key !== null) {
-            $this->$eventName[$key] = $eventHandler;
+            $this->{$eventName}[$key] = $eventHandler;
         }
         else {
-            $this->$eventName[] = $eventHandler;
+            $this->{$eventName}[] = $eventHandler;
         }
     }
 

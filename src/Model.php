@@ -59,7 +59,7 @@ final class Model {
      * 
      * @return void
      */
-    public static function use($actionName, $modelType) {
+    public static function set($actionName, $modelType) {
         if (empty($actionName)) {
             throw new \Exception('$actionName must not be empty.');
         }

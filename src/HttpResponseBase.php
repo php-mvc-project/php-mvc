@@ -264,7 +264,7 @@ abstract class HttpResponseBase {
      * 
      * @return void
      */
-    public function addCookie(string $name, string $value = '', int $expire = 0, string $path = '', string $domain = '', bool $secure = false, bool $httponly = false) {
+    public function addCookie($name, $value = '', $expire = 0, $path = '', $domain = '', $secure = false, $httponly = false) {
         if ($this->canSetHeaders()) {
             $this->cookies[] = func_get_args();
         }

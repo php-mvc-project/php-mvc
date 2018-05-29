@@ -185,7 +185,7 @@ use PhpMvc\Model;
 class AccountController extends Controller {
 
     public function __construct() {
-        Model::use('join', 'join');
+        Model::set('join', 'join');
 
         Model::required('join', 'username');
         Model::required('join', 'email');

@@ -10,7 +10,7 @@ use \PhpMvcTest\Models\Login;
 class AccountController extends Controller {
 
     public function __construct() {
-        Model::use('login', 'login');
+        Model::set('login', 'login');
 
         Model::required('login', 'username');
         Model::required('login', 'password', 'Password is required.');

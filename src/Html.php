@@ -295,7 +295,7 @@ class Html {
      */
     public static function antiForgeryToken($dynamic = false) {
         if (self::$token === null) {
-            self::$token = bin2hex(random_bytes(64));
+            self::$token = bin2hex(function_exists('random_bytes') ? random_bytes(64) : uniqid('', true));
             $response = self::$viewContext->getHttpContext()->getResponse();
             $response->addCookie('__requestVerificationToken', self::$token, 0, '/', '', false, true);
         }

@@ -145,13 +145,13 @@ final class AppBuilder {
      * 
      * @param callback $callback
      * For example:
-     * AppBuilder::use(function($appContext: AppContext) {
+     * AppBuilder::useAppContext(function(\PhpMvc\AppContext $appContext) {
      *   // ...
      * });
      * 
      * @return void
      */
-    public static function use($callback) {
+    public static function useAppContext($callback) {
         self::$config['customHandlers'] = $callback;
     }
 
@@ -210,7 +210,7 @@ final class AppBuilder {
     public static function build() {
         try {
             self::init();
-            self::include();
+            self::dependencies();
     
             $route = self::canRoute();
     
@@ -259,7 +259,7 @@ final class AppBuilder {
 
         if (isset(self::$config['customHandlers'])) {
             if (is_callable(self::$config['customHandlers'])) {
-                self::$config['customHandlers'](self::$appContext);
+                call_user_func(self::$config['customHandlers'], self::$appContext);
             }
             else {
                 throw new \Exception('Function is expected.');
@@ -884,7 +884,9 @@ final class AppBuilder {
         // request verification token
         $antiForgeryTokenForAction = InternalHelper::getStaticPropertyValue('\\PhpMvc\\ValidateAntiForgeryToken', 'enable');
         if ($antiForgeryTokenForAction === true || (($validators === true || (!isset($validators['antiForgeryToken']) || $validators['antiForgeryToken'] === true)) && $antiForgeryTokenForAction !== false)) {
-            if (($request = self::$config['httpContext']->getRequest())->isPost()) {
+            $request = self::$config['httpContext']->getRequest();
+
+            if ($request->isPost()) {
                 $post = $request->post();
                 $expected = $request->cookies('__requestVerificationToken');
 
@@ -936,7 +938,7 @@ final class AppBuilder {
      * 
      * @return void
      */
-    private static function include() {
+    private static function dependencies() {
         require_once PHPMVC_CORE_PATH . 'Loader.php';
         require_once PHPMVC_CORE_PATH . 'Controller.php';
     }
@@ -1092,12 +1094,17 @@ final class AppBuilder {
                         unset($postData['__requestVerificationToken']);
                     }
 
-                    if ($param->hasType()) {
+                    if (method_exists($param, 'hasType') && $param->hasType()) {
                         if ($param->getType()->isBuiltin()) {
                             $arguments[$name] = ($param->isOptional() ? $param->getDefaultValue() : null);
                             continue;
                         }
 
+                        if (($paramTypeName = $param->getClass()) !== null) {
+                            $paramTypeName = $paramTypeName->getName();
+                        }
+                    }
+                    else {
                         if (($paramTypeName = $param->getClass()) !== null) {
                             $paramTypeName = $paramTypeName->getName();
                         }

@@ -30,6 +30,6 @@ namespace PhpMvc;
  */
 final class Info {
 
-    const VERSION = '1.1.1';
+    const VERSION = '1.2.0';
 
 }

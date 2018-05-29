@@ -43,7 +43,7 @@ final class HtmlTest extends TestCase
 
         $viewContext->model = $this->getModelA('Hello, world!');
 
-        Model::use('.', 'test');
+        Model::set('.', 'test');
         Model::display('test', 'text', 'Program', 'The program name.');
         Model::display('test', 'number', 'Lines', 'The lines of program code.');
 
@@ -64,7 +64,7 @@ final class HtmlTest extends TestCase
 
         $viewContext->model = $this->getModelB(null, 'Hello, world!');
 
-        Model::use('.', 'test');
+        Model::set('.', 'test');
         Model::display('test', array('a', 'text'), 'Program', 'The program name.');
         Model::display('test', array('a', 'number'), 'Lines', 'The lines of program code.');
 
@@ -85,7 +85,7 @@ final class HtmlTest extends TestCase
 
         $viewContext->model = $this->getModelA();
 
-        Model::use('.', 'test');
+        Model::set('.', 'test');
         Model::required('test', 'text');
         Model::validation('test', 'number', function($value, &$errorMessage) {
             if ($value != 555) {
@@ -119,7 +119,7 @@ final class HtmlTest extends TestCase
 
         $viewContext = $this->setContext('justModel', 'Home', 'POST', array('text' => '', 'number' => 555));
 
-        Model::use('.', 'test');
+        Model::set('.', 'test');
         Model::required('test', 'text');
         Model::validation('test', 'number', function($value, &$errorMessage) {
             if ($value != 555) {
@@ -143,7 +143,7 @@ final class HtmlTest extends TestCase
 
         $viewContext = $this->setContext('justModel', 'Home', 'POST', array('text' => 'Hello, world!', 'number' => 555));
 
-        Model::use('.', 'test');
+        Model::set('.', 'test');
         Model::required('test', 'text');
         Model::required('test', 'number');
 
@@ -161,7 +161,7 @@ final class HtmlTest extends TestCase
         $viewContext->model = $this->getModelB();
         $viewContext->model->a->number = 123;
 
-        Model::use('.', 'test');
+        Model::set('.', 'test');
         Model::required('test', array('a', 'text'));
         Model::validation('test', array('a', 'number'), function($value, &$errorMessage) {
             if ($value != 555) {
@@ -189,7 +189,7 @@ final class HtmlTest extends TestCase
 
         $viewContext->model = $this->getModelA();
 
-        Model::use('.', 'test');
+        Model::set('.', 'test');
         Model::required('test', 'text');
         Model::validation('test', 'number', function($value, &$errorMessage) {
             if ($value != 555) {
@@ -227,7 +227,7 @@ final class HtmlTest extends TestCase
         $viewContext->model->b1 = new ModelB();
         $viewContext->model->b1->a = new ModelA();
 
-        Model::use('.', 'test');
+        Model::set('.', 'test');
         Model::required('test', array('b1', 'a', 'text'));
         Model::validation('test', array('b1', 'a', 'number'), function($value, &$errorMessage) {
             if ($value != 555) {
@@ -267,7 +267,7 @@ final class HtmlTest extends TestCase
         $viewContext->model->b1->a->text = 'hello, world!';
         $viewContext->model->b1->a->number = 555;
 
-        Model::use('.', 'test');
+        Model::set('.', 'test');
         Model::required('test', array('b1', 'a', 'text'));
         Model::validation('test', array('b1', 'a', 'number'), function($value, &$errorMessage) {
             if ($value != 555) {

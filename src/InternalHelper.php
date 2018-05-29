@@ -264,11 +264,11 @@ final class InternalHelper {
 
                     if (is_array($value)) {
                         foreach ($value as $v) {
-                            $activeObject->$key[] = $v;
+                            $activeObject->{$key}[] = $v;
                         }
                     }
                     else {
-                        $activeObject->$key[] = $value;
+                        $activeObject->{$key}[] = $value;
                     }
                 }
                 else {
